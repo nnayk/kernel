@@ -5,13 +5,18 @@ byte_offset := 1048576
 loop0 := /dev/loop26
 loop1 := /dev/loop27
 mnt_pt := /mnt/fatgrub
+execs := boot multiboot_header
 
 .PHONY: empty clean lo_status
 
-clean:
-	sudo losetup -d $(loop0)	
-	sudo losetup -d $(loop1)
+clean_all:
 	rm $(image)
+	rm kernel.bin
+	rm $(execs)
+	rm *.o
+clean:
+	rm $(execs)
+	rm *.o
 
 # assembly for bootloader
 boot: multiboot_header.asm boot.asm
