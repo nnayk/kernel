@@ -6,6 +6,7 @@ loop0 := /dev/loop26
 loop1 := /dev/loop27
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
+objs := multiboot_header.o boot.o
 
 .PHONY: empty clean lo_status
 
@@ -16,14 +17,15 @@ clean_all:
 	rm *.o
 clean:
 	rm $(execs)
-	rm *.o
+	rm $(objs)
 
-# assembly for bootloader
-boot: multiboot_header.asm boot.asm
+multiboot_header.o: multiboot_header.asm boot.asm
 	nasm -f elf64 multiboot_header.asm
+
+boot.o: boot.asm boot.asm
 	nasm -f elf64 boot.asm
 
-kernel.bin: linker.ld multiboot_header.o boot.o
+kernel.bin: linker.ld $(objs) 
 	ld -n -o $(@) -T $^
 
 kernel: kernel.bin grub.cfg
@@ -39,7 +41,7 @@ partition: empty
 	parted $(image) mkpart primary fat32 2048s 30720s
 	parted $(image) set 1 boot on
 
-fat_img: partition kernel
+$(image): partition kernel
 	sudo losetup $(loop0) $(image)
 	sudo losetup $(loop1) $(image) -o $(byte_offset)
 	-sudo mkdir -p $(mnt_pt)
@@ -51,5 +53,5 @@ fat_img: partition kernel
 	sudo losetup -d $(loop0)	
 	sudo losetup -d $(loop1)
 
-run: fat.img
+run: $(image)
 	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio
