@@ -6,7 +6,7 @@ loop0 := /dev/loop26
 loop1 := /dev/loop27
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o
+objs := multiboot_header.o boot.o long_mode_init.o
 
 .PHONY: empty clean lo_status
 
@@ -24,6 +24,9 @@ multiboot_header.o: multiboot_header.asm boot.asm
 
 boot.o: boot.asm boot.asm
 	nasm -f elf64 boot.asm
+
+long_mode_init.o: long_mode_init.asm long_mode_init.asm
+	nasm -f elf64 long_mode_init.asm
 
 kernel.bin: linker.ld $(objs) 
 	ld -n -o $(@) -T $^

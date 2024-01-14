@@ -1,4 +1,5 @@
 global start
+extern long_mode_start
 
 section .text
 bits 32
@@ -12,6 +13,8 @@ start:
     call set_up_page_tables ; new
     call enable_paging     ; new
 
+    lgdt [gdt64.pointer]
+    jmp gdt64.code:long_mode_start
     ; print `OK` to screen
     mov dword [0xb8000], 0x2f4b2f4f
     hlt
@@ -135,6 +138,14 @@ error:
     mov byte  [0xb800a], al
     hlt
 
+section .rodata
+gdt64:
+    dq 0 ; zero entry
+.code: equ $ - gdt64 ; new
+    dq (1<<43) | (1<<44) | (1<<47) | (1<<53) ; code segment
+.pointer:
+    dw $ - gdt64 - 1
+    dq gdt64
 section .bss
 section .bss
 align 4096
