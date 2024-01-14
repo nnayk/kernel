@@ -2,8 +2,8 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop26
-loop1 := /dev/loop27
+loop0 := /dev/loop56
+loop1 := /dev/loop57
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o
@@ -13,9 +13,9 @@ my-gcc_flags := -c -g
 .PHONY: empty clean lo_status
 
 clean_all:
-	rm $(image)
-	rm kernel.bin
 	rm *.o
+	rm kernel.bin
+	rm $(image)
 clean:
 	rm $(objs)
 
