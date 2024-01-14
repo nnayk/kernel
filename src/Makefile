@@ -6,17 +6,17 @@ loop0 := /dev/loop26
 loop1 := /dev/loop27
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o
+my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
+my-gcc_flags := -c -g
 
 .PHONY: empty clean lo_status
 
 clean_all:
 	rm $(image)
 	rm kernel.bin
-	rm $(execs)
 	rm *.o
 clean:
-	rm $(execs)
 	rm $(objs)
 
 multiboot_header.o: multiboot_header.asm boot.asm
@@ -28,10 +28,15 @@ boot.o: boot.asm boot.asm
 long_mode_init.o: long_mode_init.asm long_mode_init.asm
 	nasm -f elf64 long_mode_init.asm
 
+kernel.o:
+	$(my-gcc) $(my-gcc_flags) kernel.c
+
+# binary file with dummy "OKAY" display for now
 kernel.bin: linker.ld $(objs) 
 	ld -n -o $(@) -T $^
 
-kernel: kernel.bin grub.cfg
+# package the source for the kernel image (includes grub bootloader)
+kernel_package: kernel.bin grub.cfg
 	mkdir -p .img/boot/grub
 	cp grub.cfg .img/boot/grub
 	cp kernel.bin .img/boot
@@ -44,7 +49,7 @@ partition: empty
 	parted $(image) mkpart primary fat32 2048s 30720s
 	parted $(image) set 1 boot on
 
-$(image): partition kernel
+$(image): partition kernel_package
 	sudo losetup $(loop0) $(image)
 	sudo losetup $(loop1) $(image) -o $(byte_offset)
 	-sudo mkdir -p $(mnt_pt)
