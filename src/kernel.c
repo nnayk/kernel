@@ -3,9 +3,6 @@ void VGA_display_char(char);
 void kmain()
 {
 	int loop = 0;
-	while(loop)
-	{
-	}
 	VGA_display_char('N');
 	while(!loop)
 	{
