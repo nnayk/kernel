@@ -9,9 +9,6 @@
 
 #include <stddef.h>
 #include "error.h"
-// DELETE
-#include <stdio.h>
-//
 #define LIMIT 5000
 
 void *memset2(void *dst, int c, size_t n)
@@ -31,9 +28,7 @@ void *memcpy2(void *dst, const void *src, size_t n)
         for(int i=0;i<n;i++)
         {
                 if(!dst || !src) return NULL_PTR;
-                printf("B4 dst[%d]=%d\n",i,((char *)dst)[i]);
                 ((char *)dst)[i] = ((char *)src)[i];
-                printf("AFTER dst[%d]=%d\n",i,((char *)dst)[i]);
         }
         return dst;
 }
