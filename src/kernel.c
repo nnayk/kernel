@@ -1,4 +1,4 @@
-extern void VGA_display_char(char);
+#include "vga.h"
 void kmain()
 {
 	int loop = 0;
