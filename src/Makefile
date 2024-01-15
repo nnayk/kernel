@@ -6,17 +6,17 @@ loop0 := /dev/loop56
 loop1 := /dev/loop57
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g
 
 .PHONY: empty clean lo_status
 
-clean_all:
+clean:
 	rm *.o
 	rm kernel.bin
 	rm $(image)
-clean:
+cleano:
 	rm $(objs)
 
 multiboot_header.o: multiboot_header.asm boot.asm
@@ -28,9 +28,8 @@ boot.o: boot.asm boot.asm
 long_mode_init.o: long_mode_init.asm long_mode_init.asm
 	nasm -f elf64 long_mode_init.asm
 
-kernel.o:
-	$(my-gcc) $(my-gcc_flags) kernel.c
-
+.c.o:
+	$(my-gcc) $(my-gcc_flags) $< -o $@
 # binary file with dummy "OKAY" display for now
 kernel.bin: linker.ld $(objs) 
 	ld -n -o $(@) -T $^
