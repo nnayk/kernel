@@ -2,7 +2,8 @@
 void kmain()
 {
 	int loop = 0;
-	VGA_display_char('N');
+        char *x="Hello";
+	for(int i=0;i<5;i++) VGA_display_char(x[i]);
 	while(!loop)
 	{
 	}
