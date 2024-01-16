@@ -7,6 +7,7 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_CHAR_SIZE 2 // bytes
+#define VGA_DIMS VGA_WIDTH * VGA_HEIGHT
 #define BOTTOM_LEFT (VGA_HEIGHT-1)*VGA_WIDTH
 #define LINE(x) (x/VGA_WIDTH) 
 
@@ -20,6 +21,14 @@ static int height = VGA_HEIGHT;
 static int cursor = 0;
 static unsigned char color = 0x2f;
 //static unsigned char color = FG(VGA_LIGHT_GREY) | BG(VGA_BLACK);
+
+int VGA_clear()
+{
+        if(!memset2(vgaBuff,0,VGA_DIMS)) 
+                return MEMCPY_ERR; 
+        return SUCCESS;
+        
+}
 
 void VGA_display_char(char c)
 {
@@ -47,3 +56,4 @@ int scroll()
                 return MEMCPY_ERR; 
         return SUCCESS;
 }
+
