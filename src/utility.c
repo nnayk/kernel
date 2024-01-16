@@ -43,8 +43,20 @@ size_t strlen2(const char *s)
         }
         return len;
 }
+
+char *strcpy(char *dest, const char *src)
+{
+        if(!dest || !src) return ERR_NULL_PTR;
+        size_t len = strlen2(src); 
+        for(size_t i=0;i<=len;i++) // account for trailing null byte
+        {
+                if(!(dest+i) || !(src+i)) return ERR_NULL_PTR;
+                dest[i] = src[i];
+        }
+        return dest;
+}
+
 #if 0
-char *strcpy(char *dest, const char *src);
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);
 char *strdup(const char *s);
