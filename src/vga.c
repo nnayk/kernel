@@ -22,6 +22,18 @@ static int cursor = 0;
 static unsigned char color = 0x2f;
 //static unsigned char color = FG(VGA_LIGHT_GREY) | BG(VGA_BLACK);
 
+int  VGA_display_str(const char *s)
+{
+        if(!s) return ERR_NULL_PTR;
+        size_t len = strlen2(s);
+        for(int i=0;i<len;i++)
+        {
+                VGA_display_char(s[i]);
+                // TODO: add logic for string on next line for cutoffs
+        }
+        return SUCCESS;
+}
+
 int VGA_clear()
 {
         if(!memset2(vgaBuff,0,VGA_DIMS)) 
