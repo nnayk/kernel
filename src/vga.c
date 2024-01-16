@@ -25,7 +25,7 @@ static unsigned char color = 0x2f;
 int VGA_clear()
 {
         if(!memset2(vgaBuff,0,VGA_DIMS)) 
-                return MEMCPY_ERR; 
+                return ERR_MEMCPY; 
         return SUCCESS;
         
 }
@@ -53,7 +53,7 @@ void VGA_display_char(char c)
 int scroll()
 {
         if(!memcpy2(vgaBuff,vgaBuff+VGA_WIDTH,VGA_CHAR_SIZE*BOTTOM_LEFT)) 
-                return MEMCPY_ERR; 
+                return ERR_MEMCPY; 
         return SUCCESS;
 }
 

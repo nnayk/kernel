@@ -5,9 +5,9 @@
  * Error code definitions
 */
 
-#define NULL_PTR (void *)-1
-#define INPUT_SIZE (void *)-2
-#define MEMCPY_ERR -3
-#define SCROLL_ERR -4
+#define ERR_NULL_PTR -1
+#define ERR_INPUT_SIZE -2
+#define ERR_MEMCPY -3
+#define ERR_SCROLL -4
 
 #define SUCCESS 1
