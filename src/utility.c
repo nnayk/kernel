@@ -33,9 +33,15 @@ void *memcpy2(void *dst, const void *src, size_t n)
         return dst;
 }
 
-size_t strlen(const char *s)
+size_t strlen2(const char *s)
 {
-        if(!s) return (void *)ERR_NULL_PTR;
+        size_t len = 0;
+        while(*s) 
+        {
+                len++;
+                s++;
+        }
+        return len;
 }
 #if 0
 char *strcpy(char *dest, const char *src);
