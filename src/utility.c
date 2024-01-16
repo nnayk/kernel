@@ -7,8 +7,8 @@
  * from libc
 */
 
-#include <stddef.h>
 #include "error.h"
+#include "utility.h"
 #define LIMIT 5000
 
 void *memset2(void *dst, int c, size_t n)

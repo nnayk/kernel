@@ -7,3 +7,4 @@
 
 #define NULL_PTR (void *)-1
 #define INPUT_SIZE (void *)-2
+#define MEMCPY_ERR -3

@@ -6,6 +6,8 @@
  * manipulation functions from standard C library
 */
 
+#include <stddef.h>
+
 void *memset2(void *dst, int c, size_t n);
 void *memcpy2(void *dest, const void *src, size_t n);
 size_t strlen(const char *s);
