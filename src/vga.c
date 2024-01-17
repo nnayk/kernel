@@ -1,4 +1,5 @@
 // header files
+#include "vga.h"
 #include "utility.h"
 #include "error.h"
 
@@ -9,7 +10,7 @@
 #define VGA_CHAR_SIZE 2 // bytes
 #define VGA_DIMS VGA_WIDTH * VGA_HEIGHT
 #define BOTTOM_LEFT (VGA_HEIGHT-1)*VGA_WIDTH
-#define LINE(x) (x/VGA_WIDTH) 
+#define LINE(x) ((x)/VGA_WIDTH) 
 
 //function prototypes
 int scroll();
@@ -24,8 +25,14 @@ static unsigned char color = 0x2f;
 
 int  VGA_display_str(const char *s)
 {
+        int loop = 0;
         if(!s) return ERR_NULL_PTR;
-        size_t len = strlen2(s);
+        size_t len = strlen(s);
+        int last_char_line = 0;
+        if(len <= VGA_WIDTH && LINE(cursor) 
+                       != (last_char_line = LINE(cursor + len - 1)))
+                cursor = last_char_line * VGA_WIDTH;
+        //while(!loop);
         for(int i=0;i<len;i++)
         {
                 VGA_display_char(s[i]);
@@ -36,7 +43,7 @@ int  VGA_display_str(const char *s)
 
 int VGA_clear()
 {
-        if(!memset2(vgaBuff,0,VGA_DIMS)) 
+        if(!memset(vgaBuff,0,VGA_DIMS)) 
                 return ERR_MEMCPY; 
         return SUCCESS;
         
@@ -64,7 +71,7 @@ void VGA_display_char(char c)
 
 int scroll()
 {
-        if(!memcpy2(vgaBuff,vgaBuff+VGA_WIDTH,VGA_CHAR_SIZE*BOTTOM_LEFT)) 
+        if(!memcpy(vgaBuff,vgaBuff+VGA_WIDTH,VGA_CHAR_SIZE*BOTTOM_LEFT)) 
                 return ERR_MEMCPY; 
         return SUCCESS;
 }

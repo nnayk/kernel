@@ -11,7 +11,7 @@
 #include "utility.h"
 #define LIMIT 5000
 
-void *memset2(void *dst, int c, size_t n)
+void *memset(void *dst, int c, size_t n)
 {
         if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
         for(int i=0;i<n;i++)
@@ -22,7 +22,7 @@ void *memset2(void *dst, int c, size_t n)
 
         return dst;
 }
-void *memcpy2(void *dst, const void *src, size_t n)
+void *memcpy(void *dst, const void *src, size_t n)
 {
         if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
         for(int i=0;i<n;i++)
@@ -33,7 +33,7 @@ void *memcpy2(void *dst, const void *src, size_t n)
         return dst;
 }
 
-size_t strlen2(const char *s)
+size_t strlen(const char *s)
 {
         size_t len = 0;
         while(*s) 
@@ -46,11 +46,11 @@ size_t strlen2(const char *s)
 
 char *strcpy(char *dest, const char *src)
 {
-        if(!dest || !src) return ERR_NULL_PTR;
-        size_t len = strlen2(src); 
+        if(!dest || !src) return (void *)ERR_NULL_PTR;
+        size_t len = strlen(src); 
         for(size_t i=0;i<=len;i++) // account for trailing null byte
         {
-                if(!(dest+i) || !(src+i)) return ERR_NULL_PTR;
+                if(!(dest+i) || !(src+i)) return (void *)ERR_NULL_PTR;
                 dest[i] = src[i];
         }
         return dest;
