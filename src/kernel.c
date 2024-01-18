@@ -9,12 +9,13 @@ void kmain()
         unsigned char z = 255;
         char z = "a";
         VGA_display_str(&z);
-        */
         unsigned char z = 97;
+        */
         VGA_display_str(x);
         VGA_display_str(y);
         print_uchar(19);
         print_short(-32768);
+        printk("Hello %s %d\n","hey",'a');
         //VGA_clear();
 	while(!loop)
 	{

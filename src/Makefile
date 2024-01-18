@@ -9,7 +9,7 @@ execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o \
 	print.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
-my-gcc_flags := -c -g
+my-gcc_flags := -c -g -Wall -Werror
 
 .PHONY: empty clean lo_status
 

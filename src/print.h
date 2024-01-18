@@ -5,6 +5,7 @@
  * Print function prototypes
 */
 
+int printk(const char *,...)__attribute__ ((format (printf, 1, 2)));
 void print_char(char);
 void print_str(const char *);
 void print_uchar(unsigned char);
