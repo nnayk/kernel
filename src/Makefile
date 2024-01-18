@@ -6,7 +6,8 @@ loop0 := /dev/loop56
 loop1 := /dev/loop57
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o \
+	print.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g
 

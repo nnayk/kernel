@@ -32,11 +32,9 @@ int  VGA_display_str(const char *s)
         if(len <= VGA_WIDTH && LINE(cursor) 
                        != (last_char_line = LINE(cursor + len - 1)))
                 cursor = last_char_line * VGA_WIDTH;
-        //while(!loop);
         for(int i=0;i<len;i++)
         {
                 VGA_display_char(s[i]);
-                // TODO: add logic for string on next line for cutoffs
         }
         return SUCCESS;
 }
