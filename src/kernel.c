@@ -14,6 +14,7 @@ void kmain()
         VGA_display_str(x);
         VGA_display_str(y);
         print_uchar(19);
+        print_short(-32768);
         //VGA_clear();
 	while(!loop)
 	{
