@@ -16,6 +16,8 @@ void kmain()
         print_uchar(19);
         print_short(-32768);
         printk("Hello %s %d\n","hey",'a');
+        print_long_decimal(-32768);
+        print_long_hex(20);
         //VGA_clear();
 	while(!loop)
 	{
