@@ -18,13 +18,14 @@
 #define FMT_UCHAR u
 #define FMT_INT d
 #define FMT_CHAR c
-#define FMT_CHAR p // note: a pointer can be treated as a long for x86_64
+#define FMT_PTR p // note: a pointer can be treated as a long for x86_64
 #define FMT_STR s
 // TODO: define format constants for the 3 bracket cases listed in instructions
 
 __attribute__ ((format (printf, 1, 2)))
 int printk(const char *str,...)
 {
+        /*
         if(!str) return ERR_NULL_PTR;
         size_t len = strlen(str);
         for(int i=0;i<len;i++)
@@ -36,6 +37,7 @@ int printk(const char *str,...)
                 // just a regular char, display it
                 VGA_display_char(str[i]);
         }
+        */
 
         return 1;
 }

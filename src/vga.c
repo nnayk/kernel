@@ -25,7 +25,7 @@ static unsigned char color = 0x2f;
 
 int  VGA_display_str(const char *s)
 {
-        int loop = 0;
+        //int loop = 0;
         if(!s) return ERR_NULL_PTR;
         size_t len = strlen(s);
         int last_char_line = 0;
@@ -49,7 +49,7 @@ int VGA_clear()
 
 void VGA_display_char(char c)
 {
-	int errCode = 0;
+	//int errCode = 0;
 	if (c == '\n') {
 		cursor = (LINE(cursor) + 1) * width;
 		if (cursor >= width*height)
@@ -59,7 +59,7 @@ void VGA_display_char(char c)
                 }
 	}
 	else if (c == '\r')
-		cursor = LINE(cursor);
+		cursor = LINE(cursor)*VGA_WIDTH;
 	else {
 		vgaBuff[cursor] = (color << 8) | c;
 		//if ((cursor % width) < (width - 1))

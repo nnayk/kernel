@@ -4,7 +4,7 @@ void kmain()
 {
 	int loop = 0;
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        char *y="Hello";
+        char *y="Hel\nl\ro";
         /*
         unsigned char z = 255;
         char z = "a";
@@ -19,5 +19,6 @@ void kmain()
         //VGA_clear();
 	while(!loop)
 	{
+
 	}
 }
