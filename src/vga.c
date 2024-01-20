@@ -41,10 +41,9 @@ int  VGA_display_str(const char *s)
 
 int VGA_clear()
 {
-        if(!memset(vgaBuff,0,VGA_DIMS)) 
+        if(!memset(vgaBuff,0,VGA_DIMS*VGA_CHAR_SIZE)) 
                 return ERR_MEMCPY; 
         return SUCCESS;
-        
 }
 
 void VGA_display_char(char c)

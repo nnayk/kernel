@@ -97,13 +97,16 @@ int printk(const char *fmt,...)
                                         switch(fmt[i])
                                         {
                                                 case FMT_INT:
-                                                        print_signed_long(args.long_val);
+                                                        print_signed_long(
+                                                                args.long_val);
                                                         break;
                                                 case FMT_UINT:
-                                                        print_unsigned_long(args.long_val);
+                                                        print_unsigned_long(
+                                                                args.long_val);
                                                         break;
                                                 case FMT_HEXINT:
-                                                        print_long_hex(args.long_val);
+                                                        print_long_hex(
+                                                                args.long_val);
                                                         break;
                                         }
                         }
