@@ -24,6 +24,7 @@ void kmain()
         printk("long long ints: %qd %qd %qu %qx\n",LLONG_MAX,LLONG_MIN,ULLONG_MAX,LLONG_MIN);
         printk("%hd\n",-32768);
         printk("here's a special symbol: %%. Oh and a number %d\n",59);
+        printk("why hello there.... %s\r%p\n","nope",&x);
         //VGA_clear();
 	while(!loop);
 }

@@ -52,11 +52,8 @@ int printk(const char *fmt,...)
         va_list va;
         va_start(va, fmt);
         union Args args;
-        //int int_val = va_arg(va, int);
-        //void *voidp_val = va_arg(va, void*);
         size_t len = strlen(fmt);
         int i = 0;
-        // %% %d %u %x %c %p %h[dux] %l[dux] %q[dux] %s
         while(i<len)
         {
                 if(fmt[i] == FMT_SPEC)
@@ -110,7 +107,6 @@ int printk(const char *fmt,...)
                                                         break;
                                         }
                         }
-                        // TODO: handle format specifiers
                 }
                 // just a regular char, display it
                 else VGA_display_char(fmt[i]);
@@ -159,15 +155,6 @@ void print_signed_long(long l)
                 l=l*-1;
         }
         print_digits(digits,index,l);
-        /*
-        while(l)
-        {
-                temp = (l%DEC_BASE);
-                digits[index++] = temp;
-                l=l/DEC_BASE;
-        }
-        while(index--) VGA_display_char(digits[index]);
-        */
 }
 
 void print_unsigned_long(unsigned long l)
