@@ -6,51 +6,118 @@
 */
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <limits.h>
 #include "vga.h"
+#include "utility.h"
+#include "print.h"
+#include "error.h"
 
+//offsets
 #define NUM_ASCII_OFF 48
 #define CHAR_ASCII_OFF 65
-#define ARR_SIZE 20 // should handle all data type cases
+#define ARR_SIZE 20 // should handle all data type cases for x86_64
 #define MINUS_ASCII 45
+
+//decimal and hex constants
 #define DEC_BASE 10
 #define NEG_DEC_BASE -DEC_BASE
 #define HEX_BASE 16
 #define HEX_PREFIX "0x"
-#define FMT_SPEC %
+
 // format specifier constants below
-#define FMT_MODULO %
-#define FMT_INT d
-#define FMT_UCHAR u
-#define FMT_INT d
-#define FMT_CHAR c
-#define FMT_PTR p // note: a pointer can be treated as a long for x86_64
-#define FMT_STR s
+#define FMT_SPEC '%'
+#define FMT_MODULO '%'
+#define FMT_INT 'd'
+#define FMT_UINT 'u'
+#define FMT_HEXINT 'x'
+#define FMT_CHAR 'c'
+#define FMT_PTR 'p' // note: a pointer can be treated as a long for x86_64
+#define FMT_STR 's'
+#define FMT_SHORT_PREFIX 'h'
+#define FMT_LONG_PREFIX 'l'
+#define FMT_LONG_LONG_PREFIX 'q'
 // TODO: define format constants for the 3 bracket cases listed in instructions
 
+union Args {
+   int int_val;
+   long long_val;
+   char *str_val;
+};
+
 __attribute__ ((format (printf, 1, 2)))
-int printk(const char *str,...)
+int printk(const char *fmt,...)
 {
-        /*
+        if(!fmt) return ERR_NULL_PTR;
         va_list va;
         va_start(va, fmt);
-        int int_val = va_arg(va, int);
-        void *voidp_val = va_arg(va, void*);
-        if(!str) return ERR_NULL_PTR;
-        size_t len = strlen(str);
-        for(int i=0;i<len;i++)
+        union Args args;
+        //int int_val = va_arg(va, int);
+        //void *voidp_val = va_arg(va, void*);
+        size_t len = strlen(fmt);
+        int i = 0;
+        // %% %d %u %x %c %p %h[dux] %l[dux] %q[dux] %s
+        while(i<len)
         {
-                if(str[i] == FMT_SPEC)
+                if(fmt[i] == FMT_SPEC)
                 {
-
+                        i++; // look at following char for the actual specifier
+                        switch(fmt[i])
+                        {
+                                case FMT_MODULO:
+                                        print_char(FMT_MODULO);
+                                        break;
+                                case FMT_CHAR:
+                                        args.int_val = va_arg(va,int);
+                                        print_char(args.int_val);
+                                        break;
+                                case FMT_PTR:
+                                        args.long_val = va_arg(va,long);
+                                        print_long_hex(args.long_val);
+                                        break;
+                                case FMT_STR:
+                                        args.str_val = va_arg(va,char *);
+                                        print_str(args.str_val);
+                                        break;
+                                case FMT_SHORT_PREFIX:
+                                        break;
+                                case FMT_INT:
+                                        args.int_val = va_arg(va,int);
+                                        print_signed_long(args.int_val);
+                                        break;
+                                case FMT_UINT:
+                                        args.int_val = va_arg(va,int);
+                                        print_uchar(args.int_val);
+                                        break;
+                                case FMT_HEXINT:
+                                        args.int_val = va_arg(va,int);
+                                        print_long_hex(args.int_val);
+                                        break;
+                                case FMT_LONG_PREFIX: 
+                                case FMT_LONG_LONG_PREFIX:
+                                        i++;
+                                        args.long_val = va_arg(va,long);
+                                        switch(fmt[i])
+                                        {
+                                                case FMT_INT:
+                                                        print_signed_long(args.long_val);
+                                                        break;
+                                                case FMT_UINT:
+                                                        print_unsigned_long(args.long_val);
+                                                        break;
+                                                case FMT_HEXINT:
+                                                        print_long_hex(args.long_val);
+                                                        break;
+                                        }
+                        }
                         // TODO: handle format specifiers
                 }
                 // just a regular char, display it
-                VGA_display_char(str[i]);
+                else VGA_display_char(fmt[i]);
+                i++;
         }
 
         va_end(va);
-        */
         return 1;
 }
 void print_char(char c)
@@ -76,49 +143,49 @@ void print_uchar(unsigned char b)
         while(index--) VGA_display_char(digits[index]);
 }
 
-void print_short(short s)
+void print_signed_long(long l)
 {
-        unsigned char temp = 0;
-        unsigned char digits[ARR_SIZE]; 
+        unsigned char digits[ARR_SIZE];
         int index = 0;
-        // this cleanly handles the case where we're given the max. negative short value
-        int s_copy = s; 
-        if(s_copy < 0) 
-        {
-                VGA_display_char(MINUS_ASCII);
-                s_copy=s_copy*-1;
-        }
-        while(s_copy)
-        {
-                temp = (s_copy%10)+NUM_ASCII_OFF;
-                digits[index++] = temp;
-                s_copy=s_copy/10;
-        }
-        while(index--) VGA_display_char(digits[index]);
-}
-
-void print_long_decimal(long l)
-{
-        unsigned char digits[ARR_SIZE]; 
-        int index = 0;
-        unsigned char temp = 0;
 
         if(l<0)
         {
                 VGA_display_char(MINUS_ASCII);
                 if(l==LONG_MIN)
                 {
-                        digits[index++] = -1*(l%NEG_DEC_BASE);
+                        digits[index++] = -1*(l%NEG_DEC_BASE) + NUM_ASCII_OFF;
+                        l=l/DEC_BASE;
                 }
                 l=l*-1;
         }
+        print_digits(digits,index,l);
+        /*
         while(l)
         {
-                temp = (l%DEC_BASE)+NUM_ASCII_OFF;
+                temp = (l%DEC_BASE);
                 digits[index++] = temp;
                 l=l/DEC_BASE;
         }
         while(index--) VGA_display_char(digits[index]);
+        */
+}
+
+void print_unsigned_long(unsigned long l)
+{
+        unsigned char digits[ARR_SIZE]; 
+        print_digits(digits,0,l);
+}
+
+void print_digits(unsigned char digits[],int index,unsigned long l)
+{
+        unsigned char temp;
+        while(l)
+        {
+                temp = (l%DEC_BASE) + NUM_ASCII_OFF;
+                digits[index++] = temp;
+                l=l/DEC_BASE;
+        }
+        while(index--) print_char(digits[index]);
 }
 
 void print_long_hex(unsigned long l)

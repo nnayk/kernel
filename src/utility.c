@@ -16,7 +16,7 @@ void *memset(void *dst, int c, size_t n)
         if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
         for(int i=0;i<n;i++)
         {
-                if(!dst) return (void *)ERR_NULL_PTR;
+                if(!(dst+i)) return (void *)ERR_NULL_PTR;
                 ((char *)dst)[i] = c;
         }
 
@@ -27,7 +27,7 @@ void *memcpy(void *dst, const void *src, size_t n)
         if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
         for(int i=0;i<n;i++)
         {
-                if(!dst || !src) return (void *)ERR_NULL_PTR;
+                if(!(dst+i) || !(src+i)) return (void *)ERR_NULL_PTR;
                 ((char *)dst)[i] = ((char *)src)[i];
         }
         return dst;
@@ -46,7 +46,7 @@ size_t strlen(const char *s)
 
 char *strcpy(char *dest, const char *src)
 {
-        if(!dest || !src) return (void *)ERR_NULL_PTR;
+        //if(!src) return (void *)ERR_NULL_PTR;
         size_t len = strlen(src); 
         for(size_t i=0;i<=len;i++) // account for trailing null byte
         {
