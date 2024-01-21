@@ -39,11 +39,11 @@
 #define FMT_LONG_LONG_PREFIX 'q'
 // TODO: define format constants for the 3 bracket cases listed in instructions
 
-union Args {
+typedef union{
    int int_val;
    long long_val;
    char *str_val;
-};
+} Args;
 
 __attribute__ ((format (printf, 1, 2)))
 int printk(const char *fmt,...)
@@ -51,7 +51,7 @@ int printk(const char *fmt,...)
         if(!fmt) return ERR_NULL_PTR;
         va_list va;
         va_start(va, fmt);
-        union Args args;
+        Args args;
         size_t len = strlen(fmt);
         int i = 0;
         while(i<len)

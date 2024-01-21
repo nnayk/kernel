@@ -56,6 +56,7 @@ char *strcpy(char *dest, const char *src)
         return dest;
 }
 
+
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);

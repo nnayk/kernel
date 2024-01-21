@@ -1,19 +1,21 @@
 #include "vga.h"
 #include "print.h"
 #include "limits.h"
+#include "ps2.h"
 
 void kmain()
 {
 	int loop = 0;
+        /*
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
         char *y="Hel\nl\ro";
-        /*
+        *
         unsigned char z = 255;
         char z = "a";
         VGA_display_str(&z);
         unsigned char z = 97;
-        */
+        *
         //while(!loop);
         printk("long min : %ld\n",LONG_MIN);
         printk("Here's a string: %s",x);
@@ -33,7 +35,10 @@ void kmain()
         printk("Here's a string: %s",x);
         printk("here's another string: %s",y);
         printk("char: %c, short_min = %hd\n",115,SHRT_MIN);
-        //printk("why hello there.... %s\r%p\n","nope",&x);
-        VGA_clear();
+        printk("why hello there.... %s\r%p\n","nope",&x);
+        //VGA_clear();
+        */
+        ps2_init();
 	while(!loop);
 }
+
