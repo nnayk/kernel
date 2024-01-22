@@ -76,7 +76,6 @@ void ps2_init()
         ps2_byte = ps2_poll_read();
         printk("ps2 config byte = %d\n",ps2_byte);
         // reset the keyboard
-        /*
         ps2_poll_write(PS2_DATA,KBD_RESET);
         if(DBUG) printk("sent reset kbd command");
         outb(PS2_CMD,PS2_CONFIG);
@@ -86,6 +85,5 @@ void ps2_init()
         printk("ps2 keyboard reset status: %x\n",ps2_byte);
         // set the keyboard to a known scan code.
         // enable the keyboard.
-        // */
 }
 
