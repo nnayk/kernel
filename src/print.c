@@ -190,7 +190,7 @@ void print_long_hex(unsigned long l)
                 temp = (l%HEX_BASE);
                 if(temp >= 10)
                 {
-                        temp = temp + CHAR_ASCII_OFF;
+                        temp = (temp%10) + CHAR_ASCII_OFF;
                 }
                 else temp = temp + NUM_ASCII_OFF;
                 digits[index++] = temp;
