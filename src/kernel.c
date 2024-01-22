@@ -38,6 +38,7 @@ void kmain()
         printk("why hello there.... %s\r%p\n","nope",&x);
         //VGA_clear();
         */
+        printk("num = %d\n",0);
         ps2_init();
 	while(!loop);
 }

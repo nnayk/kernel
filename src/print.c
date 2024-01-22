@@ -169,6 +169,7 @@ void print_unsigned_long(unsigned long l)
 void print_digits(unsigned char digits[],int index,unsigned long l)
 {
         unsigned char temp;
+        if(l==0) digits[index++] = l+NUM_ASCII_OFF;
         while(l)
         {
                 temp = (l%DEC_BASE) + NUM_ASCII_OFF;
