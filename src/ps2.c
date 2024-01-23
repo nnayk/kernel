@@ -38,7 +38,7 @@ static inline uint8_t inb(uint16_t port)
         return ret;
 }
 
-static char ps2_poll_read(void)
+char ps2_poll_read(void)
 {
         char status = inb(PS2_STATUS);
         while (!(status & PS2_STATUS_OUTPUT))
@@ -47,7 +47,7 @@ static char ps2_poll_read(void)
         return inb(PS2_DATA);
 }
 
-static void ps2_poll_write(uint16_t port,uint8_t val)
+void ps2_poll_write(uint16_t port,uint8_t val)
 {
         char status = inb(PS2_STATUS);
         while(status & PS2_STATUS_INPUT)
@@ -118,21 +118,5 @@ void kbd_init()
         ps2_poll_write(PS2_DATA,0xF4);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("enable kbd scanning ack = %x\n",ps2_byte);
-        int loop = 0;
-        unsigned char data = 0;
-        int count = 0;
-	while(!loop)
-        {
-                data = ps2_poll_read();
-                if(data<100)
-                {
-                print_uchar(data);
-                print_char('\n');
-                }
-                count++;
-                //printk("count %d: %d\n",count++,data);
-                //data = mapScanCodeToAscii(data);
-                //if(data) printk("data = %c\n",data);
-        }
 }
 

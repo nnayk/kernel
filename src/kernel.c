@@ -7,8 +7,8 @@ char mapScanCodeToAscii(int);
 
 void kmain()
 {
-	//int loop = 0;
-        //unsigned char data;
+	int loop = 0;
+        unsigned char data;
         /*
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
@@ -43,15 +43,13 @@ void kmain()
         */
         ps2_init();
         kbd_init();
-/*	
         while(!loop)
         {
                 data = ps2_poll_read();
-                printk("scan code = %x\n",data);
-                //data = mapScanCodeToAscii(data);
-                //if(data) printk("data = %c\n",data);
+                //printk("scan code = %x\n",data);
+                data = mapScanCodeToAscii(data);
+                if(data) print_char(data);
         }
-*/
 }
 
 
