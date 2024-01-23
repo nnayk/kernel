@@ -6,6 +6,7 @@
 void kmain()
 {
 	int loop = 0;
+        unsigned char data;
         /*
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
@@ -39,6 +40,11 @@ void kmain()
         //VGA_clear();
         */
         ps2_init();
-	while(!loop);
+        kbd_init();
+	while(!loop)
+        {
+                data = ps2_poll_read();
+                printk("data = %x\n",data);
+        }
 }
 

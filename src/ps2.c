@@ -1,4 +1,3 @@
-#include "stdint-gcc.h"
 #include "ps2.h"
 #include "print.h"
 
@@ -39,7 +38,7 @@ static inline uint8_t inb(uint16_t port)
         return ret;
 }
 
-static char ps2_poll_read(void)
+char ps2_poll_read(void)
 {
         char status = inb(PS2_STATUS);
         while (!(status & PS2_STATUS_OUTPUT))
@@ -47,7 +46,7 @@ static char ps2_poll_read(void)
         return inb(PS2_DATA);
 }
 
-static void ps2_poll_write(uint16_t port,uint8_t val)
+void ps2_poll_write(uint16_t port,uint8_t val)
 {
         char status = inb(PS2_STATUS);
         while(status & PS2_STATUS_INPUT)
@@ -81,6 +80,12 @@ void ps2_init()
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("ps2 config byte = %d\n",ps2_byte);
+
+}
+
+void kbd_init()
+{
+        uint8_t ps2_byte; // general command byte
         // reset the keyboard
         ps2_poll_write(PS2_DATA,KBD_RESET);
         if(DBUG) if(DBUG) printk("sent reset kbd command\n");
@@ -107,14 +112,9 @@ void ps2_init()
         if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("current kbd scan code = %x\n",ps2_byte);
-        ps2_byte = ps2_poll_read();
-        if(DBUG) printk("pressed %x\n",ps2_byte);
-        ps2_byte = ps2_poll_read();
-        if(DBUG) printk("released %x\n",ps2_byte);
         // enable keyboard scanning.
         ps2_poll_write(PS2_DATA,0xF4);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
-
 }
 
