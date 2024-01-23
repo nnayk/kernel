@@ -14,9 +14,11 @@
 #define PS2_DISABLE_PORT2 0xA7
 #define PS2_ENABLE_CLOCK1 ~(1<<4)
 #define PS2_ENABLE_CLOCK2 ~(1<<5)
+#define PS1_ENABLE_TR_PORT1 (1<<6)
 #define PS2_CONFIG 0x20
 
 #define KBD_RESET 0xFF
+#define KBD_SCAN_CODE 0xF0
 
 #define DBUG 1
 
@@ -63,13 +65,14 @@ void ps2_init()
         /* read controller config. byte */
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 byte = %d\n",ps2_byte);
-        if(DBUG) printk("ps2 bit 4 = %d\n",ps2_byte & (1 << 4));
+        if(DBUG) if(DBUG) printk("ps2 byte = %d\n",ps2_byte);
+        if(DBUG) if(DBUG) printk("ps2 bit 4 = %d\n",ps2_byte & (1 << 4));
         /* enable the clock on channel 1 */
         ps2_byte &= PS2_ENABLE_CLOCK1;
         ps2_byte &= ~PS2_ENABLE_INT_PORT1; // disable port 1 interrupts
         ps2_byte |= ~PS2_ENABLE_CLOCK2;
-        printk("writing ps2 config byte = %d %d\n",ps2_byte,~PS2_ENABLE_CLOCK2);
+        ps2_byte &= ~(PS2_ENABLE_CLOCK2);
+        if(DBUG) printk("writing ps2 config byte = %d %d\n",ps2_byte,~PS2_ENABLE_CLOCK2);
         // write the configuration byte back out to the PS/2 controller.
         ps2_poll_write(PS2_CMD,PS2_WRITE_CONFIG);
         ps2_poll_write(PS2_DATA,ps2_byte);
@@ -77,18 +80,41 @@ void ps2_init()
         ps2_poll_write(PS2_CMD,PS2_ENABLE_PORT1);
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
-        printk("ps2 config byte = %d\n",ps2_byte);
+        if(DBUG) printk("ps2 config byte = %d\n",ps2_byte);
         // reset the keyboard
         ps2_poll_write(PS2_DATA,KBD_RESET);
-        if(DBUG) printk("sent reset kbd command\n");
+        if(DBUG) if(DBUG) printk("sent reset kbd command\n");
         ps2_byte = ps2_poll_read();
-        printk("kbd command ack: %x\n",ps2_byte);
+        if(DBUG) printk("kbd command ack: %x\n",ps2_byte);
         ps2_byte = ps2_poll_read();
-        printk("ps2 keyboard reset status: %d\n",ps2_byte);
+        if(DBUG) printk("ps2 keyboard reset status: %x\n",ps2_byte);
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
-        printk("ps2 config byte = %d\n",ps2_byte);
-        // set the keyboard to a known scan code.
-        // enable the keyboard.
+        if(DBUG) printk("ps2 config byte = %x\n",ps2_byte);
+        // set the keyboard to scan code set 1.
+        ps2_poll_write(PS2_DATA,KBD_SCAN_CODE);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        ps2_poll_write(PS2_DATA,0x1);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        // check that kbd scan code set = 1
+        ps2_poll_write(PS2_DATA,KBD_SCAN_CODE);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        ps2_poll_write(PS2_DATA,0x0);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("current kbd scan code = %x\n",ps2_byte);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("pressed %x\n",ps2_byte);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("released %x\n",ps2_byte);
+        // enable keyboard scanning.
+        ps2_poll_write(PS2_DATA,0xF4);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+
 }
 
