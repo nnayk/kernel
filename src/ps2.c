@@ -19,7 +19,7 @@
 #define KBD_RESET 0xFF
 #define KBD_SCAN_CODE 0xF0
 
-#define DBUG 1
+#define DBUG 0
 
 //void outb(uint16_t, uint8_t);
 //uint8_t inb(uint16_t );
@@ -38,19 +38,21 @@ static inline uint8_t inb(uint16_t port)
         return ret;
 }
 
-char ps2_poll_read(void)
+static char ps2_poll_read(void)
 {
         char status = inb(PS2_STATUS);
         while (!(status & PS2_STATUS_OUTPUT))
                 status = inb(PS2_STATUS);
+        //if(DBUG) printk("READ READY!\n");
         return inb(PS2_DATA);
 }
 
-void ps2_poll_write(uint16_t port,uint8_t val)
+static void ps2_poll_write(uint16_t port,uint8_t val)
 {
         char status = inb(PS2_STATUS);
         while(status & PS2_STATUS_INPUT)
                 status = inb(PS2_STATUS);
+        //if(DBUG) printk("WRITE READY!\n");
         outb(port,val);
 }
 
@@ -64,14 +66,14 @@ void ps2_init()
         /* read controller config. byte */
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
-        if(DBUG) if(DBUG) printk("ps2 byte = %d\n",ps2_byte);
-        if(DBUG) if(DBUG) printk("ps2 bit 4 = %d\n",ps2_byte & (1 << 4));
+        if(DBUG) printk("ps2 byte = %d\n",ps2_byte);
+        if(DBUG) printk("ps2 bit 4 = %d\n",ps2_byte & (1 << 4));
         /* enable the clock on channel 1 */
         ps2_byte &= PS2_ENABLE_CLOCK1;
         ps2_byte &= ~PS2_ENABLE_INT_PORT1; // disable port 1 interrupts
         ps2_byte |= ~PS2_ENABLE_CLOCK2;
         ps2_byte &= ~(PS2_ENABLE_CLOCK2);
-        if(DBUG) printk("writing ps2 config byte = %d %d\n",ps2_byte,~PS2_ENABLE_CLOCK2);
+        if(DBUG) printk("writing ps2 config byte = %d\n",ps2_byte);
         // write the configuration byte back out to the PS/2 controller.
         ps2_poll_write(PS2_CMD,PS2_WRITE_CONFIG);
         ps2_poll_write(PS2_DATA,ps2_byte);
@@ -88,33 +90,49 @@ void kbd_init()
         uint8_t ps2_byte; // general command byte
         // reset the keyboard
         ps2_poll_write(PS2_DATA,KBD_RESET);
-        if(DBUG) if(DBUG) printk("sent reset kbd command\n");
+        if(DBUG) printk("sent reset kbd command\n");
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("kbd command ack: %x\n",ps2_byte);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("ps2 keyboard reset status: %x\n",ps2_byte);
         ps2_poll_write(PS2_CMD,PS2_CONFIG);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 config byte = %x\n",ps2_byte);
+        if(DBUG) printk("kbd reset ack = %d\n",ps2_byte);
         // set the keyboard to scan code set 1.
         ps2_poll_write(PS2_DATA,KBD_SCAN_CODE);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        if(DBUG) printk("set scan code cmd ack = %x\n",ps2_byte);
         ps2_poll_write(PS2_DATA,0x1);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        if(DBUG) printk("set scan code data ack = %x\n",ps2_byte);
         // check that kbd scan code set = 1
         ps2_poll_write(PS2_DATA,KBD_SCAN_CODE);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        if(DBUG) printk("get kbd scan cmd ack = %x\n",ps2_byte);
         ps2_poll_write(PS2_DATA,0x0);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        if(DBUG) printk("get kbd scan data ack = %x\n",ps2_byte);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("current kbd scan code = %x\n",ps2_byte);
         // enable keyboard scanning.
         ps2_poll_write(PS2_DATA,0xF4);
         ps2_byte = ps2_poll_read();
-        if(DBUG) printk("ps2 kbd scan code ack = %x\n",ps2_byte);
+        if(DBUG) printk("enable kbd scanning ack = %x\n",ps2_byte);
+        int loop = 0;
+        unsigned char data = 0;
+        int count = 0;
+	while(!loop)
+        {
+                data = ps2_poll_read();
+                if(data<100)
+                {
+                print_uchar(data);
+                print_char('\n');
+                }
+                count++;
+                //printk("count %d: %d\n",count++,data);
+                //data = mapScanCodeToAscii(data);
+                //if(data) printk("data = %c\n",data);
+        }
 }
 

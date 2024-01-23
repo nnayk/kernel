@@ -10,6 +10,7 @@
 #define VGA_CHAR_SIZE 2 // bytes
 #define VGA_DIMS VGA_WIDTH * VGA_HEIGHT
 #define BOTTOM_LEFT (VGA_HEIGHT-1)*VGA_WIDTH
+#define BOTTOM_RIGHT VGA_DIMS-1
 #define LINE(x) ((x)/VGA_WIDTH) 
 
 //function prototypes
@@ -48,12 +49,17 @@ int VGA_clear()
 
 void VGA_display_char(char c)
 {
+        if(cursor == BOTTOM_RIGHT+1)
+        {
+                scroll();
+                cursor=BOTTOM_LEFT;
+        }
 	//int errCode = 0;
 	if (c == '\n') {
 		cursor = (LINE(cursor) + 1) * width;
 		if (cursor >= width*height)
                 {
-			scroll();
+                        scroll();
                         cursor = BOTTOM_LEFT;
                 }
 	}
@@ -62,14 +68,15 @@ void VGA_display_char(char c)
 	else {
 		vgaBuff[cursor] = (color << 8) | c;
 		//if ((cursor % width) < (width - 1))
-			cursor++;
+                cursor++;
 	}
 }
 
 int scroll()
 {
         if(!memcpy(vgaBuff,vgaBuff+VGA_WIDTH,VGA_CHAR_SIZE*BOTTOM_LEFT)) 
-                return ERR_MEMCPY; 
+                return ERR_MEMCPY;
+        memset(vgaBuff+BOTTOM_LEFT,0,VGA_WIDTH*VGA_CHAR_SIZE);
         return SUCCESS;
 }
 
