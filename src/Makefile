@@ -6,8 +6,7 @@ loop0 := /dev/loop56
 loop1 := /dev/loop57
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o \
-	print.o ps2.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o \ print.o ps2.o idt_init.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g -Wall -Werror
 
@@ -28,6 +27,9 @@ boot.o: boot.asm boot.asm
 
 long_mode_init.o: long_mode_init.asm long_mode_init.asm
 	nasm -f elf64 long_mode_init.asm
+
+idt_init.o: idt_init.asm idt_init.asm
+	nasm -f elf64 idt_init.asm
 
 .c.o:
 	$(my-gcc) $(my-gcc_flags) $< -o $@
