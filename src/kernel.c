@@ -2,6 +2,7 @@
 #include "print.h"
 #include "limits.h"
 #include "ps2.h"
+#include "irq.h"
 
 char mapScanCodeToAscii(int);
 
@@ -43,6 +44,7 @@ void kmain()
         */
         ps2_init();
         kbd_init();
+        irq_init();
         while(!loop)
         {
                 data = ps2_poll_read();

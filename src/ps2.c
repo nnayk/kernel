@@ -1,5 +1,6 @@
 #include "ps2.h"
 #include "print.h"
+#include "utility.h"
 
 #define PS2_DATA 0x60
 #define PS2_CMD 0x64
@@ -24,19 +25,6 @@
 //void outb(uint16_t, uint8_t);
 //uint8_t inb(uint16_t );
 
-static inline void outb(uint16_t port, uint8_t val)
-{
-        asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
-}
-
-static inline uint8_t inb(uint16_t port)
-{
-        uint8_t ret;
-        asm volatile ( "inb %1, %0"
-        : "=a"(ret)
-        : "Nd"(port) );
-        return ret;
-}
 
 char ps2_poll_read(void)
 {

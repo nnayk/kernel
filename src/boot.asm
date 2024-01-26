@@ -147,7 +147,6 @@ gdt64:
     dw $ - gdt64 - 1
     dq gdt64
 section .bss
-section .bss
 align 4096
 p4_table:
     resb 4096
