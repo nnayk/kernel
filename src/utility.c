@@ -76,12 +76,17 @@ void io_wait(void)
 }
 
 void cli() {
-  asm volatile ("cli");
+        asm volatile ("cli");
 }
 
 void sti() {
-  asm volatile ("sti");
+        asm volatile ("sti");
 }
+
+/*
+void load_idtr() {
+        asm volatile("l" :m(*idtr_ptr));
+}*/
 
 #if 0
 int strcmp(const char *s1, const char *s2);
