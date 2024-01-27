@@ -1,6 +1,7 @@
 global idt_start
 
 section .bss
+    ;temp resb 4096
     idt resb 4096
 section .text
 bits 64
