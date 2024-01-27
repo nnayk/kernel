@@ -6,6 +6,28 @@
 
 #include "utility.h"
 
+typedef struct
+{
+        uint16_t limit;
+        void *base_addr;
+}__attribute__((__packed__)) idtr_t;
+
+typedef struct {
+	uint16_t    isr_low;      // The lower 16 bits of the ISR's address
+	uint16_t    kernel_cs;    // The GDT segment selector that the CPU will 
+                              // load into CS before calling the ISR
+	uint8_t	    ist:3;        // The IST in the TSS that the CPU will load 
+                              //   into RSP; set to zero for now
+	uint8_t	    reserved_1:5;          // The IST in the TSS that the CPU will load into RSP; set to zero for now
+	uint8_t     type:4;   // gate type (interrupt or trap)
+	uint8_t     zero:1;   // fixed at zero
+	uint8_t     dpl:2;   // data protection level (0=kernel,3=user)
+        uint8_t     present:1; // 1 = valid table entry
+	uint16_t    isr_mid;      // The higher 16 bits of the lower 32 bits of the ISR's address
+	uint32_t    isr_high;     // The higher 32 bits of the ISR's address
+	uint32_t    reserved;     // Set to zero
+} __attribute__((packed)) idt_entry_t;
+
 void irq_init(void);
 void irq_set_mask(int irq);
 void irq_clear_mask(int irq);
@@ -14,6 +36,8 @@ void irq_end_of_interrupt(int irq);
 typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);
 int are_interrupts_enabled();
+void load_idtr(idtr_t *);
+
 
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */

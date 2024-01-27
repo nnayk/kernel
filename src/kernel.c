@@ -4,13 +4,9 @@
 #include "ps2.h"
 #include "irq.h"
 
+
 char mapScanCodeToAscii(int);
 
-typedef struct
-{
-        uint16_t limit;
-        void *base_addr;
-}__attribute__((__packed__)) Idt_reg;
 
 void kmain()
 {
@@ -51,15 +47,6 @@ void kmain()
         ps2_init();
         kbd_init();
         irq_init();
-        Idt_reg idt_ptr;
-        asm volatile("sidt %0" : "=m" (idt_ptr));
-        //while(!loop);
-        //printk("IDT Limit: %u\n", idt_ptr.limit);
-        //idt_ptr.base_addr = ULONG_MAX;
-        printk("IDT Base Address: %p\n", idt_ptr.base_addr);
-        void *x=memset(idt_ptr.base_addr,1,500);
-        printk("xee = %d\n",*(int *)(x));
-        printk("data = %d\n",((uint8_t *)idt_ptr.base_addr)[10]);
         while(!loop)
         {
                 data = ps2_poll_read();

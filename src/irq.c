@@ -5,7 +5,10 @@
 */
 
 #include "irq.h"
+#include "print.h"
 
+#define IDT_ENTRIES 256
+#define IDT_ENTRY_SIZE 16
 
 void pic_remap(int,int);
 void pic_remap(int offset1, int offset2)
@@ -39,7 +42,17 @@ void pic_remap(int offset1, int offset2)
 
 void irq_init()
 {
+        //idt_entry_t idt[IDT_ENTRIES];
+        idtr_t idtr;
         pic_remap(0x20,0x28);
+        load_idtr(&idtr);
+        //while(!loop);
+        //printk("IDT Limit: %u\n", idt_ptr.limit);
+        //idt_ptr.base_addr = ULONG_MAX;
+        printk("IDT Base Address: %p\n", idtr.base_addr);
+        /*void *x=memset(idt_ptr.base_addr,1,500);
+        printk("xee = %d\n",*(int *)(x));
+        printk("data = %d\n",((uint8_t *)idt_ptr.base_addr)[10]);*/
 }
 
 void irq_set_mask(int irq)
@@ -100,4 +113,9 @@ int are_interrupts_enabled()
                    "pop %0"
                    : "=g"(flags) );
     return flags & (1 << 9);
+}
+
+void load_idtr(idtr_t *idtr)
+{
+    asm volatile("sidt %0" : "=m" (*idtr));
 }
