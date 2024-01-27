@@ -10,8 +10,9 @@ isr0:
     pop rdi
     pop rsi
     iretq
+global dummy
 dummy:
-    mov rax, 0x2f592f412f4b2f4f
+    mov rax, 0x2f412f412f4b2f4f
     mov qword [0xb8000], rax
     ret
 
@@ -24,7 +25,3 @@ isr1:
     pop rdi
     pop rsi
     iretq
-dummy:
-    mov rax, 0x2f592f412f4b2f4f
-    mov qword [0xb8000], rax
-    ret
