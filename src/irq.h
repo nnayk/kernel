@@ -13,6 +13,7 @@ uint8_t irq_get_mask(int irqline);
 void irq_end_of_interrupt(int irq);
 typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);
+int are_interrupts_enabled();
 
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */

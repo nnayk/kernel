@@ -75,6 +75,13 @@ void io_wait(void)
         outb(0x80,0);
 }
 
+void cli() {
+  asm volatile ("cli");
+}
+
+void sti() {
+  asm volatile ("sti");
+}
 
 #if 0
 int strcmp(const char *s1, const char *s2);

@@ -92,3 +92,12 @@ void irq_end_of_interrupt(int irq)
         outb(PIC2_COMMAND,PIC_EOI);
     outb(PIC1_COMMAND,PIC_EOI);
 }
+
+int are_interrupts_enabled()
+{
+    unsigned long flags;
+    asm volatile ( "pushf\n\t"
+                   "pop %0"
+                   : "=g"(flags) );
+    return flags & (1 << 9);
+}
