@@ -84,7 +84,7 @@ int printk(const char *fmt,...)
                                         break;
                                 case FMT_UINT:
                                         args.int_val = va_arg(va,int);
-                                        print_uchar(args.int_val);
+                                        print_unsigned_long(args.int_val);
                                         break;
                                 case FMT_HEXINT:
                                         args.int_val = va_arg(va,int);
