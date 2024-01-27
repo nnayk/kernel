@@ -10,7 +10,7 @@ typedef struct
 {
         uint16_t limit;
         void *base_addr;
-}Idt_reg;
+}__attribute__((__packed__)) Idt_reg;
 
 void kmain()
 {
