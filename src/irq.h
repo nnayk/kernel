@@ -4,10 +4,12 @@
  * Description: API interface for irq
 */
 
+#include "utility.h"
+
 void irq_init(void);
 void irq_set_mask(int irq);
 void irq_clear_mask(int irq);
-int irq_get_mask(int irqline);
+uint8_t irq_get_mask(int irqline);
 void irq_end_of_interrupt(int irq);
 typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);

@@ -5,7 +5,6 @@
 */
 
 #include "irq.h"
-#include "utility.h"
 
 
 void pic_remap(int,int);
@@ -48,13 +47,13 @@ void irq_set_mask(int irq)
     uint16_t port;
     uint8_t value;
 
-    if(IRQline < 8) {
+    if(irq < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
-        IRQline -= 8;
+        irq -= 8;
     }
-    value = inb(port) | (1 << IRQline);
+    value = inb(port) | (1 << irq);
     outb(port, value);
 }
 void irq_clear_mask(int irq)
@@ -62,28 +61,29 @@ void irq_clear_mask(int irq)
     uint16_t port;
     uint8_t value;
  
-    if(IRQline < 8) {
+    if(irq < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
-        IRQline -= 8;
+        irq -= 8;
     }
-    value = inb(port) & ~(1 << IRQline);
+    value = inb(port) & ~(1 << irq);
     outb(port, value);   
 }
 
-uint8_t irq_get_mask(int irqline)
+uint8_t irq_get_mask(int irq)
 {
     uint16_t port;
     uint8_t value;
  
-    if(IRQline < 8) {
+    if(irq < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
-        IRQline -= 8;
+        irq -= 8;
     }
     value = inb(port);
+    return value;
 }
 
 void irq_end_of_interrupt(int irq)
