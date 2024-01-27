@@ -6,12 +6,11 @@
 
 #include "irq.h"
 #include "print.h"
+#include "isr_asm.h"
 
 #define IDT_ENTRIES 256
 #define IDT_ENTRY_SIZE 16
 
-extern void isr0(void);
-extern void dummy(void);
 
 void pic_remap(int,int);
 void pic_remap(int offset1, int offset2)
@@ -53,7 +52,6 @@ void irq_init()
         //printk("IDT Limit: %u\n", idt_ptr.limit);
         //idt_ptr.base_addr = ULONG_MAX;
         printk("IDT Base Address: %p\n", idtr.base_addr);
-        dummy();
         /*void *x=memset(idt_ptr.base_addr,1,500);
         printk("xee = %d\n",*(int *)(x));
         printk("data = %d\n",((uint8_t *)idt_ptr.base_addr)[10]);*/
