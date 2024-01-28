@@ -7,12 +7,17 @@
 #include "irq.h"
 #include "print.h"
 #include "isr_asm.h"
+#include "error.h"
 
 #define IDT_ENTRIES 256
 #define IDT_ENTRY_SIZE 16
+#define TRAP_GATE 0xF
+#define INTERRUPT_GATE 0xE
 
 
 void pic_remap(int,int);
+int set_default_idt_entry(idt_entry_t *);
+
 void pic_remap(int offset1, int offset2)
 {
 	uint8_t a1, a2;
@@ -44,10 +49,16 @@ void pic_remap(int offset1, int offset2)
 
 void irq_init()
 {
-        //idt_entry_t idt[IDT_ENTRIES];
+        idt_entry_t idt[IDT_ENTRIES];
         idtr_t idtr;
+        idt_entry_t default_entry = {0};
         pic_remap(0x20,0x28);
         load_idtr(&idtr);
+        set_default_idt_entry(default_entry);
+        for(int i=0;i<NUM_IRQS;i++)
+        {
+
+        }
         //while(!loop);
         //printk("IDT Limit: %u\n", idt_ptr.limit);
         //idt_ptr.base_addr = ULONG_MAX;
@@ -120,4 +131,15 @@ int are_interrupts_enabled()
 void load_idtr(idtr_t *idtr)
 {
     asm volatile("sidt %0" : "=m" (*idtr));
+}
+
+int set_default_idt_entry(idt_entry_t *entry)
+{
+    if(!entry) return ERR_NULL_PTR;
+    //entry->kernel_cs = ;
+    //entry->ist = ;
+    entry->type = INTERRUPT_TYPE;
+    entry->dpl = 0;
+    entry->present = 1;
+    return SUCCESS;
 }
