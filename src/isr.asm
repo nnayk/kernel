@@ -1,6 +1,26 @@
 section .text
 bits 64
 
+global isr_glue
+isr_glue:
+    push rax
+    push rcx
+    push rdx
+    push r8
+    push r9
+    push r10
+    push r11
+    ;;call c_wrapper
+    pop rax
+    pop rcx
+    pop rdx
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop rdi 
+    pop rsi ;; pop error code
+    ret
 
 global isr0
 isr0:
@@ -9,7 +29,6 @@ isr0:
     mov rdi, 0
     jmp isr_glue
 
-
 global isr1
 isr1:
     push rsi ; placeholder for error code
@@ -17,7 +36,7 @@ isr1:
     mov rdi, 1
     jmp isr_glue
 
-
+;%if 0
 global isr2
 isr2:
     push rsi ; placeholder for error code
@@ -2048,4 +2067,4 @@ isr255:
     push rdi ; will be used to store irq number
     mov rdi, 255
     jmp isr_glue
-
+;;%endif
