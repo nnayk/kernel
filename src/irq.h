@@ -5,6 +5,7 @@
 */
 
 #include "utility.h"
+#include "isr_asm.h"
 
 typedef struct
 {
@@ -28,7 +29,7 @@ typedef struct {
 	uint32_t    reserved;     // Set to zero
 } __attribute__((packed)) idt_entry_t;
 
-void irq_init(void);
+int irq_init(void);
 void irq_set_mask(int irq);
 void irq_clear_mask(int irq);
 uint8_t irq_get_mask(int irqline);
@@ -37,6 +38,13 @@ typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);
 int are_interrupts_enabled();
 void load_idtr(idtr_t *);
+
+typedef void (*irq_handler_t)(int, int, void*); 
+
+typedef static struct { 
+        void *arg; 
+        irq_handler_t handler; 
+} irq_helper[NUM_IRQS];
 
 
 #define PIC1		0x20		/* IO base address for master PIC */
@@ -58,4 +66,3 @@ void load_idtr(idtr_t *);
 #define ICW4_SFNM	0x10		/* Special fully nested (not) */
 #define PIC_EOI		0x20
 
-#define NUM_IRQS 256
