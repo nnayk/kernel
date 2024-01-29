@@ -41,10 +41,10 @@ void load_idtr(idtr_t *);
 
 typedef void (*irq_handler_t)(int, int, void*); 
 
-typedef static struct { 
+typedef struct { 
         void *arg; 
         irq_handler_t handler; 
-} irq_helper[NUM_IRQS];
+} irq_helper_t[NUM_IRQS];
 
 
 #define PIC1		0x20		/* IO base address for master PIC */

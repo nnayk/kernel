@@ -6,7 +6,6 @@
 
 #include "irq.h"
 #include "print.h"
-#include "isr_asm.h"
 #include "error.h"
 
 #define IDT_ENTRIES 256
@@ -57,17 +56,18 @@ int irq_init()
         idt_entry_t default_entry = {0};
         pic_remap(0x20,0x28);
         load_idtr(&idtr);
-        if(!(err=set_default_idt_entry(default_entry)))
+        if(!(err=set_default_idt_entry(&default_entry)))
                 return err;
         // setup the irq helper
-        if(!(err=irq_helper_init()))
+       /* 
+       if(!(err=irq_helper_init()))
                 return err;
-
+       */
         for(int i=0;i<NUM_IRQS;i++)
         {
             idt[i] = default_entry;
             // set correct isr address and ist
-            idt[i].isr_low = 
+            //idt[i].isr_low =  
         }
         //while(!loop);
         //printk("IDT Limit: %u\n", idt_ptr.limit);
@@ -76,6 +76,7 @@ int irq_init()
         /*void *x=memset(idt_ptr.base_addr,1,500);
         printk("xee = %d\n",*(int *)(x));
         printk("data = %d\n",((uint8_t *)idt_ptr.base_addr)[10]);*/
+        return 1;
 }
 
 void irq_set_mask(int irq)

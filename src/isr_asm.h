@@ -256,7 +256,6 @@ extern void isr253(void);
 extern void isr254(void);
 extern void isr255(void);
 
-typedef void (*)(int, int, void*);
 void (*asm_wrappers[NUM_IRQS])() = {
         isr0,
         isr1,
