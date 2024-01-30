@@ -7,6 +7,7 @@
 #include "irq.h"
 #include "print.h"
 #include "error.h"
+#include "isr_asm.h"
 
 #define IDT_ENTRIES 256
 #define IDT_ENTRY_SIZE 16
@@ -54,29 +55,26 @@ int irq_init()
 {
         idtr_t idtr;
         idt_entry_t default_entry = {0};
+        uint64_t isr_addr;
         pic_remap(0x20,0x28);
         load_idtr(&idtr);
         if(!(err=set_default_idt_entry(&default_entry)))
                 return err;
         // setup the irq helper
-       /* 
        if(!(err=irq_helper_init()))
                 return err;
-       */
-        for(int i=0;i<NUM_IRQS;i++)
-        {
+       for(int i=0;i<NUM_IRQS;i++)
+       {
             idt[i] = default_entry;
             // set correct isr address and ist
-            //idt[i].isr_low =  
-        }
-        //while(!loop);
-        //printk("IDT Limit: %u\n", idt_ptr.limit);
-        //idt_ptr.base_addr = ULONG_MAX;
-        printk("IDT Base Address: %p\n", idtr.base_addr);
-        /*void *x=memset(idt_ptr.base_addr,1,500);
-        printk("xee = %d\n",*(int *)(x));
-        printk("data = %d\n",((uint8_t *)idt_ptr.base_addr)[10]);*/
-        return 1;
+            isr_addr = (uint64_t)asm_wrappers[i];
+            idt[i].isr_low = isr_addr & 0xFFFF;   
+            idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
+            idt[i].isr_mid = (isr_addr >> 32) & 0xFFFFFFFF;
+       }
+       
+       printk("IDT Base Address: %p\n", idtr.base_addr);
+       return 1;
 }
 
 void irq_set_mask(int irq)
@@ -119,7 +117,7 @@ uint8_t irq_get_mask(int irq)
         port = PIC2_DATA;
         irq -= 8;
     }
-    value = inb(port);
+    value = inb(port) & (1 << irq);
     return value;
 }
 
@@ -147,10 +145,15 @@ void load_idtr(idtr_t *idtr)
 int set_default_idt_entry(idt_entry_t *entry)
 {
     if(!entry) return ERR_NULL_PTR;
-    //entry->kernel_cs = ;
-    //entry->ist = ;
+    entry->cs = KERNEL_CS;
+    entry->ist = KERNEL_STACK;
     entry->type = INTERRUPT_GATE;
-    entry->dpl = 0;
+    entry->dpl = KERNEL_MODE;
     entry->present = 1;
     return SUCCESS;
+}
+
+int irq_helper_init()
+{
+        return 1;
 }

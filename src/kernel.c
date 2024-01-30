@@ -12,12 +12,16 @@ void kmain()
 {
         int loop = 0;
         unsigned char data;
+        int ptr[100];
+        printk("%p\n",ptr);
+        memset(ptr,100,100*sizeof(int));
+        for(int i=0;i<100;i++) printk("%c",ptr[i]);
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
         char *y="Hel\nl\ro";
         //unsigned char z = 255;
-        char z = 'a';
-        VGA_display_str(&z);
+        char *z = "a8";
+        VGA_display_str(z);
         //unsigned char z = 97;
         //while(!loop);
         printk("long min : %ld\n",LONG_MIN);
@@ -33,17 +37,15 @@ void kmain()
                         ULLONG_MAX,LLONG_MIN);
         printk("%hd\n",-32768);
         printk("here's a special symbol: %%. Oh and a number %d\n",59);
-        printk("Here's a string: %s",x);
-        printk("here's another string: %s",y);
         printk("char: %c, short_min = %hd\n",115,SHRT_MIN);
-        printk("Here's a string: %s",x);
-        printk("here's another string: %s",y);
         printk("char: %c, short_min = %hd\n",115,SHRT_MIN);
-        printk("why hello there.... %s\r%p\n","nope",&x);
+        printk("pointer: %p\n",&x);
         //VGA_clear();
         ps2_init();
         kbd_init();
+        //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
         irq_init();
+        //for(int i=0;i<16;i++) printk("AFTER: irq %d: %d",i,irq_get_mask(i));
         while(!loop)
         {
                 data = ps2_poll_read();

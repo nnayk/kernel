@@ -5,7 +5,7 @@
 */
 
 #include "utility.h"
-#include "isr_asm.h"
+#include "constants.h"
 
 typedef struct
 {
@@ -15,18 +15,18 @@ typedef struct
 
 typedef struct {
 	uint16_t    isr_low;      // The lower 16 bits of the ISR's address
-	uint16_t    kernel_cs;    // The GDT segment selector that the CPU will 
+	uint16_t    cs;    // The GDT segment selector that the CPU will 
                               // load into CS before calling the ISR
 	uint8_t	    ist:3;        // The IST in the TSS that the CPU will load 
                               //   into RSP; set to zero for now
-	uint8_t	    reserved_1:5;          // The IST in the TSS that the CPU will load into RSP; set to zero for now
+	uint8_t	    reserved_1:5;          
 	uint8_t     type:4;   // gate type (interrupt or trap)
 	uint8_t     zero:1;   // fixed at zero
 	uint8_t     dpl:2;   // data protection level (0=kernel,3=user)
-        uint8_t     present:1; // 1 = valid table entry
+    uint8_t     present:1; // 1 = valid table entry
 	uint16_t    isr_mid;      // The higher 16 bits of the lower 32 bits of the ISR's address
 	uint32_t    isr_high;     // The higher 32 bits of the ISR's address
-	uint32_t    reserved;     // Set to zero
+	uint32_t    reserved_2;     // Set to zero
 } __attribute__((packed)) idt_entry_t;
 
 int irq_init(void);
@@ -38,6 +38,7 @@ typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);
 int are_interrupts_enabled();
 void load_idtr(idtr_t *);
+int irq_helper_init(void);
 
 typedef void (*irq_handler_t)(int, int, void*); 
 
