@@ -256,6 +256,7 @@ extern void isr253(void);
 extern void isr254(void);
 extern void isr255(void);
 
+/*
 void (*asm_wrappers[NUM_IRQS])() = {
         isr0,
         isr1,
@@ -514,3 +515,4 @@ void (*asm_wrappers[NUM_IRQS])() = {
         isr254,
         isr255 
 };
+*/

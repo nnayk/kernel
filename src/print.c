@@ -76,8 +76,6 @@ int printk(const char *fmt,...)
                                         args.str_val = va_arg(va,char *);
                                         print_str(args.str_val);
                                         break;
-                                case FMT_SHORT_PREFIX:
-                                        break;
                                 case FMT_INT:
                                         args.int_val = va_arg(va,int);
                                         print_signed_long(args.int_val);
@@ -90,6 +88,24 @@ int printk(const char *fmt,...)
                                         args.int_val = va_arg(va,int);
                                         print_long_hex(args.int_val);
                                         break;
+                                case FMT_SHORT_PREFIX: 
+                                        i++;
+                                        args.long_val = va_arg(va,int);
+                                        switch(fmt[i])
+                                        {
+                                                case FMT_INT:
+                                                        print_signed_long(
+                                                                args.long_val);
+                                                        break;
+                                                case FMT_UINT:
+                                                        print_unsigned_long(
+                                                                args.long_val);
+                                                        break;
+                                                case FMT_HEXINT:
+                                                        print_long_hex(
+                                                                args.long_val);
+                                                        break;
+                                        }
                                 case FMT_LONG_PREFIX: 
                                 case FMT_LONG_LONG_PREFIX:
                                         i++;
