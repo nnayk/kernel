@@ -56,6 +56,7 @@ int irq_init()
         idtr_t idtr;
         idt_entry_t default_entry = {0};
         uint64_t isr_addr;
+        cli();
         pic_remap(0x20,0x28);
         load_idtr(&idtr);
         if(!(err=set_default_idt_entry(&default_entry)))
@@ -74,6 +75,7 @@ int irq_init()
        }
        
        printk("IDT Base Address: %p\n", idtr.base_addr);
+       sti();
        return 1;
 }
 
