@@ -74,7 +74,7 @@ int irq_init()
             idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
             idt[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
        }
-       
+       if(!memcpy(idtr.base_addr,idt,4096)) return ERR_MEMCPY; 
        printk("IDT Base Address: %p\n", idtr.base_addr);
        sti();
        return 1;
