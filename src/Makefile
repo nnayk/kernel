@@ -67,4 +67,4 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop1)
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio
+	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio -d int

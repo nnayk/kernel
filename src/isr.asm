@@ -1,3 +1,4 @@
+extern c_wrapper
 section .text
 bits 64
 
@@ -10,7 +11,7 @@ isr_glue:
     push r9
     push r10
     push r11
-    ;;call c_wrapper
+    call c_wrapper
     pop rdi
     pop rax
     pop rcx

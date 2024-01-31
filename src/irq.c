@@ -16,10 +16,11 @@
 
 void pic_remap(int,int);
 int set_default_idt_entry(idt_entry_t *);
+void c_wrapper(int,int,void *);
 extern void (*asm_wrappers[NUM_IRQS])(); 
 
 idt_entry_t idt[IDT_ENTRIES];
-irq_helper_t irq_helper[IDT_ENTRIES];
+irq_helper_t irq_helper;
 static int err = 0; // error code
 
 void pic_remap(int offset1, int offset2)
@@ -75,7 +76,7 @@ int irq_init()
        }
        
        printk("IDT Base Address: %p\n", idtr.base_addr);
-       sti();
+       //sti();
        return 1;
 }
 
@@ -157,5 +158,15 @@ int set_default_idt_entry(idt_entry_t *entry)
 
 int irq_helper_init()
 {
+        for(int i=0;i<NUM_IRQS;i++)
+        {
+                irq_helper[i].handler = c_wrapper;
+        }
+
         return 1;
+}
+
+void c_wrapper(int int_num,int err_code,void *buffer)
+{
+        printk("ISR for interrupt %d\n",int_num);
 }
