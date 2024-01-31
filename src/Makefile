@@ -2,8 +2,8 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop56
-loop1 := /dev/loop57
+loop0 := /dev/loop20
+loop1 := /dev/loop21
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o
@@ -67,4 +67,4 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop1)
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio -d int
+	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio -d int,cpu_reset -no-reboot -no-shutdown
