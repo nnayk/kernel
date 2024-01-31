@@ -1,6 +1,6 @@
 global long_mode_start
 extern kmain
-extern idt_start
+extern idt_descriptor
 
 section .text
 bits 64
@@ -15,6 +15,6 @@ long_mode_start:
     ; print `OKAY` to screen
     ; mov rax, 0x2f592f412f4b2f4f
     ; mov qword [0xb8000], rax
-    call idt_start 
+    call idt_descriptor 
     call kmain
     ;hlt

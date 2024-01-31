@@ -91,6 +91,8 @@ isr7:
 ;; double fault
 global isr8
 isr8:
+    mov rax, 0x2f592f412f4b2f4f
+    mov qword [0xb8000], rax
     push rsi ; will be used to store irq number
     push rdi
     mov rsi, 8
@@ -138,10 +140,11 @@ isr12:
 ;; General Protection Fault
 global isr13
 isr13:
-    push rsi ; placeholder for error code
+    mov rax, 0x2f592f412f4b2f4f
+    mov qword [0xb8000], rax
     push rsi ; will be used to store irq number
     push rdi
-    mov rsi, 13
+    mov rsi, 8
     mov rdi,[rsp+16] ; push error code to a register
     jmp isr_glue
 
