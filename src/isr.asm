@@ -93,8 +93,8 @@ isr7:
 ;; double fault
 global isr8
 isr8:
-    mov rax, 0x2f542f452f492f41
-    mov qword [0xb8000], rax
+    ;;mov rax, 0x2f542f452f492f41
+    ;;mov qword [0xb8000], rax
     push rsi ; will be used to store irq number
     push rdi
     mov rdi, 8
@@ -142,8 +142,8 @@ isr12:
 ;; General Protection Fault
 global isr13
 isr13:
-    mov rax, 0x2f542f412f4b2f4f
-    mov qword [0xb8000], rax
+    ;;mov rax, 0x2f542f412f4b2f4f
+    ;;mov qword [0xb8000], rax
     push rsi ; will be used to store irq number
     push rdi
     mov rdi, 8
@@ -153,8 +153,8 @@ isr13:
 ;; Page Fault
 global isr14
 isr14:
-    mov rax, 0x2f552f412f4b2f41
-    mov qword [0xb8000], rax
+    ;;mov rax, 0x2f552f412f4b2f41
+    ;;mov qword [0xb8000], rax
     push rsi ; placeholder for error code
     push rsi ; will be used to store irq number
     push rdi
