@@ -10,12 +10,17 @@ char mapScanCodeToAscii(int);
 
 void kmain()
 {
+        //cli();
+        /*
         int loop = 0;
         unsigned char data;
+        */
+        /*
         int ptr[100];
         printk("%p\n",ptr);
         memset(ptr,100,100*sizeof(int));
         for(int i=0;i<100;i++) printk("%c",ptr[i]);
+        */
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
         char *y="Hel\nl\ro";
@@ -46,6 +51,7 @@ void kmain()
         //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
         irq_init();
         //for(int i=0;i<16;i++) printk("AFTER: irq %d: %d",i,irq_get_mask(i));
+        /*
         while(!loop)
         {
                 data = ps2_poll_read();
@@ -53,6 +59,7 @@ void kmain()
                 data = mapScanCodeToAscii(data);
                 if(data) print_char(data);
         }
+        */
 }
 
 

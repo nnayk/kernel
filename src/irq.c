@@ -55,20 +55,20 @@ void pic_remap(int offset1, int offset2)
 int irq_init()
 {
         idtr_t idtr;
-        idt_entry_t default_entry = {0};
         uint64_t isr_addr;
         cli();
         pic_remap(0x20,0x28);
         load_idtr(&idtr);
-        if(!(err=set_default_idt_entry(&default_entry)))
-                return err;
         // setup the irq helper
        if(!(err=irq_helper_init()))
                 return err;
        for(int i=0;i<NUM_IRQS;i++)
        {
-            idt[i] = default_entry;
-            // set correct isr address and ist
+            idt[i].cs = KERNEL_CS;
+            idt[i].ist = CURR_STACK;
+            idt[i].type = INTERRUPT_GATE;
+            idt[i].dpl = KERNEL_MODE;
+            idt[i].present = 1;
             isr_addr = (uint64_t)asm_wrappers[i];
             idt[i].isr_low = isr_addr & 0xFFFF;   
             idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
@@ -76,7 +76,10 @@ int irq_init()
        }
        if(!memcpy(idtr.base_addr,idt,4096)) return ERR_MEMCPY; 
        printk("IDT Base Address: %p\n", idtr.base_addr);
+       irq_set_mask(0);
        sti();
+       printk("interrupt init. complete\n");
+       irq_set_mask(0);
        return 1;
 }
 
@@ -145,17 +148,6 @@ void load_idtr(idtr_t *idtr)
     asm volatile("sidt %0" : "=m" (*idtr));
 }
 
-int set_default_idt_entry(idt_entry_t *entry)
-{
-    if(!entry) return ERR_NULL_PTR;
-    entry->cs = KERNEL_CS;
-    entry->ist = CURR_STACK;
-    entry->type = INTERRUPT_GATE;
-    entry->dpl = KERNEL_MODE;
-    entry->present = 1;
-    return SUCCESS;
-}
-
 int irq_helper_init()
 {
         for(int i=0;i<NUM_IRQS;i++)
@@ -168,5 +160,5 @@ int irq_helper_init()
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-        printk("ISR for interrupt %d\n",int_num);
+    printk("ISR for interrupt %d\n",int_num);
 }
