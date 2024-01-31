@@ -72,11 +72,11 @@ int irq_init()
             isr_addr = (uint64_t)asm_wrappers[i];
             idt[i].isr_low = isr_addr & 0xFFFF;   
             idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
-            idt[i].isr_mid = (isr_addr >> 32) & 0xFFFFFFFF;
+            idt[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
        }
        
        printk("IDT Base Address: %p\n", idtr.base_addr);
-       //sti();
+       sti();
        return 1;
 }
 
@@ -149,7 +149,7 @@ int set_default_idt_entry(idt_entry_t *entry)
 {
     if(!entry) return ERR_NULL_PTR;
     entry->cs = KERNEL_CS;
-    entry->ist = KERNEL_STACK;
+    entry->ist = CURR_STACK;
     entry->type = INTERRUPT_GATE;
     entry->dpl = KERNEL_MODE;
     entry->present = 1;
