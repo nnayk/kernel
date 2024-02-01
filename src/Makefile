@@ -23,7 +23,7 @@ multiboot_header.o: multiboot_header.asm boot.asm
 	nasm -f elf64 multiboot_header.asm
 
 boot.o: boot.asm boot.asm
-	nasm -f elf64 boot.asm
+	nasm -f elf64 -gdwarf boot.asm
 
 long_mode_init.o: long_mode_init.asm long_mode_init.asm
 	nasm -f elf64 long_mode_init.asm
@@ -67,4 +67,4 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop1)
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -serial stdio -d int,cpu_reset -no-reboot -no-shutdown
+	qemu-system-x86_64 -s -drive format=raw,file=fat.img -d int,cpu_reset -no-reboot -no-shutdown -serial stdio

@@ -12,7 +12,6 @@ start:
 
     call set_up_page_tables ; new
     call enable_paging     ; new
-
     lgdt [gdt64.pointer]
     jmp gdt64.code:long_mode_start
     ; print `OK` to screen
@@ -155,5 +154,5 @@ p3_table:
 p2_table:
     resb 4096
 stack_bottom:
-    resb 64
+    resb 4096
 stack_top:

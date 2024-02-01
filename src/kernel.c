@@ -7,20 +7,18 @@
 
 char mapScanCodeToAscii(int);
 
+static int err;
 
 void kmain()
 {
+        printk("hi");
         //cli();
-        /*
         int loop = 0;
         unsigned char data;
-        */
-        /*
         int ptr[100];
         printk("%p\n",ptr);
         memset(ptr,100,100*sizeof(int));
         for(int i=0;i<100;i++) printk("%c",ptr[i]);
-        */
         char *x="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
                 aaaaaaaaaaaaaaaaaaaa";
         char *y="Hel\nl\ro";
@@ -49,7 +47,8 @@ void kmain()
         ps2_init();
         kbd_init();
         //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
-        irq_init();
+        if((err=irq_init()) < 0)
+                printk("irq_init failed w/error = %d\n",err);
         //for(int i=0;i<16;i++) printk("AFTER: irq %d: %d",i,irq_get_mask(i));
         /*
         while(!loop)

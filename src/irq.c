@@ -17,7 +17,9 @@
 void pic_remap(int,int);
 int set_default_idt_entry(idt_entry_t *);
 void c_wrapper(int,int,void *);
-extern void (*asm_wrappers[NUM_IRQS])(); 
+void display_idt_entry(idt_entry_t);
+
+extern void (*asm_wrappers[NUM_IRQS])();
 
 idt_entry_t idt[IDT_ENTRIES];
 irq_helper_t irq_helper;
@@ -54,16 +56,18 @@ void pic_remap(int offset1, int offset2)
 
 int irq_init()
 {
+        printk("INSIDE IRQ INIT!\n");
         idtr_t idtr;
         uint64_t isr_addr;
         cli();
         pic_remap(0x20,0x28);
-        load_idtr(&idtr);
+        //load_idtr(&idtr);
         // setup the irq helper
        if(!(err=irq_helper_init()))
                 return err;
        for(int i=0;i<NUM_IRQS;i++)
        {
+            
             idt[i].cs = KERNEL_CS;
             idt[i].ist = CURR_STACK;
             idt[i].type = INTERRUPT_GATE;
@@ -74,12 +78,26 @@ int irq_init()
             idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
             idt[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
        }
-       if(!memcpy(idtr.base_addr,idt,4096)) return ERR_MEMCPY; 
-       printk("IDT Base Address: %p\n", idtr.base_addr);
+       //printk("idt limit: %d,IDT Base Address: %p\n", idtr.limit,idtr.base_addr);
+       //printk("IDT Base Address: %p\n", idt2);
+       printk("size of idt: %ld\n",sizeof(idt));
+       if(!memcpy(idt2,idt,4096)) return ERR_MEMCPY; 
        irq_set_mask(0);
+       idtr.limit = 4095;
+       idtr.base_addr = idt2;
+       asm("lidt %0" : : "m"(idtr));
+       load_idtr(&idtr);
+       printk("idt limit: %d,IDT Base Address: %p\n", idtr.limit,idtr.base_addr);
+       printk("IDT Base Address: %p\n", idt2);
+       printk("idt entry 33: ");
+       display_idt_entry((idt_entry_t)idt[33]);
+       irq_set_mask(0);
+       irq_clear_mask(33);
        sti();
        printk("interrupt init. complete\n");
-       irq_set_mask(0);
+       printk("are ints enabled? %d\n",are_interrupts_enabled());
+       int loop=0;
+       while(!loop);
        return 1;
 }
 
@@ -145,7 +163,7 @@ int are_interrupts_enabled()
 
 void load_idtr(idtr_t *idtr)
 {
-    asm volatile("sidt %0" : "=m" (*idtr));
+        asm volatile("sidt %0" : "=m" (*idtr));
 }
 
 int irq_helper_init()
@@ -160,5 +178,13 @@ int irq_helper_init()
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    printk("ISR for interrupt %d\n",int_num);
+    printk("ISR for interrupt %d. Error code = %d\n",int_num,err_code);
+}
+
+void display_idt_entry(idt_entry_t entry)
+{
+    printk("cs = %d, ist = %d, type = %x, dpl = %d, present = %d, \
+           low addr = %d, mid addr = %d, high addr = %d\n",entry.cs,entry.ist, \
+           entry.type,entry.dpl,entry.present,entry.isr_low,entry.isr_mid, \
+           entry.isr_high);
 }

@@ -12,7 +12,6 @@ isr_glue:
     push r10
     push r11
     call c_wrapper
-    pop rdi
     pop rax
     pop rcx
     pop rdx
@@ -22,6 +21,7 @@ isr_glue:
     pop r11
     pop rdi 
     pop rsi ;; pop error code
+    add rsp, 8
     ret
 
 global isr0
@@ -317,6 +317,8 @@ isr33:
     push rsi ; will be used to store irq number
     push rdi
     mov rdi, 33
+    mov rax, 0x2f592f412f4b2f4f
+    mov qword [0xb8000], rax
     jmp isr_glue
 
 global isr34
