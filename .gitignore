@@ -3,4 +3,4 @@
 *.bin
 *.img
 exp/
-data
+qemu-int-dump

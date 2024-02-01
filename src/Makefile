@@ -32,7 +32,7 @@ idt_init.o: idt_init.asm idt_init.asm
 	nasm -f elf64 idt_init.asm
 
 isr.o: isr.asm
-	nasm -f elf64 isr.asm
+	nasm -f elf64 -F dwarf -g isr.asm
 
 .c.o:
 	$(my-gcc) $(my-gcc_flags) $< -o $@
@@ -67,4 +67,4 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop1)
 
 run: $(image)
-	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -d int -no-reboot -no-shutdown 2>data
+	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -d int -no-reboot -no-shutdown 2>qemu-int-dump
