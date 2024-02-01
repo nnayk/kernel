@@ -22,7 +22,7 @@ isr_glue:
     pop rdi 
     pop rsi ;; pop error code
     add rsp, 8
-    ret
+    iretq
 
 global isr0
 isr0:
