@@ -21,7 +21,7 @@ void display_idt_entry(idt_entry_t);
 
 extern void (*asm_wrappers[NUM_IRQS])();
 
-idt_entry_t idt[IDT_ENTRIES];
+idt_entry_t idt_arr[IDT_ENTRIES];
 irq_helper_t irq_helper;
 static int err = 0; // error code
 
@@ -68,36 +68,41 @@ int irq_init()
        for(int i=0;i<NUM_IRQS;i++)
        {
             
-            idt[i].cs = KERNEL_CS;
-            idt[i].ist = CURR_STACK;
-            idt[i].type = INTERRUPT_GATE;
-            idt[i].dpl = KERNEL_MODE;
-            idt[i].present = 1;
+            idt_arr[i].cs = KERNEL_CS;
+            idt_arr[i].ist = CURR_STACK;
+            idt_arr[i].type = INTERRUPT_GATE;
+            idt_arr[i].dpl = KERNEL_MODE;
+            idt_arr[i].present = 1;
             isr_addr = (uint64_t)asm_wrappers[i];
-            idt[i].isr_low = isr_addr & 0xFFFF;   
-            idt[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
-            idt[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
+            idt_arr[i].isr_low = isr_addr & 0xFFFF;   
+            idt_arr[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
+            idt_arr[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
        }
        //printk("idt limit: %d,IDT Base Address: %p\n", idtr.limit,idtr.base_addr);
        //printk("IDT Base Address: %p\n", idt2);
-       printk("size of idt: %ld\n",sizeof(idt));
-       if(!memcpy(idt2,idt,4096)) return ERR_MEMCPY; 
+       printk("size of idt: %ld\n",sizeof(idt_arr));
+       if(!memcpy(idt,idt_arr,4096)) return ERR_MEMCPY; 
        irq_set_mask(0);
        idtr.limit = 4095;
-       idtr.base_addr = idt2;
+       idtr.base_addr = idt;
        asm("lidt %0" : : "m"(idtr));
+       idtr.limit = 0;
+       idtr.base_addr = 0;
        load_idtr(&idtr);
        printk("idt limit: %d,IDT Base Address: %p\n", idtr.limit,idtr.base_addr);
-       printk("IDT Base Address: %p\n", idt2);
+       printk("IDT Base Address: %p\n", idt);
        printk("idt entry 33: ");
-       display_idt_entry((idt_entry_t)idt[33]);
+       display_idt_entry((idt_entry_t)idt_arr[33]);
        irq_set_mask(0);
-       irq_clear_mask(33);
+       irq_clear_mask(0x21);
        sti();
        printk("interrupt init. complete\n");
+       int mask = irq_get_mask(0x21);
+       printk("kbd mask = %d\n",mask);
        printk("are ints enabled? %d\n",are_interrupts_enabled());
-       int loop=0;
+       int loop=1;
        while(!loop);
+       int z=2/0;
        return 1;
 }
 

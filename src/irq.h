@@ -7,7 +7,7 @@
 #include "utility.h"
 #include "constants.h"
 
-extern char idt2[];
+extern char idt[];
 typedef struct
 {
         uint16_t limit;

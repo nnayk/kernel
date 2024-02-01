@@ -8,7 +8,7 @@ mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
-my-gcc_flags := -c -g -Wall -Werror
+my-gcc_flags := -c -g -Wall #-Werror
 
 .PHONY: empty clean lo_status
 
@@ -67,4 +67,4 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop1)
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -d int,cpu_reset -no-reboot -no-shutdown -serial stdio
+	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -d int -no-reboot -no-shutdown 2>data

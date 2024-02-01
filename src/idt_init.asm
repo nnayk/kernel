@@ -1,10 +1,10 @@
 ;global idt_descriptor
-global idt2
+global idt
 section .bss
-idt2:
+idt:
     resb 4096
-section .text
-bits 64
+;section .text
+;bits 64
 ;idt_descriptor:
    ;mov word [idt_descriptor], 4095
    ;mov qword [idt_descriptor+2], idt2
