@@ -83,11 +83,6 @@ void sti() {
         asm volatile ("sti");
 }
 
-/*
-void load_idtr() {
-        asm volatile("l" :m(*idtr_ptr));
-}*/
-
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);

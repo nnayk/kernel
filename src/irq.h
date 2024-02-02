@@ -40,6 +40,9 @@ void irq_set_handler(int irq, irq_handler_t handler, void *arg);
 int are_interrupts_enabled();
 void load_idtr(idtr_t *);
 int irq_helper_init(void);
+void pic_remap(int,int);
+void c_wrapper(int,int,void *);
+void display_idt_entry(idt_entry_t);
 
 typedef void (*irq_handler_t)(int, int, void*); 
 

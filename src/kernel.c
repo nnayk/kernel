@@ -11,8 +11,8 @@ static int err;
 
 void kmain()
 {
+        /*
         printk("hi");
-        //cli();
         int loop = 0;
         unsigned char data;
         int ptr[100];
@@ -43,7 +43,7 @@ void kmain()
         printk("char: %c, short_min = %hd\n",115,SHRT_MIN);
         printk("char: %c, short_min = %hd\n",115,SHRT_MIN);
         printk("pointer: %p\n",&x);
-        //VGA_clear();
+        */
         ps2_init();
         kbd_init();
         //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
