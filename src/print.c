@@ -106,6 +106,7 @@ int printk(const char *fmt,...)
                                                                 args.long_val);
                                                         break;
                                         }
+                                        break;
                                 case FMT_LONG_PREFIX: 
                                 case FMT_LONG_LONG_PREFIX:
                                         i++;
