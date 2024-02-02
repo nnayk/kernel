@@ -12,13 +12,13 @@ isr_glue:
     push r10
     push r11
     call c_wrapper
-    pop rax
-    pop rcx
-    pop rdx
-    pop r8
-    pop r9
-    pop r10
     pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rdx
+    pop rcx
+    pop rax
     pop rdi 
     pop rsi ;; pop error code
     add rsp, 8

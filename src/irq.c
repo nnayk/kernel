@@ -100,9 +100,6 @@ int irq_init()
        int mask = irq_get_mask(0x21);
        printk("kbd mask = %d\n",mask);
        printk("are ints enabled? %d\n",are_interrupts_enabled());
-       int loop=1;
-       while(!loop);
-       int z=2/0;
        return 1;
 }
 
