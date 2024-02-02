@@ -73,6 +73,20 @@ void ps2_init()
 
 }
 
+void ps2_enable_kbd_int()
+{
+        uint8_t ps2_byte; // general command byte
+        /* read controller config. byte */
+        ps2_poll_write(PS2_CMD,PS2_CONFIG);
+        ps2_byte = ps2_poll_read();
+        if(DBUG) printk("read ps2 config byte = %d\n",ps2_byte);
+        ps2_byte |= PS2_ENABLE_INT_PORT1; // disable port 1 interrupts
+        if(DBUG) printk("writing ps2 config byte = %d\n",ps2_byte);
+        // write the configuration byte back out to the PS/2 controller.
+        ps2_poll_write(PS2_CMD,PS2_WRITE_CONFIG);
+        ps2_poll_write(PS2_DATA,ps2_byte);
+}
+
 void kbd_init()
 {
         uint8_t ps2_byte; // general command byte
