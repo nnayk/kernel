@@ -38,7 +38,7 @@ void irq_end_of_interrupt(int irq);
 typedef void (*irq_handler_t)(int, int, void*);
 void irq_set_handler(int irq, irq_handler_t handler, void *arg);
 int are_interrupts_enabled();
-void load_idtr(idtr_t *);
+void load_idtr(idtr_t);
 int irq_helper_init(void);
 void pic_remap(int,int);
 void c_wrapper(int,int,void *);
