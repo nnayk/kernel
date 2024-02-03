@@ -51,6 +51,40 @@ typedef struct {
         irq_handler_t handler; 
 } irq_helper_t;
 
+typedef struct {
+	uint16_t    seg_low;      // lower 2 bytes of the TSS size
+	uint16_t    base_low;     // lower 2 bytes of TSS base address   
+	uint8_t	    base_mid_1;   // middle byte of TSS base address 
+	uint8_t	    type:4;       // fixed to 0x9 to indicate long mode 
+	uint8_t	    zero:1          
+	uint8_t     dpl:2;        // data protection level (0=kernel,3=user)
+    uint8_t     present:1;    // 1 = valid table entry
+	uint8_t     seg_high:4;   // higher 4 bits of TSS size
+    uint8_t     avl:3         // set to zero
+    uint8_t     granularity:1 // set to zero
+	uint8_t     base_mid_2;   // upper middle byte of TSS base address
+    uint32_t    base_high;
+	uint32_t    reserved_2;   // Set bits 8-1 to zero
+} __attribute__((packed)) tss_desc_t;
+
+typedef struct{
+    uint32_t reserved_1;
+    uint64_t rsp0;
+    uint64_t rsp1;
+    uint64_t rsp2;
+    uint64_t reserved_2;
+    uint64_t ist1;
+    uint64_t ist2;
+    uint64_t ist3;
+    uint64_t ist4;
+    uint64_t ist5;
+    uint64_t ist6;
+    uint64_t ist7;
+    uint64_t reserved_3;
+    uint16_t reserved_4;
+    uint16_t io_map_base;
+} __attribute__((packed)) tss_t;
+
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */
 #define PIC1_COMMAND	PIC1
