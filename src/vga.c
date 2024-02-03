@@ -2,6 +2,7 @@
 #include "vga.h"
 #include "utility.h"
 #include "error.h"
+#include "irq.h"
 
 //macros
 #define VGA_BASE 0xb8000 // starting address of VGA console (top left corner)
@@ -49,11 +50,17 @@ int VGA_clear()
 
 void VGA_display_char(char c)
 {
-        if(cursor == BOTTOM_RIGHT+1)
-        {
-                scroll();
-                cursor=BOTTOM_LEFT;
-        }
+    int int_set = 0;
+    if(are_interrupts_enabled())
+    {
+       int_set = 1;
+       cli();
+    }
+    if(cursor == BOTTOM_RIGHT+1)
+    {
+       scroll();
+       cursor=BOTTOM_LEFT;
+    }
 	//int errCode = 0;
 	if (c == '\n') {
 		cursor = (LINE(cursor) + 1) * width;
@@ -70,6 +77,7 @@ void VGA_display_char(char c)
 		//if ((cursor % width) < (width - 1))
                 cursor++;
 	}
+    if(int_set) sti();
 }
 
 int scroll()
