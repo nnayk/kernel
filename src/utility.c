@@ -83,6 +83,27 @@ void sti() {
         asm volatile ("sti");
 }
 
+// Function to map scan codes to ASCII characters
+char mapScanCodeToAscii(int scanCode) {
+    // Define a lookup table
+    const char scanCodeToAscii[] = {
+        0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+        '\b', '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[',
+        ']', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'',
+        '`', 0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',
+        0, '*', 0, ' ', 0
+    };
+
+    // Check if the scan code is within the bounds of the lookup table
+    if (scanCode >= 0 && scanCode < 
+                    sizeof(scanCodeToAscii) / sizeof(scanCodeToAscii[0])) {
+        return scanCodeToAscii[scanCode];
+    }
+
+    // Return 0 for undefined scan codes
+    return 0;
+}
+
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);
