@@ -9,6 +9,8 @@
 #include "constants.h"
 #include "error.h"
 #include "isr_asm.h"
+#include "ps2.h"
+#include "c_isr.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
@@ -65,7 +67,6 @@ int irq_init()
         // init each idt entry
         for(int i=0;i<NUM_IRQS;i++)
         {
-            
             idt_arr[i].cs = KERNEL_CS;
             idt_arr[i].ist = CURR_STACK;
             idt_arr[i].type = INTERRUPT_GATE;
@@ -85,14 +86,21 @@ int irq_init()
         load_idtr(idtr); 
         idtr.limit = 0;
         idtr.base_addr = 0;
-        irq_clear_mask(KBD_INT_NO);
-        
+        irq_set_mask(0);
+        irq_clear_mask(1);
+        //int loop = 0;
+        //while(!loop);
+        ps2_enable_kbd_int(); 
         sti();
         if(DBUG) printk("interrupt init. complete\n");
         // delete after kbd ints. work
-        int mask = irq_get_mask(0x21);
-        printk("kbd mask = %d\n",mask);
+        int mask = irq_get_mask(1);
+        int timer_mask = irq_get_mask(0);
+        printk("kbd mask = %d,timer mask = %d\n",mask,timer_mask);
         if(DBUG) printk("are ints enabled? %d\n",are_interrupts_enabled());
+        /*asm volatile (
+        "int $0x21"  // Use interrupt number 1 (IRQ 1 for keyboard)
+    );*/
         return 1;
 }
 
@@ -174,6 +182,8 @@ int irq_helper_init()
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
     printk("ISR for interrupt %d. Error code = %d\n",int_num,err_code);
+    if(int_num == KBD_INT_NO)
+            kbd_isr(NULL);
 }
 
 void display_idt_entry(idt_entry_t entry)
