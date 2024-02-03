@@ -4,5 +4,5 @@
  * Description:
 */
 
-void kbd_isr(void *);
+void kbd_isr(int,int,void *);
 

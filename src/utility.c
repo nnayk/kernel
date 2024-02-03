@@ -83,6 +83,10 @@ void sti() {
         asm volatile ("sti");
 }
 
+void hlt() {
+        asm volatile ("hlt");
+}
+
 // Function to map scan codes to ASCII characters
 char mapScanCodeToAscii(int scanCode) {
     // Define a lookup table

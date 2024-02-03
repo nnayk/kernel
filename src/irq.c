@@ -20,7 +20,7 @@
 
 extern void (*asm_wrappers[NUM_IRQS])();
 idt_entry_t idt_arr[NUM_IRQS];
-irq_helper_t irq_helper;
+irq_helper_t irq_helper[NUM_IRQS];
 static int err = 0; // error code
 
 void pic_remap(int offset1, int offset2)
@@ -84,10 +84,8 @@ int irq_init()
         idtr.limit = idt_size - 1;
         idtr.base_addr = idt;
         load_idtr(idtr); 
-        idtr.limit = 0;
-        idtr.base_addr = 0;
-        irq_set_mask(0);
-        irq_clear_mask(1);
+        irq_set_mask(PIT_IRQ_NO);
+        irq_clear_mask(KBD_IRQ_NO);
         //int loop = 0;
         //while(!loop);
         ps2_enable_kbd_int(); 
@@ -173,17 +171,32 @@ int irq_helper_init()
 {
         for(int i=0;i<NUM_IRQS;i++)
         {
-                irq_helper[i].handler = c_wrapper;
+                irq_helper[i].handler = NULL;
+                irq_helper[i].arg = NULL;
         }
-
+        /* init the entries for the interrupts I'll handle */
+        irq_helper[KBD_INT_NO].handler = kbd_isr;
         return 1;
 }
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    printk("ISR for interrupt %d. Error code = %d\n",int_num,err_code);
-    if(int_num == KBD_INT_NO)
-            kbd_isr(NULL);
+    /* validate int. num */
+    if(!((0<=int_num) && (int_num < NUM_IRQS)))
+    {
+        printk("Error: Invalid interrupt number %d",int_num);
+        hlt();
+    }
+    /* check that it's a handled interrupt */
+    irq_helper_t entry = irq_helper[int_num];
+    if(!entry.handler)
+    {
+        printk("Error: Unhandled interrupt %d. Error code = %d\n",
+                        int_num,err_code);
+        hlt();
+    }
+    /* call the ISR */
+    else (*entry.handler)(int_num,err_code,entry.arg);
 }
 
 void display_idt_entry(idt_entry_t entry)

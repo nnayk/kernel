@@ -9,7 +9,7 @@
 #include "ps2.h"
 #include "utility.h"
 
-void kbd_isr(void *buffer)
+void kbd_isr(int int_num,int err_code,void *buffer)
 {
         char data = ps2_poll_read();
         data = mapScanCodeToAscii(data);

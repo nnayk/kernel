@@ -49,8 +49,7 @@ typedef void (*irq_handler_t)(int, int, void*);
 typedef struct { 
         void *arg; 
         irq_handler_t handler; 
-} irq_helper_t[NUM_IRQS];
-
+} irq_helper_t;
 
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */

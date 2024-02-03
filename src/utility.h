@@ -21,4 +21,5 @@ uint8_t inb(uint16_t);
 void io_wait(void);
 void cli();
 void sti();
+void hlt();
 char mapScanCodeToAscii(int);
