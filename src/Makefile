@@ -8,7 +8,7 @@ mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o c_isr.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
-my-gcc_flags := -c -g -Wall -Werror
+my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 
 .PHONY: empty clean lo_status
 
