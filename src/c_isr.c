@@ -11,9 +11,9 @@
 
 void kbd_isr(int int_num,int err_code,void *buffer)
 {
-        char data = ps2_poll_read();
-        data = mapScanCodeToAscii(data);
-        printk("recv: %c\n",data);
+        unsigned char data = ps2_poll_read();
+        //data = mapScanCodeToAscii(data);
+        printk("recv: %d\n",data);
         irq_end_of_interrupt(1);
 }
 
