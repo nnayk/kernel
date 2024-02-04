@@ -57,12 +57,14 @@ void pic_remap(int offset1, int offset2)
 
 int irq_init()
 {
-        printk("INSIDE IRQ INIT!\n");
+        if(DBUG) printk("INSIDE IRQ INIT!\n");
         idtr_t idtr;
         tss_desc_t tss_desc;
         size_t tss_size = sizeof(tss);
+        size_t tss_desc_size = sizeof(tss_desc);
         size_t idt_size = sizeof(idt_arr);
-        uint64_t isr_addr,tss_addr=(uint64_t)&tss;
+        uint64_t isr_addr;
+        uint64_t tss_addr=(uint64_t)&tss;
         cli();
         pic_remap(PIC_OFF_1,PIC_OFF_2);
         // setup the irq helper
@@ -72,7 +74,7 @@ int irq_init()
         for(int i=0;i<NUM_IRQS;i++)
         {
             idt_arr[i].cs = KERNEL_CS;
-            idt_arr[i].ist = CURR_STACK;
+            idt_arr[i].ist = 0 | KERNEL_IST;
             idt_arr[i].type = INTERRUPT_GATE;
             idt_arr[i].dpl = KERNEL_MODE;
             idt_arr[i].present = 1;
@@ -81,7 +83,7 @@ int irq_init()
             idt_arr[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
             idt_arr[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
         }
-        printk("size of idt: %ld\n",idt_size);
+        if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n",                         idt_size,tss_desc_size,tss_size);
         // write to the idt memory location
         if(!memcpy(idt,idt_arr,idt_size)) return ERR_MEMCPY; 
         
@@ -95,39 +97,41 @@ int irq_init()
         ps2_enable_kbd_int();
 
         // tss descriptor setup
-        printk("tss_size = %d\n",(int)tss_size);
+        if(DBUG) printk("tss_size = %d\n",(int)tss_size);
         tss_desc.seg_low = tss_size & 0xFFFF;
         tss_desc.base_low = tss_addr & 0xFFFF;
-        tss_desc.base_mid_1 = (tss_addr >> 16) & 0xF;
+        tss_desc.base_mid_1 = (tss_addr >> 16) & 0xFF;
         tss_desc.type = 0x9;
         tss_desc.zero = 0;
         tss_desc.dpl = 0;
         tss_desc.present = 1;
-        tss_desc.seg_high = (tss_size >> 16) & 0xF;
+        tss_desc.seg_high = (tss_size >> 16) & 0xFF;
         tss_desc.avl = 0;
         tss_desc.granularity = 0;
-        tss_desc.base_mid_2 = (tss_addr >> 24) & 0xF;
+        tss_desc.base_mid_2 = (tss_addr >> 24) & 0xFF;
         tss_desc.base_high = (tss_addr >> 32) & 0xFFFFFFFF;
         tss_desc.reserved_2 = 0; 
+        if(!memcpy(gdt64+16,&tss_desc,16)) return ERR_MEMCPY; 
+        idtr.limit = idt_size - 1;
         // tss setup
-        tss.rsp0 = ists[STACK_SIZE-1]; // TODO: update this value
+        tss.rsp0 = (uint64_t)&ists[STACK_SIZE-1]; // TODO: update this value
         tss.rsp1 = 0; 
         tss.rsp2 = 0;
-        tss.ist1 = ists[STACK_SIZE-1]; // kernel IST
-        tss.ist2 = ists[STACK_SIZE*2 -1]; // double fault
-        tss.ist3 = ists[STACK_SIZE*3 -1]; // page fault
-        tss.ist4 = ists[STACK_SIZE*4 -1]; // GPF
+        tss.ist1 = (uint64_t)&ists[STACK_SIZE-1]; // kernel IST
+        tss.ist2 = (uint64_t)&ists[STACK_SIZE*2 -1]; // double fault
+        tss.ist3 = (uint64_t)&ists[STACK_SIZE*3 -1]; // page fault
+        tss.ist4 = (uint64_t)&ists[STACK_SIZE*4 -1]; // GPF
         tss.ist5 = 0; 
         tss.ist6 = 0; 
         tss.ist7 = 0;
         // load tss
-
+        ltr(TSS_DESC_SELECTOR);
         sti();
         if(DBUG) printk("interrupt init. complete\n");
         // delete after kbd ints. work
         int mask = irq_get_mask(1);
         int timer_mask = irq_get_mask(0);
-        printk("kbd mask = %d,timer mask = %d\n",mask,timer_mask);
+        if(DBUG) printk("kbd mask = %d,timer mask = %d\n",mask,timer_mask);
         if(DBUG) printk("are ints enabled? %d\n",are_interrupts_enabled());
         /*asm volatile (
         "int $0x21"  // Use interrupt number 1 (IRQ 1 for keyboard)
@@ -214,6 +218,7 @@ int irq_helper_init()
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
+    if(DBUG) printk("wrapper");
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_IRQS)))
     {

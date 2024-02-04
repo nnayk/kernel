@@ -87,6 +87,10 @@ void hlt() {
         asm volatile ("hlt");
 }
 
+void ltr(uint16_t selector) {
+        asm volatile ("ltr %0" : :"r"(selector));
+}
+
 // Function to map scan codes to ASCII characters
 char mapScanCodeToAscii(int scanCode) {
     // Define a lookup table

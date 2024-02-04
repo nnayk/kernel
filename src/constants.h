@@ -6,7 +6,12 @@
 
 #define NUM_IRQS 256
 #define KERNEL_CS 0x8
+#define TSS_DESC_SELECTOR 0x10
 #define CURR_STACK 0
+#define KERNEL_IST 1
+#define DF_IST 2
+#define PF_IST 3
+#define GPF_IST 4
 #define KERNEL_MODE 0
 #define USER_MODE 3
 #define PIT_IRQ_NO 0

@@ -23,3 +23,4 @@ void cli();
 void sti();
 void hlt();
 char mapScanCodeToAscii(int);
+void ltr(uint16_t);
