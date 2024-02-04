@@ -1,4 +1,5 @@
 global start
+global gdt64
 extern long_mode_start
 
 section .text
@@ -158,3 +159,24 @@ p2_table:
 stack_bottom:
     resb 4096
 stack_top:
+
+    resb 4096
+ist1_top:
+
+    resb 4096
+ist2_top:
+
+    resb 4096
+ist3_top:
+
+    resb 4096
+ist4_top:
+
+    resb 4096
+ist5_top:
+
+    resb 4096
+ist6_top:
+
+    resb 4096
+ist7_top:
