@@ -114,10 +114,10 @@ int irq_init()
         if(!memcpy(gdt64+16,&tss_desc,16)) return ERR_MEMCPY; 
         idtr.limit = idt_size - 1;
         // tss setup
-        tss.rsp0 = (uint64_t)&ists[STACK_SIZE-1]; // TODO: update this value
+        tss.rsp0 = (uint64_t)&ists[STACK_SIZE]; // TODO: update this value
         tss.rsp1 = 0; 
         tss.rsp2 = 0;
-        tss.ist1 = (uint64_t)&ists[STACK_SIZE-1]; // kernel IST
+        tss.ist1 = (uint64_t)&ists[STACK_SIZE]; // kernel IST
         tss.ist2 = (uint64_t)&ists[STACK_SIZE*2 -1]; // double fault
         tss.ist3 = (uint64_t)&ists[STACK_SIZE*3 -1]; // page fault
         tss.ist4 = (uint64_t)&ists[STACK_SIZE*4 -1]; // GPF
@@ -127,6 +127,7 @@ int irq_init()
         // load tss
         ltr(TSS_DESC_SELECTOR);
         sti();
+        asm volatile("int $0x21");
         if(DBUG) printk("interrupt init. complete\n");
         // delete after kbd ints. work
         int mask = irq_get_mask(1);
