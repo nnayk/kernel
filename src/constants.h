@@ -15,3 +15,6 @@
 #define KBD_INT_NO 0x20+KBD_IRQ_NO
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
+
+#define PG_SIZE 4096
+#define STACK_SIZE 4096

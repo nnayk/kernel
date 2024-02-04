@@ -16,13 +16,14 @@
 #define TRAP_GATE 0xF
 #define INTERRUPT_GATE 0xE
 #define DBUG 1
-
+#define NUM_ISTS 4
 
 extern void (*asm_wrappers[NUM_IRQS])();
 idt_entry_t idt_arr[NUM_IRQS];
 irq_helper_t irq_helper[NUM_IRQS];
 tss_t tss;
 static int err = 0; // error code
+uint8_t ists[STACK_SIZE*NUM_ISTS];
 
 void pic_remap(int offset1, int offset2)
 {
@@ -108,10 +109,17 @@ int irq_init()
         tss_desc.base_mid_2 = (tss_addr >> 24) & 0xF;
         tss_desc.base_high = (tss_addr >> 32) & 0xFFFFFFFF;
         tss_desc.reserved_2 = 0; 
-
         // tss setup
-        //tss.rsp0 = 
-        
+        tss.rsp0 = ists[STACK_SIZE-1]; // TODO: update this value
+        tss.rsp1 = 0; 
+        tss.rsp2 = 0;
+        tss.ist1 = ists[STACK_SIZE-1]; // kernel IST
+        tss.ist2 = ists[STACK_SIZE*2 -1]; // double fault
+        tss.ist3 = ists[STACK_SIZE*3 -1]; // page fault
+        tss.ist4 = ists[STACK_SIZE*4 -1]; // GPF
+        tss.ist5 = 0; 
+        tss.ist6 = 0; 
+        tss.ist7 = 0;
         // load tss
 
         sti();
