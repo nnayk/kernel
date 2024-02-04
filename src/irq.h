@@ -8,6 +8,7 @@
 #include "constants.h"
 
 extern char idt[];
+extern uint8_t gdt64[];
 typedef struct
 {
         uint16_t limit;
@@ -56,12 +57,12 @@ typedef struct {
 	uint16_t    base_low;     // lower 2 bytes of TSS base address   
 	uint8_t	    base_mid_1;   // middle byte of TSS base address 
 	uint8_t	    type:4;       // fixed to 0x9 to indicate long mode 
-	uint8_t	    zero:1          
+	uint8_t	    zero:1;          
 	uint8_t     dpl:2;        // data protection level (0=kernel,3=user)
     uint8_t     present:1;    // 1 = valid table entry
 	uint8_t     seg_high:4;   // higher 4 bits of TSS size
-    uint8_t     avl:3         // set to zero
-    uint8_t     granularity:1 // set to zero
+    uint8_t     avl:3;        // set to zero
+    uint8_t     granularity:1;// set to zero
 	uint8_t     base_mid_2;   // upper middle byte of TSS base address
     uint32_t    base_high;
 	uint32_t    reserved_2;   // Set bits 8-1 to zero

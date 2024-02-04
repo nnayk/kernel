@@ -21,6 +21,7 @@
 extern void (*asm_wrappers[NUM_IRQS])();
 idt_entry_t idt_arr[NUM_IRQS];
 irq_helper_t irq_helper[NUM_IRQS];
+tss_t tss;
 static int err = 0; // error code
 
 void pic_remap(int offset1, int offset2)
@@ -57,8 +58,10 @@ int irq_init()
 {
         printk("INSIDE IRQ INIT!\n");
         idtr_t idtr;
+        tss_desc_t tss_desc;
+        size_t tss_size = sizeof(tss);
         size_t idt_size = sizeof(idt_arr);
-        uint64_t isr_addr;
+        uint64_t isr_addr,tss_addr=(uint64_t)&tss;
         cli();
         pic_remap(PIC_OFF_1,PIC_OFF_2);
         // setup the irq helper
@@ -88,7 +91,29 @@ int irq_init()
         irq_clear_mask(KBD_IRQ_NO);
         //int loop = 0;
         //while(!loop);
-        ps2_enable_kbd_int(); 
+        ps2_enable_kbd_int();
+
+        // tss descriptor setup
+        printk("tss_size = %d\n",(int)tss_size);
+        tss_desc.seg_low = tss_size & 0xFFFF;
+        tss_desc.base_low = tss_addr & 0xFFFF;
+        tss_desc.base_mid_1 = (tss_addr >> 16) & 0xF;
+        tss_desc.type = 0x9;
+        tss_desc.zero = 0;
+        tss_desc.dpl = 0;
+        tss_desc.present = 1;
+        tss_desc.seg_high = (tss_size >> 16) & 0xF;
+        tss_desc.avl = 0;
+        tss_desc.granularity = 0;
+        tss_desc.base_mid_2 = (tss_addr >> 24) & 0xF;
+        tss_desc.base_high = (tss_addr >> 32) & 0xFFFFFFFF;
+        tss_desc.reserved_2 = 0; 
+
+        // tss setup
+        //tss.rsp0 = 
+        
+        // load tss
+
         sti();
         if(DBUG) printk("interrupt init. complete\n");
         // delete after kbd ints. work
