@@ -5,7 +5,7 @@
 */
 
 #define NUM_IRQS 256
-#define KERNEL_CS 0x8
+#define KERNEL_CS 0x08
 #define TSS_DESC_SELECTOR 0x10
 #define CURR_STACK 0
 #define KERNEL_IST 1
@@ -18,6 +18,9 @@
 #define PIT_INT_NO 0x20+PIT_IRQ_NO
 #define KBD_IRQ_NO 1
 #define KBD_INT_NO 0x20+KBD_IRQ_NO
+#define DF_INT_NO 0x08
+#define PF_INT_NO 0x0E
+#define GPF_INT_NO 0x0D
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
 

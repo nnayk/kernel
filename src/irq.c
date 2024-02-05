@@ -74,7 +74,7 @@ int irq_init()
         for(int i=0;i<NUM_IRQS;i++)
         {
             idt_arr[i].cs = KERNEL_CS;
-            idt_arr[i].ist = 0 | KERNEL_IST;
+            idt_arr[i].ist = KERNEL_IST;
             idt_arr[i].type = INTERRUPT_GATE;
             idt_arr[i].dpl = KERNEL_MODE;
             idt_arr[i].present = 1;
@@ -83,6 +83,13 @@ int irq_init()
             idt_arr[i].isr_mid = (isr_addr >> 16) & 0xFFFF;
             idt_arr[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
         }
+
+        // set the ists for the special faults
+        idt_arr[DF_INT_NO].ist = DF_IST;
+        idt_arr[PF_INT_NO].ist = PF_IST;
+        idt_arr[GPF_INT_NO].ist = GPF_IST;
+        
+
         if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n",                         idt_size,tss_desc_size,tss_size);
         // write to the idt memory location
         if(!memcpy(idt,idt_arr,idt_size)) return ERR_MEMCPY; 
