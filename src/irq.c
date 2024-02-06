@@ -205,10 +205,6 @@ void load_idtr(idtr_t idtr)
         asm("lidt %0" : : "m"(idtr));
 }
 
-void foo()
-{
-        printk("FOO!\n");
-}
 int irq_helper_init()
 {
         for(int i=0;i<NUM_IRQS;i++)
@@ -218,7 +214,6 @@ int irq_helper_init()
         }
         /* init the entries for the interrupts I'll handle */
         irq_helper[KBD_INT_NO].handler = kbd_isr;
-        irq_helper[COM1_INT_NO].handler = foo;
         return 1;
 }
 

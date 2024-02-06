@@ -47,11 +47,9 @@ void kmain()
         */
         ps2_init();
         kbd_init();
-        serial_init();
-        //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
         if((err=irq_init()) < 0)
                 printk("irq_init failed w/error = %d\n",err);
-        //for(int i=0;i<16;i++) printk("AFTER: irq %d: %d",i,irq_get_mask(i));
+        serial_init();
         /*
         while(!loop)
         {
