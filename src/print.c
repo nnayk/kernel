@@ -12,6 +12,8 @@
 #include "utility.h"
 #include "print.h"
 #include "error.h"
+#include "shared_buff.h"
+#include "serial.h"
 
 //offsets
 #define NUM_ASCII_OFF 48
@@ -44,6 +46,8 @@ typedef union{
    long long_val;
    char *str_val;
 } Args;
+
+extern State serial_buffer;
 
 __attribute__ ((format (printf, 1, 2)))
 int printk(const char *fmt,...)
@@ -129,7 +133,7 @@ int printk(const char *fmt,...)
                         }
                 }
                 // just a regular char, display it
-                else VGA_display_char(fmt[i]);
+                else print_char(fmt[i]);
                 i++;
         }
 
@@ -138,12 +142,15 @@ int printk(const char *fmt,...)
 }
 void print_char(char c)
 {
-        VGA_display_char(c);        
+        VGA_display_char(c);   
+        serial_write(c,&serial_buffer); 
 }
 
 void print_str(const char *str)
 {
-        VGA_display_str(str);
+        //VGA_display_str(str);
+        for(int i = 0; i < strlen(str); i++)
+                print_char(str[i]);
 }
 void print_uchar(unsigned char b)
 {
@@ -156,7 +163,7 @@ void print_uchar(unsigned char b)
                 digits[index++] = temp;
                 b=b/10;
         }
-        while(index--) VGA_display_char(digits[index]);
+        while(index--) print_char(digits[index]);
 }
 
 void print_signed_long(long l)
@@ -166,7 +173,7 @@ void print_signed_long(long l)
 
         if(l<0)
         {
-                VGA_display_char(MINUS_ASCII);
+                print_char(MINUS_ASCII);
                 if(l==LONG_MIN)
                 {
                         digits[index++] = -1*(l%NEG_DEC_BASE) + NUM_ASCII_OFF;
@@ -201,7 +208,7 @@ void print_long_hex(unsigned long l)
         unsigned char digits[ARR_SIZE]; 
         int index = 0;
         unsigned char temp;
-        VGA_display_str(HEX_PREFIX);
+        print_str(HEX_PREFIX);
         while(l)
         {
                 temp = (l%HEX_BASE);
@@ -213,5 +220,5 @@ void print_long_hex(unsigned long l)
                 digits[index++] = temp;
                 l=l/HEX_BASE;
         }
-        while(index--) VGA_display_char(digits[index]);
+        while(index--) print_char(digits[index]);
 }

@@ -15,5 +15,6 @@ void init_state(State *state)
 
 void show_state(State *state)
 {
-        printk("consumer = %d, producer = %d\n",(int)(state->consumer-state->buff),(int)(state->producer-state->buff));
+        printk("consumer = %d, producer = %d, idle = %d\n",
+                        (int)(state->consumer-state->buff),(int)(state->producer-state->buff),state->idle);
 }
