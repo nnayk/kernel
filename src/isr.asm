@@ -20,8 +20,8 @@ isr_glue:
     pop rcx
     pop rax
     pop rdi 
-    pop rsi ;; pop error code
-    add rsp, 8
+    pop rsi
+    add rsp, 8 ;; pop off error code
     iretq
 
 global isr0
