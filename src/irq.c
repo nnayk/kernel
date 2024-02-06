@@ -10,15 +10,16 @@
 #include "error.h"
 #include "isr_asm.h"
 #include "ps2.h"
-#include "c_isr.h"
+#include "serial.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
 #define INTERRUPT_GATE 0xE
-#define DBUG 1
+#define DBUG 0
 #define NUM_ISTS 4
 
 extern void (*asm_wrappers[NUM_IRQS])();
+extern State serial_buffer;
 idt_entry_t idt_arr[NUM_IRQS];
 irq_helper_t irq_helper[NUM_IRQS];
 tss_t tss;
@@ -90,7 +91,7 @@ int irq_init()
         idt_arr[GPF_INT_NO].ist = GPF_IST;
         
 
-        if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n",                         idt_size,tss_desc_size,tss_size);
+        if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n", idt_size,tss_desc_size,tss_size);
         // write to the idt memory location
         if(!memcpy(idt,idt_arr,idt_size)) return ERR_MEMCPY; 
         
@@ -214,12 +215,14 @@ int irq_helper_init()
         }
         /* init the entries for the interrupts I'll handle */
         irq_helper[KBD_INT_NO].handler = kbd_isr;
+        irq_helper[COM1_INT_NO].handler = serial_consume;
+        irq_helper[COM1_INT_NO].arg = &serial_buffer;
         return 1;
 }
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    if(DBUG) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
+    //if(DBUG) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_IRQS)))
     {
