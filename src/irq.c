@@ -97,8 +97,8 @@ int irq_init()
         idtr.limit = idt_size - 1;
         idtr.base_addr = idt;
         load_idtr(idtr); 
-        irq_set_mask(PIT_IRQ_NO);
         irq_set_mask(COM1_IRQ_NO);
+        irq_set_mask(PIT_IRQ_NO);
         irq_clear_mask(KBD_IRQ_NO);
         //int loop = 0;
         //while(!loop);
