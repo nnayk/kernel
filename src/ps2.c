@@ -1,6 +1,7 @@
 #include "ps2.h"
 #include "print.h"
 #include "utility.h"
+#include "irq.h"
 
 #define PS2_DATA 0x60
 #define PS2_CMD 0x64
@@ -19,6 +20,7 @@
 
 #define KBD_RESET 0xFF
 #define KBD_SCAN_CODE 0xF0
+#define RELEASE_KEY_START 0x81
 
 #define DBUG 0
 
@@ -120,5 +122,16 @@ void kbd_init()
         ps2_poll_write(PS2_DATA,0xF4);
         ps2_byte = ps2_poll_read();
         if(DBUG) printk("enable kbd scanning ack = %x\n",ps2_byte);
+}
+
+void kbd_isr(int int_num,int err_code,void *buffer)
+{
+        unsigned char data = ps2_poll_read();
+        if(data < RELEASE_KEY_START)
+        {
+            data = mapScanCodeToAscii(data);
+            print_char(data);
+        }
+        irq_end_of_interrupt(KBD_IRQ_NO);
 }
 
