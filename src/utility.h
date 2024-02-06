@@ -24,3 +24,4 @@ void sti();
 void hlt();
 char mapScanCodeToAscii(int);
 void ltr(uint16_t);
+int are_interrupts_enabled();

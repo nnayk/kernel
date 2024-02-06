@@ -91,6 +91,15 @@ void ltr(uint16_t selector) {
         asm volatile ("ltr %0" : :"r"(selector));
 }
 
+int are_interrupts_enabled()
+{
+    unsigned long flags;
+    asm volatile ( "pushf\n\t"
+                   "pop %0"
+                   : "=g"(flags) );
+    return flags & (1 << 9);
+}
+
 // Function to map scan codes to ASCII characters
 char mapScanCodeToAscii(int scanCode) {
     // Define a lookup table

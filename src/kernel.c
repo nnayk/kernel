@@ -4,8 +4,11 @@
 #include "ps2.h"
 #include "irq.h"
 #include "utility.h"
+#include "shared_buff.h"
+#include "serial.h"
 
 static int err;
+State serial_buffer;
 
 void kmain()
 {
@@ -44,6 +47,7 @@ void kmain()
         */
         ps2_init();
         kbd_init();
+        serial_init();
         //for(int i=0;i<16;i++) printk("B4: irq %d: %d ",i,irq_get_mask(i));
         if((err=irq_init()) < 0)
                 printk("irq_init failed w/error = %d\n",err);
