@@ -8,8 +8,10 @@
 #include "utility.h"
 #include "error.h"
 #include "irq.h"
+#include "print.h" // DELETE
 
 #define PORT_COM1 0x3f8          // COM1
+#define DBUG 0
 
 static void consume_byte();
 static void consume_byte(State *);
@@ -27,30 +29,34 @@ void serial_init()
    outb(PORT_COM1 + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
    outb(PORT_COM1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
    outb(PORT_COM1 + 4, 0x1E);    // Set in loopback mode, test the serial chip
-   outb(PORT_COM1 + 0, 0xAE);    // Test serial chip (send byte 0xAE and check if serial returns same byte)
-   outb(PORT_COM1+1,0x02); // enable TX interrupts only
+   outb(PORT_COM1+1,0x02);       // enable TX interrupts only
    //int loop = 0;
    //while(!loop);
    irq_clear_mask(COM1_IRQ_NO);
    //asm volatile("int $0x24");
 }
 
-void serial_consume(State *state)
+void serial_consume(int int_num,int error_code,void *arg)
 {
+        if(DBUG) printk("Inside consumer!\n");
+        State *state = (State *)arg;
         // line status interrupt
         if(is_line_int())
         {
+                if(DBUG) printk("LSR\n");
                 // read LSR to clear the int.
                 read_LSR(); 
         }
         // empty buffer, turn off TX interrupts and set idle bit
         else if (state->consumer == state->producer)  
         {
+                if(DBUG) printk("EMPTY BUFFER!\n");
                 irq_set_mask(COM1_IRQ_NO);
                 state->idle = 1;
         }
         else
         {
+             if(DBUG) printk("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
             consume_byte(state); 
         }
@@ -67,6 +73,7 @@ int serial_write(char toAdd, State *state)
         // if hw buffer is empty, write the next byte immediately
         if(state->idle && get_hw_buff_status())
         {
+                irq_clear_mask(COM1_IRQ_NO);
                 consume_byte(state);
         }
 
@@ -91,7 +98,6 @@ int serial_write(char toAdd, State *state)
 static void consume_byte(State *state)
 {
     state->idle = 0;
-    irq_clear_mask(COM1_IRQ_NO);
     outb(PORT_COM1,*state->consumer++);
     // wrap consumer pointer back to "front" of circular queue
     if (state->consumer >= &state->buff[BUFF_SIZE]) 
@@ -101,7 +107,7 @@ static void consume_byte(State *state)
 // Returns >1 if HW buffer is empty, 0 if not.
 static int get_hw_buff_status()
 {
-    uint8_t status = read_LSR();;
+    uint8_t status = read_LSR();
     return (status & (1<<5));
 }
 
