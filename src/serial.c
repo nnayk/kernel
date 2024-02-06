@@ -21,6 +21,7 @@ void serial_init()
    outb(PORT_COM1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
    outb(PORT_COM1 + 4, 0x1E);    // Set in loopback mode, test the serial chip
    outb(PORT_COM1 + 0, 0xAE);    // Test serial chip (send byte 0xAE and check if serial returns same byte)
+   outb(PORT_COM1+1,0x02); // enable TX interrupts only
 }
 
 int serial_consume(State *state)

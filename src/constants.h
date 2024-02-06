@@ -18,6 +18,8 @@
 #define PIT_INT_NO 0x20+PIT_IRQ_NO
 #define KBD_IRQ_NO 1
 #define KBD_INT_NO 0x20+KBD_IRQ_NO
+#define COM1_IRQ_NO 4
+#define COM1_INT_NO 0x20+COM1_IRQ_NO
 #define DF_INT_NO 0x08
 #define PF_INT_NO 0x0E
 #define GPF_INT_NO 0x0D

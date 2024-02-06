@@ -4,6 +4,8 @@
  * Description:
 */
 
+#ifndef SHARED_BUFF_H
+#define SHARED_BUFF_H
 #include "stdint-gcc.h"
 
 #define BUFF_SIZE 16
@@ -14,3 +16,4 @@ typedef struct{
 } State;
 
  void init_state(State *);
+#endif

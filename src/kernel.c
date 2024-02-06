@@ -4,8 +4,8 @@
 #include "ps2.h"
 #include "irq.h"
 #include "utility.h"
-#include "shared_buff.h"
 #include "serial.h"
+#include "shared_buff.h"
 
 static int err;
 State serial_buffer;

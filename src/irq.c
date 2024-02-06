@@ -98,6 +98,7 @@ int irq_init()
         idtr.base_addr = idt;
         load_idtr(idtr); 
         irq_set_mask(PIT_IRQ_NO);
+        irq_set_mask(COM1_IRQ_NO);
         irq_clear_mask(KBD_IRQ_NO);
         //int loop = 0;
         //while(!loop);
@@ -134,7 +135,7 @@ int irq_init()
         // load tss
         ltr(TSS_DESC_SELECTOR);
         sti();
-        asm volatile("int $0x21");
+        //asm volatile("int $0x21");
         if(DBUG) printk("interrupt init. complete\n");
         // delete after kbd ints. work
         int mask = irq_get_mask(1);
@@ -204,6 +205,10 @@ void load_idtr(idtr_t idtr)
         asm("lidt %0" : : "m"(idtr));
 }
 
+void foo()
+{
+        printk("FOO!\n");
+}
 int irq_helper_init()
 {
         for(int i=0;i<NUM_IRQS;i++)
@@ -213,12 +218,13 @@ int irq_helper_init()
         }
         /* init the entries for the interrupts I'll handle */
         irq_helper[KBD_INT_NO].handler = kbd_isr;
+        irq_helper[COM1_INT_NO].handler = foo;
         return 1;
 }
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    if(DBUG) printk("wrapper");
+    if(DBUG) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_IRQS)))
     {
