@@ -30,6 +30,16 @@ void kmain()
         */
         printk("a");
         while(!loop);
+        loop=0;
+        while(!loop);
+        loop=0;
+        while(!loop);
+        loop=0;
+        while(!loop);
+        loop=0;
+        while(!loop);
+        loop=0;
+        while(!loop);
 }
 
 

@@ -13,8 +13,7 @@
 #define PORT_COM1 0x3f8          // COM1
 #define DBUG 0
 
-static void consume_byte();
-static void consume_byte(State *);
+static void consume_byte(char);
 static int get_hw_buff_status();
 static int is_line_int();
 static uint8_t read_LSR();
@@ -32,6 +31,7 @@ void serial_init()
    outb(PORT_COM1+1,0x02);       // enable TX interrupts only
    //int loop = 0;
    //while(!loop);
+   outb(PORT_COM1 + 4, 0x0F);
    irq_clear_mask(COM1_IRQ_NO);
    //asm volatile("int $0x24");
 }
@@ -53,13 +53,16 @@ void serial_consume(int int_num,int error_code,void *arg)
                 if(DBUG) printk("EMPTY BUFFER!\n");
                 irq_set_mask(COM1_IRQ_NO);
                 state->idle = 1;
-        }
-        else
+        }else
         {
              if(DBUG) printk("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
-            consume_byte(state); 
+            consume_byte(*state->consumer++); 
+            state->idle = 0;
         }
+        // wrap consumer pointer back to "front" of circular queue
+        if (state->consumer >= &state->buff[BUFF_SIZE])
+                state->consumer = &state->buff[0];
         irq_end_of_interrupt(COM1_IRQ_NO); 
         return; 
 }
@@ -67,25 +70,31 @@ void serial_consume(int int_num,int error_code,void *arg)
 int serial_write(char toAdd, State *state)
 {
         int int_enabled = 0;
+        int temp = 0; // DELETE 
         if((int_enabled = are_interrupts_enabled()))
             cli();
 
         // if hw buffer is empty, write the next byte immediately
-        if(state->idle && get_hw_buff_status())
+        if(state->idle && (temp = get_hw_buff_status()))
         {
                 irq_clear_mask(COM1_IRQ_NO);
-                consume_byte(state);
+                consume_byte(toAdd);
+                state->idle = 0;
+                if(int_enabled) sti();
+                temp = are_interrupts_enabled();
+                return SUCCESS; 
         }
-
-
+        
         // TODO: fix this check. full buffer, throw away the input char and return.
         if ((state->producer == (state->consumer - 1)) ||
         (state->consumer == &(state->buff[0]) && state->producer == &(state->buff[BUFF_SIZE-1])))
         {
             if(int_enabled) sti();
             return ERR_BUFF_FULL;
+        }else
+        {
+            *state->producer++ = toAdd;
         }
-        *state->producer++ = toAdd;
 
         if (state->producer >= &state->buff[BUFF_SIZE])
         {
@@ -95,13 +104,9 @@ int serial_write(char toAdd, State *state)
         return SUCCESS; 
 }
 
-static void consume_byte(State *state)
+static void consume_byte(char c)
 {
-    state->idle = 0;
-    outb(PORT_COM1,*state->consumer++);
-    // wrap consumer pointer back to "front" of circular queue
-    if (state->consumer >= &state->buff[BUFF_SIZE]) 
-        state->consumer = &state->buff[0];
+    outb(PORT_COM1,c);
 }
 
 // Returns >1 if HW buffer is empty, 0 if not.
