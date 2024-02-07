@@ -28,6 +28,7 @@ void kmain()
                 if(data) print_char(data);
         }
         */
+        while(!loop);
         printk("a");
         while(!loop);
         loop=0;

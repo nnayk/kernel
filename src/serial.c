@@ -9,6 +9,7 @@
 #include "error.h"
 #include "irq.h"
 #include "print.h" // DELETE
+#include "vga.h" // DELETE
 
 #define PORT_COM1 0x3f8          // COM1
 #define DBUG 0
@@ -38,24 +39,24 @@ void serial_init()
 
 void serial_consume(int int_num,int error_code,void *arg)
 {
-        if(DBUG) printk("Inside consumer!\n");
+        if(DBUG) VGA_display_str("Inside consumer!\n");
         State *state = (State *)arg;
         // line status interrupt
         if(is_line_int())
         {
-                if(DBUG) printk("LSR\n");
+                if(DBUG) VGA_display_str("LSR\n");
                 // read LSR to clear the int.
                 read_LSR(); 
         }
         // empty buffer, turn off TX interrupts and set idle bit
         else if (state->consumer == state->producer)  
         {
-                if(DBUG) printk("EMPTY BUFFER!\n");
+                if(DBUG) VGA_display_str("EMPTY BUFFER!\n");
                 irq_set_mask(COM1_IRQ_NO);
                 state->idle = 1;
         }else
         {
-             if(DBUG) printk("CALLING CONSUME FROM CONSUME!\n");
+             if(DBUG) VGA_display_str("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
             consume_byte(*state->consumer++); 
             state->idle = 0;
@@ -77,6 +78,7 @@ int serial_write(char toAdd, State *state)
         // if hw buffer is empty, write the next byte immediately
         if(state->idle && (temp = get_hw_buff_status()))
         {
+                if(DBUG) VGA_display_str("hw empty, writing!\n");
                 irq_clear_mask(COM1_IRQ_NO);
                 consume_byte(toAdd);
                 state->idle = 0;
@@ -89,15 +91,18 @@ int serial_write(char toAdd, State *state)
         if ((state->producer == (state->consumer - 1)) ||
         (state->consumer == &(state->buff[0]) && state->producer == &(state->buff[BUFF_SIZE-1])))
         {
+            if(DBUG) VGA_display_str("buffer full!\n");
             if(int_enabled) sti();
             return ERR_BUFF_FULL;
         }else
         {
+            if(DBUG) VGA_display_str("writing to buffer\n");
             *state->producer++ = toAdd;
         }
 
         if (state->producer >= &state->buff[BUFF_SIZE])
         {
+            if(DBUG) VGA_display_str("buffer wrap\n");
             state->producer = &state->buff[0];
         }
         if(int_enabled) sti();
@@ -119,7 +124,7 @@ static int get_hw_buff_status()
 static int is_line_int()
 {
     uint8_t status = inb(PORT_COM1+2);
-    return (status & 0x06);
+    return (status == 0x06);
 }
 
 static uint8_t read_LSR()
