@@ -5,7 +5,6 @@
 */
 
 #include "utility.h"
-#include "memutils.h"
 #include "constants.h"
 
 extern char idt[];

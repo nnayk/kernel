@@ -4,12 +4,15 @@
 #include "ps2.h"
 #include "irq.h"
 #include "utility.h"
+#include "memutils.h"
 #include "serial.h"
 #include "shared_buff.h"
 
 static int err;
 State serial_buffer;
-extern uint8_t *multiboot_start;
+region *unused_head;
+region *free_head;
+
 
 void kmain()
 {
@@ -29,7 +32,7 @@ void kmain()
                 if(data) print_char(data);
         }
         */
-        printk("multiboot_start = %p\n",multiboot_start);
+        track_unused();
         while(!loop);
         printk("a");
 }

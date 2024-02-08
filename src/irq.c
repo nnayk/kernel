@@ -11,6 +11,7 @@
 #include "isr_asm.h"
 #include "ps2.h"
 #include "serial.h"
+#include "memutils.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
