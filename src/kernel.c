@@ -9,6 +9,7 @@
 
 static int err;
 State serial_buffer;
+extern uint8_t *multiboot_start;
 
 void kmain()
 {
@@ -28,19 +29,9 @@ void kmain()
                 if(data) print_char(data);
         }
         */
+        printk("multiboot_start = %p\n",multiboot_start);
         while(!loop);
         printk("a");
-        while(!loop);
-        loop=0;
-        while(!loop);
-        loop=0;
-        while(!loop);
-        loop=0;
-        while(!loop);
-        loop=0;
-        while(!loop);
-        loop=0;
-        while(!loop);
 }
 
 

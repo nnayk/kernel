@@ -1,6 +1,7 @@
 // header files
 #include "vga.h"
 #include "utility.h"
+#include "memutils.h"
 #include "error.h"
 #include "irq.h"
 

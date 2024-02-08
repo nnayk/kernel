@@ -6,7 +6,7 @@ loop0 := /dev/loop21
 loop1 := /dev/loop22
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 
