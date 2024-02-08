@@ -56,7 +56,7 @@ void serial_consume(int int_num,int error_code,void *arg)
                 state->idle = 1;
         }else
         {
-             if(DBUG) VGA_display_str("CALLING CONSUME FROM CONSUME!\n");
+            if(DBUG) VGA_display_str("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
             consume_byte(*state->consumer++); 
             state->idle = 0;
@@ -71,23 +71,20 @@ void serial_consume(int int_num,int error_code,void *arg)
 int serial_write(char toAdd, State *state)
 {
         int int_enabled = 0;
-        int temp = 0; // DELETE 
         if((int_enabled = are_interrupts_enabled()))
             cli();
 
         // if hw buffer is empty, write the next byte immediately
-        if(state->idle && (temp = get_hw_buff_status()))
+        if(state->idle && get_hw_buff_status())
         {
                 if(DBUG) VGA_display_str("hw empty, writing!\n");
                 irq_clear_mask(COM1_IRQ_NO);
                 consume_byte(toAdd);
                 state->idle = 0;
                 if(int_enabled) sti();
-                temp = are_interrupts_enabled();
                 return SUCCESS; 
         }
         
-        // TODO: fix this check. full buffer, throw away the input char and return.
         if ((state->producer == (state->consumer - 1)) ||
         (state->consumer == &(state->buff[0]) && state->producer == &(state->buff[BUFF_SIZE-1])))
         {
