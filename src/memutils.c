@@ -58,7 +58,7 @@ int track_unused()
         while(curr_off < total_size)
         {
              addr = multiboot_start+curr_off;
-             if((uint64_t)addr%8)
+             if(((uint64_t)addr)%8)
              {
                      printk("not an even multiple!\n");
                      curr_off += (8-(uint64_t)addr%8);
@@ -66,6 +66,11 @@ int track_unused()
              }
              memcpy(&header,addr,sizeof(tag_hdr));
              if(DBUG) printk("type = %d\n,size=%d\n",header.type,header.size);
+             if(header.type==2)
+             {
+                     printk("bootloader name = %s\n",addr+8);
+                      
+             }
              curr_off += header.size;
         }
 
