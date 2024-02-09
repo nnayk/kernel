@@ -11,6 +11,8 @@
 #include "print.h"
 
 #define LIMIT 5000
+#define MMAP_TAG 6
+#define ELF_TAG 9
 #define DBUG 1
 
 extern region *unused_head;
@@ -40,20 +42,35 @@ void *memcpy(void *dst, const void *src, size_t n)
         return dst;
 }
 
-int track_unused()
+int mem_setup()
+{
+        memtag_hdr_t mmap_data; // save tag 6 
+        elftag_hdr_t elf_data;  // save tag 9
+        if((err = track_unused(&mmap_data,&elf_data)) < 0)
+                return err;
+        if((err = setup_unused(mmap_data,elf_data)) < 0)
+        {
+                printk("error = %d\n",err);
+                return err;
+        }
+        return SUCCESS;
+}
+
+int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
 {
         printk("multiboot_start = %p\n",multiboot_start);
         // get size of the entire multiboot struct
         uint32_t total_size;
         uint32_t curr_off = 2 * sizeof(uint32_t); // current offset into multiboot struct
-        tag_hdr header;
+        tag_hdr temp;
         uint8_t *addr;
 
 
         if((err=(uint64_t)memcpy(&total_size,multiboot_start,sizeof(uint32_t))) <= 0)
                 return err;
         printk("total struct size = %d\n",total_size);
-
+        int loop=1;
+        while(!loop);
         // loop until tag type = 8 reached
         while(curr_off < total_size)
         {
@@ -64,16 +81,29 @@ int track_unused()
                      curr_off += (8-(uint64_t)addr%8);
                      addr = multiboot_start+curr_off;
              }
-             memcpy(&header,addr,sizeof(tag_hdr));
-             if(DBUG) printk("type = %d\n,size=%d\n",header.type,header.size);
-             if(header.type==2)
+             memcpy(&temp,addr,sizeof(tag_hdr));
+             if(DBUG) printk("type = %d\n,size=%d\n",temp.type,temp.size);
+             if(temp.type == MMAP_TAG)
              {
-                     printk("bootloader name = %s\n",addr+8);
-                      
+                     if((err=(uint64_t)memcpy(memhdr,addr,sizeof(memtag_hdr_t))) < 0)
+                             return err;
              }
-             curr_off += header.size;
+             else if(temp.type == ELF_TAG)
+             {
+                     if((err=(uint64_t)memcpy(elfhdr,addr,sizeof(elftag_hdr_t))) < 0)
+                             return err;
+             }
+
+             curr_off += temp.size;
         }
 
-        return 1;
+        return SUCCESS;
+}
+
+int setup_unused(memtag_hdr_t mmap_data,elftag_hdr_t elf_data)
+{
+        printk("inside setup_unused\n");
+        if(DBUG) printk("mmap info entry size (should be 24)  = %d\n",mmap_data.entry_size);
+        return SUCCESS;
 }
 

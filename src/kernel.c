@@ -32,7 +32,7 @@ void kmain()
                 if(data) print_char(data);
         }
         */
-        track_unused();
+        mem_setup();
         while(!loop);
         printk("a");
 }
