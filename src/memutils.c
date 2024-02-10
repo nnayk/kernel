@@ -13,10 +13,16 @@
 #define LIMIT 5000
 #define MMAP_TAG 6
 #define ELF_TAG 9
+#define FREE_RAM_TYPE 1
+#define MEM_INFO_OFF 16
+#define SEC_INFO_OFF 20
 #define DBUG 1
 
-extern region *unused_head;
-extern region *free_head;
+//extern region unused_head;
+//extern region free_head;
+extern region low_region;
+extern region high_region;
+extern region free_region;
 extern uint8_t *multiboot_start;
 static int err;
 
@@ -65,7 +71,6 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
         tag_hdr temp;
         uint8_t *addr;
 
-
         if((err=(uint64_t)memcpy(&total_size,multiboot_start,sizeof(uint32_t))) <= 0)
                 return err;
         printk("total struct size = %d\n",total_size);
@@ -85,13 +90,17 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
              if(DBUG) printk("type = %d\n,size=%d\n",temp.type,temp.size);
              if(temp.type == MMAP_TAG)
              {
+                     printk("addr arrays = %p\n",addr+16);
                      if((err=(uint64_t)memcpy(memhdr,addr,sizeof(memtag_hdr_t))) < 0)
                              return err;
+                     memhdr->entry_start = addr+MEM_INFO_OFF;
+                     printk("addr arrays in struct = %p\n",memhdr->entry_start);
              }
              else if(temp.type == ELF_TAG)
              {
                      if((err=(uint64_t)memcpy(elfhdr,addr,sizeof(elftag_hdr_t))) < 0)
                              return err;
+                     elfhdr->entry_start = addr+SEC_INFO_OFF;
              }
 
              curr_off += temp.size;
@@ -100,10 +109,61 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
         return SUCCESS;
 }
 
-int setup_unused(memtag_hdr_t mmap_data,elftag_hdr_t elf_data)
+int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
 {
+        int num_mem_entries = (mmaphdr.size)/mmaphdr.entry_size;
+        int num_elf_entries = elfhdr.entry_count;
+        uint8_t *mem_addr = mmaphdr.entry_start;
+        uint8_t *elf_addr = elfhdr.entry_start;
+        memtag_entry_t mementry;
+        elf_entry_t elfentry;
         printk("inside setup_unused\n");
-        if(DBUG) printk("mmap info entry size (should be 24)  = %d\n",mmap_data.entry_size);
+        printk("addr arrays in struct = %p,version=%d\n",mmaphdr.entry_start,mmaphdr.entry_version);
+        if(DBUG) 
+        {
+                printk("mmap info entry size (should be 24)  = %d, num_mem_entries = %d\n",mmaphdr.entry_size,num_mem_entries);
+                printk("number of section entries = %d\n",num_elf_entries);
+        }
+#if 1        
+        for(int i=0;i<num_mem_entries;i++)
+        {
+                memcpy(&mementry,mem_addr,mmaphdr.entry_size);
+                if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)mementry.start_addr,mementry.size,mementry.type);
+                if(mementry.type == FREE_RAM_TYPE)
+                {
+                        if(!high_region.start)
+                        {
+                                high_region.start = mementry.start_addr;
+                                high_region.end = mementry.start_addr+mementry.size; //exclusive end address
+                        }
+                        else
+                        {
+                                high_region.start = mementry.start_addr;
+                                high_region.end = mementry.start_addr+mementry.size;
+                                high_region.next = high_region.start;
+                        }
+                }
+                mem_addr += mmaphdr.entry_size;
+        }
+        for(int i=0;i<num_elf_entries;i++)
+        {
+                memcpy(&elfentry,elf_addr,elfhdr.entry_size);
+                if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)elfentry.seg_addr,elfentry.seg_size,elfentry.type);
+                if(elfentry.seg_size)
+                {
+                    printk("Found the kernel code!\n");
+                    if(DBUG)
+                    {
+                            // check no low region overlap
+                            if(low_region.start < elfentry.seg_addr && low_region.start < elfentry.seg_addr)
+                                    printk("No overlap for low region\n");
+                            // check no high region overlap
+                            if(high_region.start < elfentry.seg_addr && high_region.start < elfentry.seg_addr)
+                                    printk("No overlap for high region\n");
+                    }
+                }
+                elf_addr += elfhdr.entry_size;
+        }
+#endif
         return SUCCESS;
 }
-

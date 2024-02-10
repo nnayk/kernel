@@ -10,13 +10,15 @@
 
 static int err;
 State serial_buffer;
-region *unused_head;
-region *free_head;
+region low_region;
+region high_region;
+region free_head;
 
 
 void kmain()
 {
         int loop = 0;
+        low_region.start = NULL;
         ps2_init();
         kbd_init();
         if((err=irq_init()) < 0)

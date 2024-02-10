@@ -50,8 +50,8 @@ typedef struct
 
 typedef struct
 {
-        void *start,*end;
-        void *next;
+        uint8_t *start,*end;
+        uint8_t *next;
 }region;
 
 void *memset(void *dst, int c, size_t n);
