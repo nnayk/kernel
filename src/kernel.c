@@ -36,6 +36,7 @@ void kmain()
         }
         */
         mem_setup();
+        pf_alloc_simple_test();
         while(!loop);
         printk("a");
 }
