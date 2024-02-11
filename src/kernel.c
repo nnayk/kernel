@@ -19,7 +19,7 @@ void kmain()
 {
         int loop = 0;
         low_region.start = NULL;
-        free_head = NULL;
+        free_head = 0xFFFFFFFFFFFFFFFF;
         ps2_init();
         kbd_init();
         if((err=irq_init()) < 0)

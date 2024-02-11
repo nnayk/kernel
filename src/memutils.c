@@ -181,6 +181,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         return SUCCESS;
 }
 
+// allocates an entire physical frame
 void *pf_alloc()
 {
         void *pg_start = NULL;
@@ -196,14 +197,31 @@ void *pf_alloc()
             high_region.curr += PAGE_SIZE;
         }
         // check free list
-        else if(free_head)
+        else if(free_head != 0xFFFFFFFFFFFFFFFF)
         {
                 pg_start = free_head;
                 /* TODO: properly update free head to point to next free frame */
+                memcpy(&free_head,free_head,sizeof(void *));
         }
         return pg_start;
 }
 
+// frees an entire physical frame
+int pf_free(void *frame_start)
+{
+        // enqueue the new frame to the free list
+        if(free_head != 0xFFFFFFFFFFFFFFFF)
+        {
+                free_head = frame_start;
+                memset(free_head,0xFF,sizeof(void *);
+        }
+        else
+        {
+                memcpy(frame_start,&free_head,sizeof(void *));
+                free_head = frame_start;
+        }
+        return SUCCESS;
+}
 void pf_alloc_simple_test()
 {
         void *page;
