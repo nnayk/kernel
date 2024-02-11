@@ -209,6 +209,11 @@ void print_long_hex(unsigned long l)
         int index = 0;
         unsigned char temp;
         print_str(HEX_PREFIX);
+        if(l == 0)
+        {
+                print_digits(digits,0,l);
+                return;
+        }
         while(l)
         {
                 temp = (l%HEX_BASE);
