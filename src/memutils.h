@@ -65,4 +65,5 @@ int setup_unused(memtag_hdr_t,elftag_hdr_t);
 void pf_simple_test();
 int pf_free(void *);
 void pf_nonseq_test();
-
+int pf_stress_test();
+int are_pages_equal(const void *, const void *);

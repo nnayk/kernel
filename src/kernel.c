@@ -36,8 +36,9 @@ void kmain()
         }
         */
         mem_setup();
-        pf_simple_test();
-        pf_nonseq_test();
+        //pf_simple_test();
+        //pf_nonseq_test();
+        pf_stress_test();
         while(!loop);
         printk("a");
 }

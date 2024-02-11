@@ -25,8 +25,10 @@ extern region low_region;
 extern region high_region;
 extern void *free_head;
 extern uint8_t *multiboot_start;
-static int err;
-static uint32_t num_frames; // total number of physical frames
+static uint64_t err;
+static uint32_t num_frames_total; // total number of physical frames
+static uint32_t num_frames_low; // number of physical frames in low region
+static uint32_t num_frames_high; // number of physical frames in high region
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -58,7 +60,7 @@ int mem_setup()
                 return err;
         if((err = setup_unused(mmap_data,elf_data)) < 0)
         {
-                printk("error = %d\n",err);
+                printk("error = %ld\n",err);
                 return err;
         }
         return SUCCESS;
@@ -144,8 +146,9 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                                 low_region.start = mementry.start_addr;
                                 low_region.curr = low_region.start;
                                 low_region.end = mementry.start_addr+mementry.size; //exclusive end address
-                                num_frames = mementry.size/PAGE_SIZE;
-                                if(DBUG) printk("Number of frames in low = %d\n",num_frames);
+                                num_frames_low = mementry.size/PAGE_SIZE;
+                                num_frames_total = num_frames_low;
+                                if(DBUG) printk("Number of frames in low = %d\n",num_frames_total);
                         }
                         else
                         {
@@ -153,8 +156,9 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                                 high_region.curr = high_region.start;
                                 high_region.end = mementry.start_addr+mementry.size;
                                 low_region.next = high_region.start;
-                                num_frames += mementry.size/PAGE_SIZE;
-                                if(DBUG) printk("number of frames in total = %d\n",num_frames);
+                                num_frames_high = mementry.size/PAGE_SIZE;
+                                num_frames_total += num_frames_high;
+                                if(DBUG) printk("number of frames in total = %d\n",num_frames_total);
                         }
                 }
                 mem_addr += mmaphdr.entry_size;
@@ -185,7 +189,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
 // allocates an entire physical frame
 void *pf_alloc()
 {
-        void *pg_start = NULL;
+        void *pg_start = INVALID_START_ADDR;
         // check free list
         if(free_head != INVALID_START_ADDR)
         {
@@ -201,6 +205,7 @@ void *pf_alloc()
         }
         else if((high_region.curr + PAGE_SIZE < high_region.end))
         {
+            printk("page_start=%p\n",pg_start);
             pg_start = high_region.curr;
             high_region.curr += PAGE_SIZE;
         }
@@ -290,4 +295,80 @@ void pf_nonseq_test()
         printk("%p\n",high_region.start);
         */
         return;
+}
+
+int pf_stress_test()
+{
+        printk("num_frames_low = %d,num_frames_high = %d\n",num_frames_low,num_frames_high);
+        uint8_t bitmap[PAGE_SIZE];
+        void *page_start;
+        void *region_start = low_region.start;
+        for(int i = 0; i<num_frames_total;i++)
+        {
+                page_start = pf_alloc();
+                if(DBUG) printk("page_start %d = %p\n",i+1,page_start); 
+                for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
+                {
+                        if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
+                        {
+                                printk("pf_stress_test: memcpy error\n");
+                                return err;
+                        }
+                }
+                /* write the bit pattern to the page */
+                        if((err=(uint64_t)memcpy(page_start,bitmap,PAGE_SIZE)) < 0)
+                        {
+                                printk("pf_stress_test: memcpy error\n");
+                                return err;
+                        }
+        }
+
+        /* try to allocate more frames than are available in RAM */
+        if(pf_alloc() != INVALID_START_ADDR)
+        {
+                printk("pf_stress_test: Error with overallocation\n");
+        }
+        for(int j=0;j<2;j++)
+        {
+        /* validate all frames in low region */
+        for(int i=0;i<num_frames_low;i++)
+        {
+            page_start = region_start + i*PAGE_SIZE;
+                for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
+                {
+                        if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
+                        {
+                                printk("pf_stress_test: memcpy error\n");
+                                return err;
+                        }
+                }
+           if(!are_pages_equal(page_start,bitmap))
+           {
+                   printk("pf_stress_test: validation error for page %d: %p\n",i+1,page_start);
+                   return -1;
+           }
+           else printk("pf_stress_test: SUCCESS for page %d, %p\n",i+1,page_start);
+        }
+        region_start = high_region.start;
+        }
+
+        /* validate all frames in high region */
+
+        return SUCCESS;
+}
+
+int are_pages_equal(const void *ptr1, const void *ptr2) {
+    const unsigned char *byte_ptr1 = ptr1;
+    const unsigned char *byte_ptr2 = ptr2;
+
+    for (size_t i = 0; i < PAGE_SIZE; ++i) {
+        if (byte_ptr1[i] != byte_ptr2[i]) {
+            if(DBUG)
+            {
+                    printk("bytes %ld differ: for ptr1 = %d,ptr2=%d\n",i,byte_ptr1[i],byte_ptr2[i]);
+            }
+            return 0; // Not equal
+        }
+    }
+    return 1; // Equal
 }
