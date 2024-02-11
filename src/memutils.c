@@ -25,6 +25,7 @@ extern region high_region;
 extern void *free_head;
 extern uint8_t *multiboot_start;
 static int err;
+static uint32_t num_frames; // total number of physical frames
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -119,6 +120,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         int num_elf_entries = elfhdr.entry_count;
         uint8_t *mem_addr = mmaphdr.entry_start;
         uint8_t *elf_addr = elfhdr.entry_start;
+        uint8_t low_region_set = 0; // need to use this var. b/c low region starts at 0x0
         memtag_entry_t mementry;
         elf_entry_t elfentry;
         printk("inside setup_unused\n");
@@ -135,11 +137,14 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
-                        if(!low_region.start)
+                        if(!low_region_set)
                         {
+                                low_region_set = 1;
                                 low_region.start = mementry.start_addr;
                                 low_region.curr = low_region.start;
                                 low_region.end = mementry.start_addr+mementry.size; //exclusive end address
+                                num_frames = mementry.size/PAGE_SIZE;
+                                if(DBUG) printk("Number of frames in low = %d\n",num_frames);
                         }
                         else
                         {
@@ -147,6 +152,8 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                                 high_region.curr = high_region.start;
                                 high_region.end = mementry.start_addr+mementry.size;
                                 low_region.next = high_region.start;
+                                num_frames += mementry.size/PAGE_SIZE;
+                                if(DBUG) printk("number of frames in total = %d\n",num_frames);
                         }
                 }
                 mem_addr += mmaphdr.entry_size;
@@ -195,4 +202,10 @@ void *pf_alloc()
                 /* TODO: properly update free head to point to next free frame */
         }
         return pg_start;
+}
+
+void pf_alloc_simple_test()
+{
+        
+        return;
 }

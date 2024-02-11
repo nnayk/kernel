@@ -63,3 +63,5 @@ int mem_setup();
 int track_unused(memtag_hdr_t *,elftag_hdr_t *);
 int setup_unused(memtag_hdr_t,elftag_hdr_t);
 
+void pf_alloc_simple_test();
+
