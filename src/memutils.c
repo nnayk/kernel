@@ -22,6 +22,7 @@
 //extern region unused_head;
 //extern region free_head;
 extern region low_region;
+extern region elf_region;
 extern region high_region;
 extern void *free_head;
 extern uint8_t *multiboot_start;
@@ -91,7 +92,7 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
                      addr = multiboot_start+curr_off;
              }
              memcpy(&temp,addr,sizeof(tag_hdr));
-             if(DBUG) printk("type = %d\n,size=%d\n",temp.type,temp.size);
+             if(DBUG) printk("type = %d\n,size=%hx\n",temp.type,temp.size);
              if(temp.type == MMAP_TAG)
              {
                      printk("addr arrays = %p\n",addr+16);
@@ -102,6 +103,7 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
              }
              else if(temp.type == ELF_TAG)
              {
+                     printk("entry 1: type = %d, seg. addr = %p\n",*(uint32_t *)(addr+24),addr+36);
                      if((err=(uint64_t)memcpy(elfhdr,addr,sizeof(elftag_hdr_t))) < 0)
                              return err;
                      elfhdr->entry_start = addr+SEC_INFO_OFF;
@@ -137,7 +139,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         for(int i=0;i<num_mem_entries;i++)
         {
                 memcpy(&mementry,mem_addr,mmaphdr.entry_size);
-                if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)mementry.start_addr,mementry.size,mementry.type);
+                if(DBUG) printk("mem entry %d: start_addr = %p,size=%lx,type=%d\n",i,mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
                         if(!low_region_set)
@@ -166,15 +168,15 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         for(int i=0;i<num_elf_entries;i++)
         {
                 memcpy(&elfentry,elf_addr,elfhdr.entry_size);
-                if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)elfentry.seg_addr,elfentry.seg_size,elfentry.type);
+                if(DBUG) printk("elf entry %d: start_addr = %p,size=%lx,type=%d\n",i,elfentry.seg_addr,elfentry.seg_size,elfentry.type);
                 if(elfentry.seg_size)
                 {
+                    // mark the start of the kernel code region
+                    if(i==0)
+                            elf_region.start = elfentry.seg_addr;
                     printk("Found the kernel code!\n");
                     if(DBUG)
                     {
-                            // check no low region overlap
-                            if(low_region.start < elfentry.seg_addr && low_region.start < elfentry.seg_addr)
-                                    printk("No overlap for low region\n");
                             // check no high region overlap
                             if(high_region.start < elfentry.seg_addr && high_region.start < elfentry.seg_addr)
                                     printk("No overlap for high region\n");
@@ -182,7 +184,29 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 }
                 elf_addr += elfhdr.entry_size;
         }
+        
+        elf_region.end = elfentry.seg_addr;
 #endif
+        // handle the memory and elf overlap
+        // check no low region overlap
+        if(low_region.start < elf_region.start && low_region.start < elf_region.end)
+        {
+                printk("No low region overlap!\n");
+        }
+        else
+        {
+                printk("There IS low region overlap!\n");
+        }
+        // check no high region overlap
+        if(high_region.start < elf_region.start && high_region.start < elf_region.end)
+        {
+                printk("No high region overlap!\n");
+        }
+        else
+        {
+                printk("There IS high region overlap!\n");
+                /* setup the mid region here */
+        }
         return SUCCESS;
 }
 
@@ -205,7 +229,7 @@ void *pf_alloc()
         }
         else if((high_region.curr + PAGE_SIZE < high_region.end))
         {
-            printk("page_start=%p\n",pg_start);
+            //printk("page_start=%p\n",pg_start);
             pg_start = high_region.curr;
             high_region.curr += PAGE_SIZE;
         }
@@ -299,14 +323,20 @@ void pf_nonseq_test()
 
 int pf_stress_test()
 {
+        printk("size = %ld\n",sizeof(elf_entry_t));
         printk("num_frames_low = %d,num_frames_high = %d\n",num_frames_low,num_frames_high);
         uint8_t bitmap[PAGE_SIZE];
         void *page_start;
         void *region_start = low_region.start;
         for(int i = 0; i<num_frames_total;i++)
         {
+                if(i==160)
+                {
+                        int loop=0;
+                        while(!loop);
+                }
                 page_start = pf_alloc();
-                if(DBUG) printk("page_start %d = %p\n",i+1,page_start); 
+                printk("page_start %d = %p\n",i+1,page_start); 
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
                         if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
@@ -322,7 +352,7 @@ int pf_stress_test()
                                 return err;
                         }
         }
-
+        if(DBUG) printk("done writing bit patterns\n");
         /* try to allocate more frames than are available in RAM */
         if(pf_alloc() != INVALID_START_ADDR)
         {
@@ -349,6 +379,7 @@ int pf_stress_test()
            }
            else printk("pf_stress_test: SUCCESS for page %d, %p\n",i+1,page_start);
         }
+        printk("low region validation complete!\n");
         region_start = high_region.start;
         }
 

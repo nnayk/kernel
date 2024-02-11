@@ -38,7 +38,7 @@ typedef struct
 // only seg_addr and seg_size will be used
 typedef struct
 {
-        uint32_t *section_name; //unused
+        uint32_t section_name; //unused
         uint32_t type;
         uint64_t flags;
         uint8_t *seg_addr;

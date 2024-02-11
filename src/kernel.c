@@ -11,6 +11,7 @@
 static int err;
 State serial_buffer;
 region low_region;
+region elf_region;
 region high_region;
 void *free_head;
 
@@ -18,7 +19,8 @@ void *free_head;
 void kmain()
 {
         int loop = 0;
-        low_region.start = NULL;
+        low_region.start = INVALID_START_ADDR;
+       elf_region.start = INVALID_START_ADDR;
         free_head = INVALID_START_ADDR;
         ps2_init();
         kbd_init();
@@ -38,6 +40,7 @@ void kmain()
         mem_setup();
         //pf_simple_test();
         //pf_nonseq_test();
+        printk("VGA_display_str addr = %p\n",VGA_display_str);
         pf_stress_test();
         while(!loop);
         printk("a");
