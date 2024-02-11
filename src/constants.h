@@ -28,3 +28,4 @@
 
 #define PG_SIZE 4096
 #define STACK_SIZE 4096
+#define INVALID_START_ADDR (void *)(0xFFFFFFFFFFFFFFFF)

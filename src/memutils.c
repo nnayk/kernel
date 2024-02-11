@@ -9,6 +9,7 @@
 #include "error.h"
 #include "memutils.h"
 #include "print.h"
+#include "constants.h"
 
 #define LIMIT 5000
 #define MMAP_TAG 6
@@ -185,8 +186,15 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
 void *pf_alloc()
 {
         void *pg_start = NULL;
+        // check free list
+        if(free_head != INVALID_START_ADDR)
+        {
+                pg_start = free_head;
+                /* TODO: properly update free head to point to next free frame */
+                memcpy(&free_head,pg_start,sizeof(void *));
+        }
         // check unused regions list
-        if((low_region.curr + PAGE_SIZE < low_region.end))
+        else if((low_region.curr + PAGE_SIZE < low_region.end))
         {
             pg_start = low_region.curr;
             low_region.curr += PAGE_SIZE;
@@ -196,13 +204,6 @@ void *pf_alloc()
             pg_start = high_region.curr;
             high_region.curr += PAGE_SIZE;
         }
-        // check free list
-        else if(free_head != 0xFFFFFFFFFFFFFFFF)
-        {
-                pg_start = free_head;
-                /* TODO: properly update free head to point to next free frame */
-                memcpy(&free_head,free_head,sizeof(void *));
-        }
         return pg_start;
 }
 
@@ -210,30 +211,83 @@ void *pf_alloc()
 int pf_free(void *frame_start)
 {
         // enqueue the new frame to the free list
-        if(free_head != 0xFFFFFFFFFFFFFFFF)
+        if(free_head == INVALID_START_ADDR)
         {
+                if(DBUG) printk("First free!\n");
                 free_head = frame_start;
-                memset(free_head,0xFF,sizeof(void *);
+                memset(free_head,0xFF,sizeof(void *));
         }
         else
         {
                 memcpy(frame_start,&free_head,sizeof(void *));
                 free_head = frame_start;
         }
+        if(DBUG) printk("pf_free: old head = %lx,new_head = %p\n",*(uint64_t *)free_head,free_head);
         return SUCCESS;
 }
-void pf_alloc_simple_test()
+void pf_simple_test()
 {
-        void *page;
-        for(int i = 0;i<160;i++)
+        #define COUNT 10
+        void *pages[COUNT];
+        printk("pf_simple_test:\n");
+        for(int i = 0;i<COUNT;i++)
         {
-                page = pf_alloc();
-                printk("page addr = %p\n",page);
-                if(!((i+1)%1000))
+                pages[i] = pf_alloc();
+                printk("Alloc %d: page addr = %p\n",i+1,pages[i]);
+                /*
+                if(!((i+1)%COUNT00))
                         printk("Allocated 1k, %d in total so far\n",i+1);
+                        */
         }
+        
+        for(int i = 0;i<COUNT;i++)
+        {
+                pf_free(pages[i]);
+        }
+
+        /*
         printk("%p\n",page);
         printk("%p\n",low_region.start+158*PAGE_SIZE);
         printk("%p\n",high_region.start);
+        */
+        return;
+}
+
+void pf_nonseq_test()
+{
+        #define COUNT 10
+        void *pages[COUNT];
+        printk("pf_nonseq_test:\n");
+        printk("free_head = %p\n",free_head);
+        for(int i = 0;i<COUNT;i++)
+        {
+                pages[i] = pf_alloc();
+                printk("Alloc %d: page addr = %p\n",i+1,pages[i]);
+                /*
+                if(!((i+1)%COUNT00))
+                        printk("Allocated 1k, %d in total so far\n",i+1);
+                        */
+        }
+        
+        for(int i = 1;i<COUNT;i+=2)
+        {
+                pf_free(pages[i]);
+        }
+        return; 
+        for(int i = 0;i<COUNT;i++)
+        {
+                pages[i] = pf_alloc();
+                printk("Alloc %d: page addr = %p\n",i+1,pages[i]);
+                /*
+                if(!((i+1)%COUNT00))
+                        printk("Allocated 1k, %d in total so far\n",i+1);
+                        */
+        }
+
+        /*
+        printk("%p\n",page);
+        printk("%p\n",low_region.start+158*PAGE_SIZE);
+        printk("%p\n",high_region.start);
+        */
         return;
 }

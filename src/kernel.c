@@ -19,7 +19,7 @@ void kmain()
 {
         int loop = 0;
         low_region.start = NULL;
-        free_head = 0xFFFFFFFFFFFFFFFF;
+        free_head = INVALID_START_ADDR;
         ps2_init();
         kbd_init();
         if((err=irq_init()) < 0)
@@ -36,10 +36,8 @@ void kmain()
         }
         */
         mem_setup();
-        pf_alloc_simple_test();
+        pf_simple_test();
+        pf_nonseq_test();
         while(!loop);
         printk("a");
 }
-
-
-
