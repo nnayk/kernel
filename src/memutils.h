@@ -1,3 +1,5 @@
+#define PAGE_SIZE 4096
+
 // generic tag header
 typedef struct
 {
@@ -50,8 +52,9 @@ typedef struct
 
 typedef struct
 {
-        uint8_t *start,*end;
-        uint8_t *next;
+        uint8_t *start,*end; // starting and (exclusive) ending addrs of the region
+        uint8_t *curr; // current frame offset in the region
+        uint8_t *next; // points to next mmap region
 }region;
 
 void *memset(void *dst, int c, size_t n);

@@ -22,7 +22,7 @@
 //extern region free_head;
 extern region low_region;
 extern region high_region;
-extern region free_region;
+extern void *free_head;
 extern uint8_t *multiboot_start;
 static int err;
 
@@ -102,6 +102,10 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
                              return err;
                      elfhdr->entry_start = addr+SEC_INFO_OFF;
              }
+             else if(temp.type == 4)
+        {
+                printk("low mem size = %d, high mem size = %d\n",(uint32_t)*(addr+8),(uint32_t)*(addr+12));
+        }
 
              curr_off += temp.size;
         }
@@ -131,16 +135,18 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(DBUG) printk("entry %d: start_addr = %ld,size=%ld,type=%d\n",i,(uint64_t)mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
-                        if(!high_region.start)
+                        if(!low_region.start)
                         {
-                                high_region.start = mementry.start_addr;
-                                high_region.end = mementry.start_addr+mementry.size; //exclusive end address
+                                low_region.start = mementry.start_addr;
+                                low_region.curr = low_region.start;
+                                low_region.end = mementry.start_addr+mementry.size; //exclusive end address
                         }
                         else
                         {
                                 high_region.start = mementry.start_addr;
+                                high_region.curr = high_region.start;
                                 high_region.end = mementry.start_addr+mementry.size;
-                                high_region.next = high_region.start;
+                                low_region.next = high_region.start;
                         }
                 }
                 mem_addr += mmaphdr.entry_size;
@@ -166,4 +172,27 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         }
 #endif
         return SUCCESS;
+}
+
+void *pf_alloc()
+{
+        void *pg_start = NULL;
+        // check unused regions list
+        if((low_region.curr + PAGE_SIZE < low_region.end))
+        {
+            pg_start = low_region.curr;
+            low_region.curr += PAGE_SIZE;
+        }
+        else if((high_region.curr + PAGE_SIZE < high_region.end))
+        {
+            pg_start = high_region.curr;
+            high_region.curr += PAGE_SIZE;
+        }
+        // check free list
+        else if(free_head)
+        {
+                pg_start = free_head;
+                /* TODO: properly update free head to point to next free frame */
+        }
+        return pg_start;
 }
