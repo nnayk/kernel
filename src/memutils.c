@@ -206,6 +206,16 @@ void *pf_alloc()
 
 void pf_alloc_simple_test()
 {
-        
+        void *page;
+        for(int i = 0;i<160;i++)
+        {
+                page = pf_alloc();
+                printk("page addr = %p\n",page);
+                if(!((i+1)%1000))
+                        printk("Allocated 1k, %d in total so far\n",i+1);
+        }
+        printk("%p\n",page);
+        printk("%p\n",low_region.start+158*PAGE_SIZE);
+        printk("%p\n",high_region.start);
         return;
 }
