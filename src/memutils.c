@@ -206,6 +206,12 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         {
                 printk("There IS high region overlap!\n");
                 high_region.start = page_align_up(elf_region.end);
+                high_region.curr = high_region.start;
+                num_frames_total -= num_frames_high;
+                num_frames_high = (high_region.end-high_region.start)/PAGE_SIZE;
+                num_frames_total += num_frames_high;
+                printk("new num_frames_high = %d, num_frames_total = %d\n",num_frames_high,num_frames_total);
+                
         }
         high_region.next = INVALID_START_ADDR;
         if(DBUG)
@@ -239,7 +245,7 @@ void *pf_alloc()
             pg_start = low_region.curr;
             low_region.curr += PAGE_SIZE;
         }
-        else if((high_region.curr + PAGE_SIZE < high_region.end))
+        else if((high_region.curr < high_region.end))
         {
             //printk("page_start=%p\n",pg_start);
             pg_start = high_region.curr;
