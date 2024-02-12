@@ -50,12 +50,13 @@ typedef struct
         uint64_t fixed_entry_size;
 }__attribute__((packed)) elf_entry_t;
 
-typedef struct
+struct region
 {
         uint8_t *start,*end; // starting and (exclusive) ending addrs of the region
-        uint8_t *curr; // current frame offset in the region
-        uint8_t *next; // points to next mmap region
-}region;
+        uint8_t *curr; // current frame address in the region
+        struct region *next; // points to next mmap region
+};
+typedef struct region region;
 
 void *memset(void *dst, int c, size_t n);
 void *memcpy(void *dest, const void *src, size_t n);
@@ -67,3 +68,4 @@ int pf_free(void *);
 void pf_nonseq_test();
 int pf_stress_test();
 int are_pages_equal(const void *, const void *);
+void *page_align_up(void *);

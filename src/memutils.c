@@ -157,7 +157,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                                 high_region.start = mementry.start_addr;
                                 high_region.curr = high_region.start;
                                 high_region.end = mementry.start_addr+mementry.size;
-                                low_region.next = high_region.start;
+                                low_region.next = &high_region;
                                 num_frames_high = mementry.size/PAGE_SIZE;
                                 num_frames_total += num_frames_high;
                                 if(DBUG) printk("number of frames in total = %d\n",num_frames_total);
@@ -178,14 +178,14 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                     if(DBUG)
                     {
                             // check no high region overlap
-                            if(high_region.start < elfentry.seg_addr && high_region.start < elfentry.seg_addr)
+                            if(high_region.start < elfentry.seg_addr && high_region.end < elfentry.seg_addr)
                                     printk("No overlap for high region\n");
                     }
                 }
                 elf_addr += elfhdr.entry_size;
         }
         
-        elf_region.end = elfentry.seg_addr;
+        elf_region.end = elfentry.seg_addr+elfentry.seg_size;
 #endif
         // handle the memory and elf overlap
         // check no low region overlap
@@ -198,15 +198,27 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 printk("There IS low region overlap!\n");
         }
         // check no high region overlap
-        if(high_region.start < elf_region.start && high_region.start < elf_region.end)
+        if(high_region.start < elf_region.start && high_region.end < elf_region.end)
         {
                 printk("No high region overlap!\n");
         }
         else
         {
                 printk("There IS high region overlap!\n");
-                /* setup the mid region here */
+                high_region.start = page_align_up(elf_region.end);
         }
+        high_region.next = INVALID_START_ADDR;
+        if(DBUG)
+        {
+            region *temp = &low_region;
+            printk("temp.start = %p\n",temp->start);
+            while(temp != INVALID_START_ADDR)
+            {
+                printk("start = %p, end = %p\n",temp->start,temp->end);
+                temp = temp->next;
+            }
+        }
+
         return SUCCESS;
 }
 
@@ -328,13 +340,16 @@ int pf_stress_test()
         uint8_t bitmap[PAGE_SIZE];
         void *page_start;
         void *region_start = low_region.start;
+        int num_frames = num_frames_low; // for validation purposes
         for(int i = 0; i<num_frames_total;i++)
         {
+               /*
                 if(i==160)
                 {
                         int loop=0;
                         while(!loop);
                 }
+                */
                 page_start = pf_alloc();
                 printk("page_start %d = %p\n",i+1,page_start); 
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
@@ -361,9 +376,9 @@ int pf_stress_test()
         for(int j=0;j<2;j++)
         {
         /* validate all frames in low region */
-        for(int i=0;i<num_frames_low;i++)
+        for(int i=0;i<num_frames;i++)
         {
-            page_start = region_start + i*PAGE_SIZE;
+                page_start = region_start + i*PAGE_SIZE;
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
                         if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
@@ -381,10 +396,11 @@ int pf_stress_test()
         }
         printk("low region validation complete!\n");
         region_start = high_region.start;
+        num_frames = num_frames_high;
         }
 
+        printk("high region validation complete!\n");
         /* validate all frames in high region */
-
         return SUCCESS;
 }
 
@@ -402,4 +418,14 @@ int are_pages_equal(const void *ptr1, const void *ptr2) {
         }
     }
     return 1; // Equal
+}
+
+void *page_align_up(void *addr)
+{
+        uint64_t remainder;
+        if((remainder = (uint64_t)addr % PAGE_SIZE)) 
+        {
+                addr += PAGE_SIZE - remainder;
+        }
+        return addr;
 }

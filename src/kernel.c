@@ -11,8 +11,8 @@
 static int err;
 State serial_buffer;
 region low_region;
-region elf_region;
 region high_region;
+region elf_region;
 void *free_head;
 
 
@@ -20,7 +20,7 @@ void kmain()
 {
         int loop = 0;
         low_region.start = INVALID_START_ADDR;
-       elf_region.start = INVALID_START_ADDR;
+        elf_region.start = INVALID_START_ADDR;
         free_head = INVALID_START_ADDR;
         ps2_init();
         kbd_init();
