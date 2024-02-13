@@ -139,7 +139,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         for(int i=0;i<num_mem_entries;i++)
         {
                 memcpy(&mementry,mem_addr,mmaphdr.entry_size);
-                if(DBUG) printk("mem entry %d: start_addr = %p,size=%lx,type=%d\n",i,mementry.start_addr,mementry.size,mementry.type);
+                if(DBUG) printk("mem entry %d: start_addr = %p,size=%ld,type=%d\n",i,mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
                         if(!low_region_set)
@@ -168,7 +168,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         for(int i=0;i<num_elf_entries;i++)
         {
                 memcpy(&elfentry,elf_addr,elfhdr.entry_size);
-                if(DBUG) printk("elf entry %d: start_addr = %p,size=%lx,type=%d\n",i,elfentry.seg_addr,elfentry.seg_size,elfentry.type);
+                if(DBUG) printk("elf entry %d: start_addr = %p,size=%ld,type=%d\n",i,elfentry.seg_addr,elfentry.seg_size,elfentry.type);
                 if(elfentry.seg_size)
                 {
                     // mark the start of the kernel code region
@@ -204,23 +204,23 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         }
         else
         {
-                printk("There IS high region overlap!\n");
+                if(DBUG) printk("There IS high region overlap!\n");
                 high_region.start = page_align_up(elf_region.end);
                 high_region.curr = high_region.start;
                 num_frames_total -= num_frames_high;
                 num_frames_high = (high_region.end-high_region.start)/PAGE_SIZE;
                 num_frames_total += num_frames_high;
-                printk("new num_frames_high = %d, num_frames_total = %d\n",num_frames_high,num_frames_total);
+                if(DBUG) printk("new num_frames_high = %d, num_frames_total = %d\n",num_frames_high,num_frames_total);
                 
         }
         high_region.next = INVALID_START_ADDR;
         if(DBUG)
         {
             region *temp = &low_region;
-            printk("temp.start = %p\n",temp->start);
+            if(DBUG) printk("temp.start = %p\n",temp->start);
             while(temp != INVALID_START_ADDR)
             {
-                printk("start = %p, end = %p\n",temp->start,temp->end);
+                if(DBUG) printk("start = %p, end = %p\n",temp->start,temp->end);
                 temp = temp->next;
             }
         }
@@ -341,7 +341,6 @@ void pf_nonseq_test()
 
 int pf_stress_test()
 {
-        printk("size = %ld\n",sizeof(elf_entry_t));
         printk("num_frames_low = %d,num_frames_high = %d\n",num_frames_low,num_frames_high);
         uint8_t bitmap[PAGE_SIZE];
         void *page_start;
@@ -398,7 +397,7 @@ int pf_stress_test()
                    printk("pf_stress_test: validation error for page %d: %p\n",i+1,page_start);
                    return -1;
            }
-           else printk("pf_stress_test: SUCCESS for page %d, %p\n",i+1,page_start);
+           //else printk("pf_stress_test: SUCCESS for page %d, %p\n",i+1,page_start);
         }
         printk("low region validation complete!\n");
         region_start = high_region.start;
