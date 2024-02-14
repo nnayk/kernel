@@ -11,5 +11,7 @@
 #define ERR_SCROLL -4
 #define ERR_BUFF_EMPTY -5
 #define ERR_BUFF_FULL -6
+#define ERR_ABSENT_PTE -7
+#define ERR_NO_MEM -8
 
 #define SUCCESS 1

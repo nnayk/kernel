@@ -7,6 +7,7 @@
 #include "memutils.h"
 #include "serial.h"
 #include "shared_buff.h"
+#include "paging.h"
 
 static int err;
 State serial_buffer;
@@ -38,10 +39,14 @@ void kmain()
         }
         */
         mem_setup();
+        pf_alloc(); // ignore 0x0
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
-        pf_stress_test();
+        PTE_t temp;
+        temp.present=1;
+        allocate_pte(&temp);
+        //pf_stress_test();
         while(!loop);
         printk("a");
 }

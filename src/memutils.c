@@ -4,7 +4,6 @@
  * Description: Memory manipulation/access functions
 */
 
-#include <stddef.h>
 #include <stdint-gcc.h>
 #include "error.h"
 #include "memutils.h"
@@ -231,7 +230,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
 // allocates an entire physical frame
 void *pf_alloc()
 {
-        void *pg_start = INVALID_START_ADDR;
+        void *pg_start = NULL;
         // check free list
         if(free_head != INVALID_START_ADDR)
         {

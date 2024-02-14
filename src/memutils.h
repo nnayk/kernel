@@ -1,5 +1,6 @@
 #define PAGE_SIZE 4096
 
+#include <stddef.h>
 // generic tag header
 typedef struct
 {
@@ -63,6 +64,7 @@ void *memcpy(void *dest, const void *src, size_t n);
 int mem_setup();
 int track_unused(memtag_hdr_t *,elftag_hdr_t *);
 int setup_unused(memtag_hdr_t,elftag_hdr_t);
+void *pf_alloc();
 void pf_simple_test();
 int pf_free(void *);
 void pf_nonseq_test();
