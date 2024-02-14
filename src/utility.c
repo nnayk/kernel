@@ -99,6 +99,12 @@ char mapScanCodeToAscii(int scanCode) {
     return 0;
 }
 
+void *get_cr3() {
+    uint64_t cr3;
+    asm volatile("mov %%cr3, %0" : "=r" (cr3));
+    return (void *)cr3;
+}
+
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);

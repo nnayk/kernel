@@ -37,4 +37,6 @@ typedef enum {
     FOUR
 } PT_Level;
 
-int allocate_pte(PTE_t *);
+// Allocates a new frame and sets the given
+// entry to point to this frame
+int alloc_pte(PTE_t *,int);
