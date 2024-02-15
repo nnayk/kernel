@@ -114,6 +114,11 @@ void set_cr3(uint64_t addr)
     );        
 }
 
+void dbug_hlt(int dbug_flag)
+{
+        if(dbug_flag) hlt();
+}
+
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);

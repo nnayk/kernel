@@ -16,6 +16,7 @@
 #define NEXT_PTE_ABSENT 0
 #define ALLOCED 1
 #define NOT_ALLOCED 0
+#define PTE_WRITABLE 1
 #define DBUG 1
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
@@ -68,8 +69,12 @@ void *va_to_pa(void *va,PT_op op)
         // p4 table frame must be setup already,else terminate
         if((err=valid_phys_addr(p4_addr)) < 0)
         {
-                printk("va_to_pa (%d): p4 entry not present!\n",err);
-                hlt();
+                if(DBUG)
+                {
+                        printk("va_to_pa (%d): p4 entry not present!\n",err);
+                        hlt();
+                }
+                return NULL;
         }
         // get pt4 entry
         entry = (PTE_t *)get_full_addr(p4_addr,virt_addr->p4_index);
@@ -79,32 +84,44 @@ void *va_to_pa(void *va,PT_op op)
         {
                 if((op == GET_PA) || (op == GET_P1))
                 {
-                    printk("va_to_pa: P3 entry not set for type %d operation\n",op);
-                    return PTE_NOT_SET; 
+                    if(DBUG)
+                    {
+                            printk("va_to_pa: P3 entry not set for type %d operation\n",op);
+                            hlt();
+                    }
+                    return NULL;
                 }
                 else alloc_pte(entry,0);
         }
         
-        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p3_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr->p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
                 if((op == GET_PA) || (op == GET_P1))
                 {
-                    printk("va_to_pa: P2 entry not set for type %d operation\n",op);
-                    return PTE_NOT_SET; 
+                    if(DBUG)
+                    {
+                        printk("va_to_pa: P2 entry not set for type %d operation\n",op);
+                    }
+
+                    return NULL;
                 }
                 else alloc_pte(entry,0);
         }
-        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p2_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr->p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
         {
                 if((op == GET_PA) || (op == GET_P1))
                 {
-                    printk("va_to_pa: P1 entry not set for type %d operation\n",op);
-                    return PTE_NOT_SET; 
+                    if(DBUG)
+                    {
+                        printk("va_to_pa: P1 entry not set for type %d operation\n",op);
+                        hlt();
+                    }
+                    return NULL; 
                 }
                 else if(op == SET_P1) 
                 {
@@ -112,9 +129,9 @@ void *va_to_pa(void *va,PT_op op)
                         entry->alloced = ALLOCED;
                 }
         }
-        else if(op == GET_P1) return get_full_addr(entry->addr,virt_addr->p1_index);
+        else if(op == GET_P1) return get_full_addr(entry,virt_addr->p1_index);
         
-        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p1_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr->p1_index);
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
@@ -130,7 +147,7 @@ void *va_to_pa(void *va,PT_op op)
                 else 
                 {
                         alloc_pte(entry,0);
-                        phys_addr = LSHIFT_ADDR(entry->addr) + entry->frame_off;
+                        phys_addr = get_full_addr(entry,virt_addr->frame_off);
                 }
         }
 
@@ -151,10 +168,11 @@ void *setup_pt4()
     // set each entry in the pt4 frame
     for(int i = 0; i < num_pt_entries; i++)
     {
-        if(!memcpy(table_start + i,&entry,sizeof(PTE_t *)))
+        if(!memcpy(table_start + i,&entry,sizeof(PTE_t)))
         {
                 printk("setup_pt4: memcpy error");
-                return ERR_MEMCPY;
+                dbug_hlt(DBUG);
+                return NULL;
         }
     }
     set_cr3((uint64_t)table_start);
@@ -163,10 +181,11 @@ void *setup_pt4()
 
 void *get_full_addr(PTE_t *entry,uint16_t offset)
 {
-        if(!entry || !va)
+        if(!entry)
         {
                 printk("get_full_addr: %d\n",ERR_NULL_PTR);
-                return ERR_NULL_PTR;
+                dbug_hlt(DBUG);
+                return NULL;
         }
 
         return (void *)(LSHIFT_ADDR(entry->addr)+offset);
@@ -219,6 +238,7 @@ void *MMU_alloc_pages(int num)
     return first_page_addr;
 }
 
+#if 0
 void MMU_free_page(void *va)
 {
     PTE_t entry;
