@@ -29,7 +29,6 @@ static void *kstack; //points to topmost of kernel stack (equivalent to rsp for 
 extern region low_region;
 extern region high_region;
 
-int valid_phys_addr(void *);
 
 int alloc_pte(PTE_t *entry, int access)
 {
@@ -67,7 +66,7 @@ void *va_to_pa(void *va,PT_op op)
 
         p4_addr = get_p4_addr();
         // p4 table frame must be setup already,else terminate
-        if((err=valid_phys_addr(p4_addr)) < 0)
+        if((err=valid_pa(p4_addr)) < 0)
         {
                 if(DBUG)
                 {
@@ -191,7 +190,7 @@ void *get_full_addr(PTE_t *entry,uint16_t offset)
         return (void *)(LSHIFT_ADDR(entry->addr)+offset);
 }
 
-int valid_phys_addr(void *addr)
+int valid_pa(void *addr)
 {
     if (((low_region.start <= addr) && (addr < low_region.end)) && ((high_region.start <= addr) && (addr < high_region.end)))
     {
@@ -201,6 +200,13 @@ int valid_phys_addr(void *addr)
 
     return ERR_INVALID_ADDR;
 }
+
+int valid_va(void *addr)
+{
+    if(addr && (addr < VA_MAX)) return SUCCESS;
+    return ERR_INVALID_ADDR;
+}
+
 
 void *MMU_alloc_page()
 {
@@ -238,13 +244,30 @@ void *MMU_alloc_pages(int num)
     return first_page_addr;
 }
 
-#if 0
 void MMU_free_page(void *va)
 {
-    PTE_t entry;
-    if(!
+    PTE_t *p1_entry;
+    void *frame_start;
+    VA_t *virt_addr = (VA_t *)va;
+    if(!valid_va(va))
+    {
+            printk("MMU_free_page: Invalid VA %p\n",va);
+            return;
+    }
+
+    // mark the p1 entry as not present 
+    p1_entry = va_to_pa(va,GET_P1);
+    p1_entry->present = NEXT_PTE_ABSENT;
+    // free the underlying frame associated with the page
+    frame_start = get_full_addr(p1_entry,virt_addr->frame_off);
+    if((err = pf_free(frame_start) < 0))
+    {
+            printk("MMU_free_page (%d): pf_free() failed\n",err);
+            dbug_hlt(DBUG);
+    }
 }
 
+#if 0
 void MMU_free_pages(void *va_start, int count)
 {
 }

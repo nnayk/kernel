@@ -25,6 +25,7 @@
 #define GPF_INT_NO 0x0D
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
+#define VA_MAX (void *)0x110000000000 // max virtual address for any VA space
 
 #define PG_SIZE 4096
 #define STACK_SIZE 4096
