@@ -15,7 +15,7 @@ typedef struct
   uint64_t accessed:1;
   uint64_t ignore:3;
   uint64_t avl1:3;
-  uint64_t address:40;     
+  uint64_t addr:40;     
   uint64_t avl2:11;  
   uint64_t nx:1;
 } __attribute__((packed)) PTE_t;
@@ -40,3 +40,8 @@ typedef enum {
 // Allocates a new frame and sets the given
 // entry to point to this frame
 int alloc_pte(PTE_t *,int);
+void *va_to_pa(void *);
+void *MMU_alloc_page();
+void *MMU_alloc_pages(int);
+void MMU_free_page(void *);
+void MMU_free_pages(void *, int);
