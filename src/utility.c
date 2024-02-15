@@ -99,7 +99,7 @@ char mapScanCodeToAscii(int scanCode) {
     return 0;
 }
 
-void *get_cr3() {
+void *get_p4_addr() {
     uint64_t cr3;
     asm volatile("mov %%cr3, %0" : "=r" (cr3));
     return (void *)cr3;

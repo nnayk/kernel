@@ -45,7 +45,7 @@ void kmain()
         printk("VGA_display_str addr = %p\n",VGA_display_str);
         PTE_t temp;
         temp.present=1;
-        allocate_pte(&temp);
+        alloc_pte(&temp,1);
         //pf_stress_test();
         while(!loop);
         printk("a");

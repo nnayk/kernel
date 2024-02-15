@@ -23,3 +23,4 @@ void hlt();
 char mapScanCodeToAscii(int);
 void ltr(uint16_t);
 int are_interrupts_enabled();
+void *get_p4_addr();
