@@ -14,7 +14,7 @@ typedef struct
   uint64_t cache_disabled:1;
   uint64_t accessed:1;
   uint64_t ignore:3;
-  uint64_t avl1:3;
+  uint64_t alloced:3; // 1 if page has been allocated, 0 if not
   uint64_t addr:40;     
   uint64_t avl2:11;  
   uint64_t nx:1;
@@ -31,11 +31,12 @@ typedef struct
 } __attribute__((packed)) VA_t;
 
 typedef enum {
-    ONE,
-    TWO,
-    THREE,
-    FOUR
-} PT_Level;
+        GET_P1,
+        SET_P1,
+        GET_PA,
+        SET_PA, // don't enable user access
+        SET_PA_USER // enable user access
+}PT_op;
 
 // Allocates a new frame and sets the given
 // entry to point to this frame
@@ -44,4 +45,6 @@ void *va_to_pa(void *);
 void *MMU_alloc_page();
 void *MMU_alloc_pages(int);
 void MMU_free_page(void *);
-void MMU_free_pages(void *, int);
+void MMU_free_pages(void * int);
+void *setup_pt4();
+void *get_full_addr(PTE_t *,uint16_t);

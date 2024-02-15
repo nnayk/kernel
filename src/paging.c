@@ -14,12 +14,16 @@
 
 #define NEXT_PTE_PRESENT 1
 #define NEXT_PTE_ABSENT 0
+#define ALLOCED 1
+#define NOT_ALLOCED 0
 #define DBUG 1
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
 
-//static int num_pt_entries = PAGE_SIZE/sizeof(void *);
+static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
 static int err;
+static void *kheap; //points to top of kernel heap
+static void *kstack; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 
 extern region low_region;
 extern region high_region;
@@ -38,11 +42,7 @@ int alloc_pte(PTE_t *entry, int access)
     
     entry->present = NEXT_PTE_PRESENT;
     entry->user_access = access;
-    if(!(phys_addr = pf_alloc()))
-    {
-            printk("uh oh, phys = %p\n",phys_addr);
-            return ERR_NO_MEM;
-    }
+    phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
     printk("phys_addr = %p,entry->addr = %lx\n",
@@ -52,7 +52,7 @@ int alloc_pte(PTE_t *entry, int access)
 }
 
 // translates a virtual address to physical address
-void *va_to_pa(void *va)
+void *va_to_pa(void *va,PT_op op)
 {
         void *p4_addr; // address of page table level 4 for current thread
         void *phys_addr;
@@ -71,33 +71,50 @@ void *va_to_pa(void *va)
                 printk("va_to_pa (%d): p4 entry not present!\n",err);
                 hlt();
         }
-        entry = (PTE_t *)LSHIFT_ADDR(p4_addr+virt_addr->p4_index);
+        // get pt4 entry
+        entry = (PTE_t *)get_full_addr(p4_addr,virt_addr->p4_index);
 
         // get pt3 address and entry (set if not alloced yet)
         if(!entry->present)
         {
-                if(DBUG) printk("va_to_pa (%d): p3 entry not present!\n",err);
-                alloc_pte(entry,0);
+                if((op == GET_PA) || (op == GET_P1))
+                {
+                    printk("va_to_pa: P3 entry not set for type %d operation\n",op);
+                    return PTE_NOT_SET; 
+                }
+                else alloc_pte(entry,0);
         }
         
-        entry = (PTE_t *)LSHIFT_ADDR(entry->addr+virt_addr->p3_index);
+        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
-                if(DBUG) printk("va_to_pa (%d): p2 entry not present!\n",err);
-                alloc_pte(entry,0);
+                if((op == GET_PA) || (op == GET_P1))
+                {
+                    printk("va_to_pa: P2 entry not set for type %d operation\n",op);
+                    return PTE_NOT_SET; 
+                }
+                else alloc_pte(entry,0);
         }
-        
-        entry = (PTE_t *)LSHIFT_ADDR(entry->addr+virt_addr->p2_index);
+        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
         {
-                if(DBUG) printk("va_to_pa (%d): p1 entry not present!\n",err);
-                alloc_pte(entry,0);
+                if((op == GET_PA) || (op == GET_P1))
+                {
+                    printk("va_to_pa: P1 entry not set for type %d operation\n",op);
+                    return PTE_NOT_SET; 
+                }
+                else if(op == SET_P1) 
+                {
+                        alloc_pte(entry,0);                
+                        entry->alloced = ALLOCED;
+                }
         }
+        else if(op == GET_P1) return get_full_addr(entry->addr,virt_addr->p1_index);
         
-        entry = (PTE_t *)LSHIFT_ADDR(entry->addr+virt_addr->p1_index);
+        entry = (PTE_t *)get_full_addr(entry->addr,virt_addr->p1_index);
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
@@ -113,10 +130,46 @@ void *va_to_pa(void *va)
                 else 
                 {
                         alloc_pte(entry,0);
+                        phys_addr = LSHIFT_ADDR(entry->addr) + entry->frame_off;
                 }
         }
 
         return phys_addr;
+}
+
+// Allocates a frame for level 4 of PT, initializes it, and writes the addr to cr3
+void *setup_pt4()
+{
+    uint64_t *table_start = pf_alloc();
+    PTE_t entry;
+    entry.present = NEXT_PTE_ABSENT;
+    entry.writable = PTE_WRITABLE;
+    // disable TLB caching for now
+    entry.write_through = 1;
+    entry.cache_disabled = 1;
+    entry.nx = 1;
+    // set each entry in the pt4 frame
+    for(int i = 0; i < num_pt_entries; i++)
+    {
+        if(!memcpy(table_start + i,&entry,sizeof(PTE_t *)))
+        {
+                printk("setup_pt4: memcpy error");
+                return ERR_MEMCPY;
+        }
+    }
+    set_cr3((uint64_t)table_start);
+    return table_start;
+}
+
+void *get_full_addr(PTE_t *entry,uint16_t offset)
+{
+        if(!entry || !va)
+        {
+                printk("get_full_addr: %d\n",ERR_NULL_PTR);
+                return ERR_NULL_PTR;
+        }
+
+        return (void *)(LSHIFT_ADDR(entry->addr)+offset);
 }
 
 int valid_phys_addr(void *addr)
@@ -130,17 +183,46 @@ int valid_phys_addr(void *addr)
     return ERR_INVALID_ADDR;
 }
 
-#if 0
 void *MMU_alloc_page()
 {
+    void *addr; 
+    if(kheap > kstack)
+    {
+            if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
+            return NULL;
+    }
+    addr = kheap;
+    va_to_pa(kheap,SET_P1);
+    kheap += PAGE_SIZE;
+    return addr;
 }
 
+// Allocates consecutive pages
 void *MMU_alloc_pages(int num)
 {
+    void *first_page_addr;
+    if(!(first_page_addr = MMU_alloc_page()))
+    {
+            if(DBUG) printk("MMU_alloc_pages: MMU_alloc_page failed");
+            return NULL;
+    }
+
+    for(int i = 0; i < num - 1; i++)
+    {
+            if(!(MMU_alloc_page()))
+            {
+                    if(DBUG) printk("MMU_alloc_pages: MMU_alloc_page failed");
+                    return NULL;
+            }
+    }
+
+    return first_page_addr;
 }
 
 void MMU_free_page(void *va)
 {
+    PTE_t entry;
+    if(!
 }
 
 void MMU_free_pages(void *va_start, int count)

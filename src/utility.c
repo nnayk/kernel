@@ -105,6 +105,15 @@ void *get_p4_addr() {
     return (void *)cr3;
 }
 
+void set_cr3(uint64_t addr)
+{
+    asm volatile (
+        "mov %0, %%cr3\n"   // Move the value to CR3
+        :
+        : "r" (addr)   // Input operand: cr3_value
+    );        
+}
+
 #if 0
 int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);
