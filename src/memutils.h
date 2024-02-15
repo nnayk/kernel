@@ -24,8 +24,7 @@ typedef struct
         uint32_t entry_count;
         uint32_t entry_size;
         uint32_t str_table_index; // unused
-        uint8_t *entry_start;
-        
+        void *entry_start;
 }__attribute__((packed)) elftag_hdr_t;
 
 typedef struct
@@ -42,7 +41,7 @@ typedef struct
         uint32_t section_name; //unused
         uint32_t type;
         uint64_t flags;
-        uint8_t *seg_addr;
+        void *seg_addr;
         uint64_t seg_off;
         uint64_t seg_size;
         uint32_t table_index;
@@ -53,8 +52,8 @@ typedef struct
 
 struct region
 {
-        uint8_t *start,*end; // starting and (exclusive) ending addrs of the region
-        uint8_t *curr; // current frame address in the region
+        void *start,*end; // starting and (exclusive) ending addrs of the region
+        void *curr; // current frame address in the region
         struct region *next; // points to next mmap region
 };
 typedef struct region region;

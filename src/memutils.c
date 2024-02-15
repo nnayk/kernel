@@ -9,6 +9,7 @@
 #include "memutils.h"
 #include "print.h"
 #include "constants.h"
+#include "utility.h"
 
 #define LIMIT 5000
 #define MMAP_TAG 6
@@ -249,6 +250,14 @@ void *pf_alloc()
             //printk("page_start=%p\n",pg_start);
             pg_start = high_region.curr;
             high_region.curr += PAGE_SIZE;
+        }
+        // no free memory
+        else
+        {
+                printk("Ran out of physical  memory\n");
+                if(are_interrupts_enabled())
+                        cli();
+                hlt();
         }
         return pg_start;
 }
