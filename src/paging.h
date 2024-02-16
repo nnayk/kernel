@@ -34,8 +34,6 @@ typedef enum {
         GET_P1,
         SET_P1,
         GET_PA,
-        SET_PA, // don't enable user access
-        SET_PA_USER // enable user access
 }PT_op;
 
 // Allocates a new frame and sets the given

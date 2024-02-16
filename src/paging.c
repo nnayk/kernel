@@ -16,13 +16,14 @@
 #define NEXT_PTE_ABSENT 0
 #define ALLOCED 1
 #define NOT_ALLOCED 0
+#define ALLOCED_RESET 0 // for clarity sake
 #define PTE_WRITABLE 1
 #define DBUG 1
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
 
 static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
-static int err;
+static uint64_t err;
 static void *kheap; //points to top of kernel heap
 static void *kstack; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 
@@ -42,6 +43,11 @@ int alloc_pte(PTE_t *entry, int access)
     
     entry->present = NEXT_PTE_PRESENT;
     entry->user_access = access;
+    entry->writable = PTE_WRITABLE;
+    // disable TLB caching for now
+    entry->write_through = 1;
+    entry->cache_disabled = 1;
+    entry->nx = 1;
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
@@ -55,13 +61,12 @@ int alloc_pte(PTE_t *entry, int access)
 void *va_to_pa(void *va,PT_op op)
 {
         void *p4_addr; // address of page table level 4 for current thread
-        void *phys_addr;
         VA_t *virt_addr = (VA_t *)va;
         PTE_t *entry;
-        if(!va) 
+        if((err = valid_va(va)) < 0) 
         {
-            if(DBUG) printk("va_to_pa: ERR_NULL_PTR");
-            return (void *)ERR_NULL_PTR;
+            if(DBUG) printk("va_to_pa: Invalid VA");
+            return (void *)err;
         }
 
         p4_addr = get_p4_addr();
@@ -70,7 +75,7 @@ void *va_to_pa(void *va,PT_op op)
         {
                 if(DBUG)
                 {
-                        printk("va_to_pa (%d): p4 entry not present!\n",err);
+                        printk("va_to_pa (%ld): p4 entry not present!\n",err);
                         hlt();
                 }
                 return NULL;
@@ -86,7 +91,6 @@ void *va_to_pa(void *va,PT_op op)
                     if(DBUG)
                     {
                             printk("va_to_pa: P3 entry not set for type %d operation\n",op);
-                            hlt();
                     }
                     return NULL;
                 }
@@ -118,13 +122,13 @@ void *va_to_pa(void *va,PT_op op)
                     if(DBUG)
                     {
                         printk("va_to_pa: P1 entry not set for type %d operation\n",op);
-                        hlt();
                     }
                     return NULL; 
                 }
+                // don't actually allocate the frame yet, just mark the virtual page as allocated
                 else if(op == SET_P1) 
                 {
-                        alloc_pte(entry,0);                
+                        //alloc_pte(entry,0);                
                         entry->alloced = ALLOCED;
                 }
         }
@@ -134,23 +138,16 @@ void *va_to_pa(void *va,PT_op op)
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
-                if(DBUG) printk("va_to_pa (%d): frame not present!\n",err);
-        //TODO: fix this so that the entry is set to the page starting address (not the full address)
-        // identity map if VA corresponds to p4 entry 1
-                if(va < (void *)0x10000000000)
-                {
-                    phys_addr = va;
-                    entry->addr = RSHIFT_ADDR(phys_addr);
-                }
-        // otherwise assign to an arbitrary free frame
-                else 
-                {
-                        alloc_pte(entry,0);
-                        phys_addr = get_full_addr(entry,virt_addr->frame_off);
-                }
+                if(DBUG) printk("va_to_pa (%ld): frame not present!\n",err);
+                return NULL;
         }
-
-        return phys_addr;
+        else if(entry->present && GET_PA)
+                return get_full_addr(entry,virt_addr->frame_off);
+        else
+        {
+                printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d\n",entry->present,op);
+                return NULL;
+        }
 }
 
 // Allocates a frame for level 4 of PT, initializes it, and writes the addr to cr3
@@ -262,13 +259,40 @@ void MMU_free_page(void *va)
     frame_start = get_full_addr(p1_entry,virt_addr->frame_off);
     if((err = pf_free(frame_start) < 0))
     {
-            printk("MMU_free_page (%d): pf_free() failed\n",err);
+            printk("MMU_free_page (%ld): pf_free() failed\n",err);
             dbug_hlt(DBUG);
     }
 }
 
-#if 0
 void MMU_free_pages(void *va_start, int count)
 {
+    for(int i=0;i<count;i++)
+    {
+            va_start += (PAGE_SIZE*i);
+            MMU_free_page(va_start);
+    }
 }
-#endif
+
+void pg_fault_isr(int int_num,int err_code)
+{
+    void *va = get_cr2();
+    //TODO: add chec that va > kheap and < kstack and valid_va check
+    void *pa;
+    PTE_t *p1_entry = (PTE_t *)va_to_pa(va,GET_P1);
+    if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
+    {
+            printk("pg_fault_isr: Frame not allocated for P1 entry\n");
+            return;
+    }
+    
+   // identity map
+   if(va < (void *)VA_IDENTITY_MAP_MAX)
+   {
+           pa = va;
+           p1_entry->addr = RSHIFT_ADDR(pa);
+   }
+   // otherwise assign to an arbitrary free frame
+   else alloc_pte(p1_entry,0);
+
+   p1_entry->alloced = ALLOCED_RESET;
+}

@@ -114,6 +114,14 @@ void set_cr3(uint64_t addr)
     );        
 }
 
+void *get_cr2()
+{
+    uint64_t cr2;
+    asm volatile("mov %%cr2, %0" : "=r" (cr2));
+    return (void *)cr2;
+
+}
+
 void dbug_hlt(int dbug_flag)
 {
         if(dbug_flag) hlt();
