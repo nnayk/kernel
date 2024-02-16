@@ -108,7 +108,7 @@ void *get_p4_addr() {
 void set_cr3(uint64_t addr)
 {
     asm volatile (
-        "mov %0, %%cr3\n"   // Move the value to CR3
+        "mov %0, %%cr3"   // Move the value to CR3
         :
         : "r" (addr)   // Input operand: cr3_value
     );        

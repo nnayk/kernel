@@ -16,7 +16,7 @@
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
 #define INTERRUPT_GATE 0xE
-#define DBUG 0
+#define DBUG 1
 #define NUM_ISTS 4
 
 extern void (*asm_wrappers[NUM_IRQS])();
@@ -223,7 +223,7 @@ int irq_helper_init()
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    //if(DBUG) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
+    if(DBUG && int_num != 36) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_IRQS)))
     {

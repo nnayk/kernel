@@ -38,14 +38,21 @@ void kmain()
                 if(data) print_char(data);
         }
         */
+        //while(!loop);
+        int y = 3;
+        printk("%d\n",y);
         mem_setup();
         pf_alloc(); // ignore 0x0
+        setup_pt4();
+        //int x[2000];
+        //x[900] = 2;
+        //printk("x[900]=%d\n",x[900]);
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
-        PTE_t temp;
-        temp.present=1;
-        alloc_pte(&temp,1);
+        //PTE_t temp;
+        //temp.present=1;
+        //alloc_pte(&temp,1);
         //pf_stress_test();
         while(!loop);
         printk("a");
