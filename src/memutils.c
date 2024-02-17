@@ -172,7 +172,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(elfentry.seg_size)
                 {
                     // mark the start of the kernel code region
-                    if(i==0)
+                    if(elf_region.start == INVALID_START_ADDR)
                             elf_region.start = elfentry.seg_addr;
                     printk("Found the kernel code!\n");
                     if(DBUG)
