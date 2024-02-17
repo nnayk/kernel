@@ -60,6 +60,7 @@ void pic_remap(int offset1, int offset2)
 int irq_init()
 {
         if(DBUG) printk("INSIDE IRQ INIT!\n");
+        printk("page fault handler addr = %p\n",asm_wrappers[14]);
         idtr_t idtr;
         tss_desc_t tss_desc;
         size_t tss_size = sizeof(tss);
@@ -127,10 +128,10 @@ int irq_init()
         tss.rsp0 = (uint64_t)&ists[STACK_SIZE]; // TODO: update this value
         tss.rsp1 = 0; 
         tss.rsp2 = 0;
-        tss.ist1 = (uint64_t)&ists[STACK_SIZE]; // kernel IST
-        tss.ist2 = (uint64_t)&ists[STACK_SIZE*2 -1]; // double fault
-        tss.ist3 = (uint64_t)&ists[STACK_SIZE*3 -1]; // page fault
-        tss.ist4 = (uint64_t)&ists[STACK_SIZE*4 -1]; // GPF
+        tss.ist1 = (uint64_t)ists; // kernel IST
+        tss.ist2 = (uint64_t)&ists[STACK_SIZE]; // double fault
+        tss.ist3 = (uint64_t)&ists[STACK_SIZE*2 -1]; // page fault
+        tss.ist4 = (uint64_t)&ists[STACK_SIZE*3 -1]; // GPF
         tss.ist5 = 0; 
         tss.ist6 = 0; 
         tss.ist7 = 0;
