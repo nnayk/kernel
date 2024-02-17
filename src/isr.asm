@@ -155,11 +155,10 @@ global isr14
 isr14:
     ;;mov rax, 0x2f552f412f4b2f41
     ;;mov qword [0xb8000], rax
-    push rsi ; placeholder for error code
     push rsi ; will be used to store irq number
     push rdi
     mov rdi, 14
-    mov rsi,[rsp+16] ; push error code to a register
+    mov rsi,[rsp] ; push error code to a register
     jmp isr_glue
 
 global isr15

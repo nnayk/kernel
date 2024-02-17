@@ -41,6 +41,7 @@ void kmain()
         //while(!loop);
         int y = 3;
         printk("%d\n",y);
+        while(!loop);
         mem_setup();
         pf_alloc(); // ignore 0x0
         setup_pt4();

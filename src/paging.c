@@ -29,6 +29,7 @@ static void *kstack; //points to topmost of kernel stack (equivalent to rsp for 
 
 extern region low_region;
 extern region high_region;
+extern region elf_region;
 
 
 int alloc_pte(PTE_t *entry, int access)
@@ -136,10 +137,18 @@ void *va_to_pa(void *va,PT_op op)
         
         entry = (PTE_t *)get_full_addr(entry,virt_addr->p1_index);
         // get physical frame (set if not alloced yet)
-        if(!entry->present)
+        if(!entry->present && SET_PA)
         {
                 if(DBUG) printk("va_to_pa (%ld): frame not present!\n",err);
-                return NULL;
+                   // identity map
+                   if(va < (void *)VA_IDENTITY_MAP_MAX)
+                   {
+                           void *pa = va;
+                           entry->addr = RSHIFT_ADDR(pa);
+                   }
+                   // otherwise assign to an arbitrary free frame
+                   else alloc_pte(entry,0);
+                   return get_full_addr(entry,virt_addr->frame_off);
         }
         else if(entry->present && GET_PA)
                 return get_full_addr(entry,virt_addr->frame_off);
@@ -171,6 +180,7 @@ void *setup_pt4()
                 return NULL;
         }
     }
+    map_kernel_text();
     set_cr3((uint64_t)table_start);
     return table_start;
 }
@@ -295,4 +305,14 @@ void pg_fault_isr(int int_num,int err_code)
    else alloc_pte(p1_entry,0);
 
    p1_entry->alloced = ALLOCED_RESET;
+}
+
+void map_kernel_text()
+{
+    uint64_t curr_va = (uint64_t)elf_region.start;
+    while(curr_va < (uint64_t)elf_region.end)
+    {
+            va_to_pa((void *)curr_va,SET_PA);
+            curr_va += 1;
+    }
 }
