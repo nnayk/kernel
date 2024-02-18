@@ -48,6 +48,7 @@ int alloc_pte(PTE_t *entry, int access)
     // disable TLB caching for now
     entry->write_through = 1;
     entry->cache_disabled = 1;
+    entry->ignore = 0;
     entry->nx = 1;
     phys_addr = pf_alloc();
 
@@ -178,6 +179,7 @@ void *setup_pt4()
     // disable TLB caching for now
     entry.write_through = 1;
     entry.cache_disabled = 1;
+    entry.ignore = 0;
     entry.nx = 1;
     // set each entry in the pt4 frame
     for(int i = 0; i < num_pt_entries; i++)
@@ -203,7 +205,7 @@ void *get_full_addr(PTE_t *entry,uint16_t offset)
                 return NULL;
         }
 
-        return (void *)(LSHIFT_ADDR(entry->addr)+offset*sizeof(uint8_t));
+        return (void *)(LSHIFT_ADDR(entry->addr)+offset*sizeof(uint64_t));
 }
 
 int valid_pa(void *addr)
@@ -319,23 +321,14 @@ void pg_fault_isr(int int_num,int err_code)
 void map_kernel_text(void *p4_addr)
 {
     uint64_t curr_va = (uint64_t)elf_region.start;
+    int temp;
     while(curr_va < (uint64_t)elf_region.end)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
             printk("successfully mapped %lx\n",curr_va);
             curr_va += 1;
-            //temp++;
-            /*
-            if(entry->addr != 0x100)
-            {
-                    printk("temp=%d, entry->addr=%lx\n",temp,(long)entry->addr);
-            }
-            if(temp==4096) 
-            {
-                    printk("temp=%d, entry->addr=%lx\n",temp,(long)entry->addr);
-                    //break;
-            }
-            */
+            if(curr_va > 0x110000) break;
+            temp++;
     }
 
     if(DBUG) printk("done mapping!\n");
