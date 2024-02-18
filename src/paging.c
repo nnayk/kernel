@@ -59,10 +59,10 @@ int alloc_pte(PTE_t *entry, int access)
 }
 
 // translates a virtual address to physical address
-void *va_to_pa(void *va,PT_op op)
+void *va_to_pa(void *va,void *p4_addr,PT_op op)
 {
-        void *p4_addr; // address of page table level 4 for current thread
-        VA_t *virt_addr = (VA_t *)va;
+        //void *p4_addr; // address of page table level 4 for current thread
+        VA_t virt_addr = *((VA_t *)&va);
         PTE_t *entry;
         if((err = valid_va(va)) < 0) 
         {
@@ -70,7 +70,8 @@ void *va_to_pa(void *va,PT_op op)
             return (void *)err;
         }
 
-        p4_addr = get_p4_addr();
+        if(!p4_addr)
+            p4_addr = get_p4_addr();
         // p4 table frame must be setup already,else terminate
         if((err=valid_pa(p4_addr)) < 0)
         {
@@ -82,7 +83,7 @@ void *va_to_pa(void *va,PT_op op)
                 return NULL;
         }
         // get pt4 entry
-        entry = (PTE_t *)get_full_addr(p4_addr,virt_addr->p4_index);
+        entry = (PTE_t *)((uint64_t)p4_addr+virt_addr.p4_index);
 
         // get pt3 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -98,7 +99,7 @@ void *va_to_pa(void *va,PT_op op)
                 else alloc_pte(entry,0);
         }
         
-        entry = (PTE_t *)get_full_addr(entry,virt_addr->p3_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr.p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
@@ -113,7 +114,7 @@ void *va_to_pa(void *va,PT_op op)
                 }
                 else alloc_pte(entry,0);
         }
-        entry = (PTE_t *)get_full_addr(entry,virt_addr->p2_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr.p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -127,31 +128,39 @@ void *va_to_pa(void *va,PT_op op)
                     return NULL; 
                 }
                 // don't actually allocate the frame yet, just mark the virtual page as allocated
-                else if(op == SET_P1) 
+                else if(op == SET_P1 || op == SET_PA) 
                 {
-                        //alloc_pte(entry,0);                
-                        entry->alloced = ALLOCED;
+                        alloc_pte(entry,0);                
                 }
         }
-        else if(op == GET_P1) return get_full_addr(entry,virt_addr->p1_index);
+        else if(op == GET_P1) return get_full_addr(entry,virt_addr.p1_index);
         
-        entry = (PTE_t *)get_full_addr(entry,virt_addr->p1_index);
+        entry = (PTE_t *)get_full_addr(entry,virt_addr.p1_index);
         // get physical frame (set if not alloced yet)
-        if(!entry->present && SET_PA)
+        if(!entry->present)
         {
+                if(SET_PA)
+                {
                 if(DBUG) printk("va_to_pa (%ld): frame not present!\n",err);
                    // identity map
                    if(va < (void *)VA_IDENTITY_MAP_MAX)
                    {
-                           void *pa = va;
-                           entry->addr = RSHIFT_ADDR(pa);
+                           entry->present = NEXT_PTE_PRESENT;
+                           entry->addr = RSHIFT_ADDR(va);
+                           if(entry == (void *)0x4100) printk("Adjusting p1 entry 256: va = %p, page_start = %lx\n",va,(long)entry->addr);
                    }
                    // otherwise assign to an arbitrary free frame
                    else alloc_pte(entry,0);
-                   return get_full_addr(entry,virt_addr->frame_off);
+                   return get_full_addr(entry,virt_addr.frame_off);
+                }
+                else if(SET_P1)
+                {
+                    entry->alloced = ALLOCED;
+                    return entry;
+                }
         }
         else if(entry->present && GET_PA)
-                return get_full_addr(entry,virt_addr->frame_off);
+                return get_full_addr(entry,virt_addr.frame_off);
         else
         {
                 printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d\n",entry->present,op);
@@ -180,7 +189,7 @@ void *setup_pt4()
                 return NULL;
         }
     }
-    map_kernel_text();
+    map_kernel_text(table_start);
     set_cr3((uint64_t)table_start);
     return table_start;
 }
@@ -194,7 +203,7 @@ void *get_full_addr(PTE_t *entry,uint16_t offset)
                 return NULL;
         }
 
-        return (void *)(LSHIFT_ADDR(entry->addr)+offset);
+        return (void *)(LSHIFT_ADDR(entry->addr)+offset*sizeof(uint8_t));
 }
 
 int valid_pa(void *addr)
@@ -217,14 +226,14 @@ int valid_va(void *addr)
 
 void *MMU_alloc_page()
 {
-    void *addr; 
+    void *addr;
     if(kheap > kstack)
     {
             if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
             return NULL;
     }
     addr = kheap;
-    va_to_pa(kheap,SET_P1);
+    va_to_pa(kheap,NULL,SET_P1);
     kheap += PAGE_SIZE;
     return addr;
 }
@@ -255,7 +264,7 @@ void MMU_free_page(void *va)
 {
     PTE_t *p1_entry;
     void *frame_start;
-    VA_t *virt_addr = (VA_t *)va;
+    VA_t virt_addr = *((VA_t *)&va);
     if(!valid_va(va))
     {
             printk("MMU_free_page: Invalid VA %p\n",va);
@@ -263,10 +272,10 @@ void MMU_free_page(void *va)
     }
 
     // mark the p1 entry as not present 
-    p1_entry = va_to_pa(va,GET_P1);
+    p1_entry = va_to_pa(va,NULL,GET_P1);
     p1_entry->present = NEXT_PTE_ABSENT;
     // free the underlying frame associated with the page
-    frame_start = get_full_addr(p1_entry,virt_addr->frame_off);
+    frame_start = get_full_addr(p1_entry,virt_addr.frame_off);
     if((err = pf_free(frame_start) < 0))
     {
             printk("MMU_free_page (%ld): pf_free() failed\n",err);
@@ -288,7 +297,7 @@ void pg_fault_isr(int int_num,int err_code)
     void *va = get_cr2();
     //TODO: add chec that va > kheap and < kstack and valid_va check
     void *pa;
-    PTE_t *p1_entry = (PTE_t *)va_to_pa(va,GET_P1);
+    PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
     {
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
@@ -307,12 +316,27 @@ void pg_fault_isr(int int_num,int err_code)
    p1_entry->alloced = ALLOCED_RESET;
 }
 
-void map_kernel_text()
+void map_kernel_text(void *p4_addr)
 {
     uint64_t curr_va = (uint64_t)elf_region.start;
     while(curr_va < (uint64_t)elf_region.end)
     {
-            va_to_pa((void *)curr_va,SET_PA);
+            va_to_pa((void *)curr_va,p4_addr,SET_PA);
+            printk("successfully mapped %lx\n",curr_va);
             curr_va += 1;
+            //temp++;
+            /*
+            if(entry->addr != 0x100)
+            {
+                    printk("temp=%d, entry->addr=%lx\n",temp,(long)entry->addr);
+            }
+            if(temp==4096) 
+            {
+                    printk("temp=%d, entry->addr=%lx\n",temp,(long)entry->addr);
+                    //break;
+            }
+            */
     }
+
+    if(DBUG) printk("done mapping!\n");
 }

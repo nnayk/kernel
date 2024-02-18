@@ -40,7 +40,7 @@ typedef enum {
 // Allocates a new frame and sets the given
 // entry to point to this frame
 int alloc_pte(PTE_t *,int);
-void *va_to_pa(void *,PT_op);
+void *va_to_pa(void *,void *,PT_op);
 void *MMU_alloc_page();
 void *MMU_alloc_pages(int);
 void MMU_free_page(void *);
@@ -49,4 +49,4 @@ void *setup_pt4();
 void *get_full_addr(PTE_t *,uint16_t);
 int valid_pa(void *);
 int valid_va(void *);
-void map_kernel_text();
+void map_kernel_text(void *);
