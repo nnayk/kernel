@@ -58,6 +58,23 @@ struct region
 };
 typedef struct region region;
 
+struct FreeList {
+   struct FreeList *next;
+};
+
+typedef struct FreeList FreeList;
+
+typedef struct {
+   int max_size;
+   int avail;
+   FreeList *head;
+}KmallocPool;
+
+typedef struct {
+   KmallocPool *pool;
+   size_t size;
+}KmallocExtra;
+
 void *memset(void *dst, int c, size_t n);
 void *memcpy(void *dest, const void *src, size_t n);
 int mem_setup();
@@ -70,3 +87,5 @@ void pf_nonseq_test();
 int pf_stress_test();
 int are_pages_equal(const void *, const void *);
 void *page_align_up(void *);
+void *kmalloc(size_t);
+void kfree(void *);

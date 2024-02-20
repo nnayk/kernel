@@ -5,6 +5,9 @@
 */
 #include <stdint-gcc.h>
 
+#define KHEAP_START_VA (void *)0x10000000000
+#define KSTACK_START_VA (void *)0xF0000000000
+
 typedef struct
 {
   uint64_t present:1;
@@ -47,6 +50,7 @@ void MMU_free_page(void *);
 void MMU_free_pages(void *,int);
 void *setup_pt4();
 void *get_full_addr(PTE_t *,uint16_t);
+void *get_pte_addr(PTE_t *,uint16_t);
 int valid_pa(void *);
 int valid_va(void *);
 void map_kernel_text(void *);

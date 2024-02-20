@@ -13,6 +13,7 @@ static int err;
 State serial_buffer;
 region low_region;
 region high_region;
+region ram[2];
 region elf_region;
 void *free_head;
 
@@ -55,6 +56,6 @@ void kmain()
         //temp.present=1;
         //alloc_pte(&temp,1);
         //pf_stress_test();
-        while(!loop);
+        while(!loop || 1);
         printk("a");
 }

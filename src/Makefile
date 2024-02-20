@@ -12,6 +12,8 @@ my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 
 .PHONY: empty clean lo_status
 
+run: $(image)
+	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -d int -no-reboot -no-shutdown 1>qemu-data-dump #2>qemu-int-dump
 clean:
 	rm *.o
 	rm kernel.bin
@@ -66,5 +68,3 @@ $(image): partition kernel_package
 	sudo losetup -d $(loop0)	
 	sudo losetup -d $(loop1)
 
-run: $(image)
-	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -d int -no-reboot -no-shutdown 1>qemu-data-dump 2>qemu-int-dump

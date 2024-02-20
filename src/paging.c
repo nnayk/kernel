@@ -18,13 +18,13 @@
 #define NOT_ALLOCED 0
 #define ALLOCED_RESET 0 // for clarity sake
 #define PTE_WRITABLE 1
-#define DBUG 1
+#define DBUG 0
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
 
 static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
 static uint64_t err;
-static void *kheap; //points to top of kernel heap
+static void *kheap = KHEAP_START_VA; //points to top of kernel heap
 static void *kstack; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 
 extern region low_region;
@@ -34,7 +34,7 @@ extern region elf_region;
 
 int alloc_pte(PTE_t *entry, int access)
 {
-    printk("entry = %p\n",entry);
+    if(DBUG) printk("entry = %p\n",entry);
     void *phys_addr;
     if(!entry)
     {
@@ -53,7 +53,7 @@ int alloc_pte(PTE_t *entry, int access)
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
-    printk("phys_addr = %p,entry->addr = %lx\n",
+    if(DBUG) printk("phys_addr = %p,entry->addr = %lx\n",
                     phys_addr,(long)entry->addr);
 
     return SUCCESS;
@@ -100,7 +100,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 else alloc_pte(entry,0);
         }
         
-        entry = (PTE_t *)get_full_addr(entry,virt_addr.p3_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
@@ -115,7 +115,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 }
                 else alloc_pte(entry,0);
         }
-        entry = (PTE_t *)get_full_addr(entry,virt_addr.p2_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -134,9 +134,9 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                         alloc_pte(entry,0);                
                 }
         }
-        else if(op == GET_P1) return get_full_addr(entry,virt_addr.p1_index);
+        else if(op == GET_P1) return get_pte_addr(entry,virt_addr.p1_index);
         
-        entry = (PTE_t *)get_full_addr(entry,virt_addr.p1_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
@@ -148,7 +148,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                    {
                            entry->present = NEXT_PTE_PRESENT;
                            entry->addr = RSHIFT_ADDR(va);
-                           if(entry == (void *)0x4100) printk("Adjusting p1 entry 256: va = %p, page_start = %lx\n",va,(long)entry->addr);
+                           //if(entry == (void *)0x4100) printk("Adjusting p1 entry 256: va = %p, page_start = %lx\n",va,(long)entry->addr);
                    }
                    // otherwise assign to an arbitrary free frame
                    else alloc_pte(entry,0);
@@ -164,7 +164,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 return get_full_addr(entry,virt_addr.frame_off);
         else
         {
-                printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d\n",entry->present,op);
+                if(DBUG) printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d\n",entry->present,op);
                 return NULL;
         }
 }
@@ -197,6 +197,18 @@ void *setup_pt4()
 }
 
 void *get_full_addr(PTE_t *entry,uint16_t offset)
+{
+        if(!entry)
+        {
+                printk("get_full_addr: %d\n",ERR_NULL_PTR);
+                dbug_hlt(DBUG);
+                return NULL;
+        }
+
+        return (void *)(LSHIFT_ADDR(entry->addr)+offset);
+}
+
+void *get_pte_addr(PTE_t *entry,uint16_t offset)
 {
         if(!entry)
         {
@@ -325,11 +337,11 @@ void map_kernel_text(void *p4_addr)
     while(curr_va < (uint64_t)elf_region.end)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
-            printk("successfully mapped %lx\n",curr_va);
+            if(DBUG) printk("successfully mapped %lx\n",curr_va);
             curr_va += 1;
-            if(curr_va > 0x110000) break;
+            //if(curr_va > 0x101e24) break;
             temp++;
     }
 
-    if(DBUG) printk("done mapping!\n");
+    printk("done mapping!\n");
 }

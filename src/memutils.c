@@ -30,6 +30,7 @@ static uint64_t err;
 static uint32_t num_frames_total; // total number of physical frames
 static uint32_t num_frames_low; // number of physical frames in low region
 static uint32_t num_frames_high; // number of physical frames in high region
+KmallocPool ram_pools;
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -442,3 +443,15 @@ void *page_align_up(void *addr)
         }
         return addr;
 }
+
+void *kmalloc(size_t size)
+{
+    void *start_addr = NULL;
+    size += sizeof(KmallocExtra);
+    return start_addr;
+}
+
+void kfree(void *addr)
+{
+}
+
