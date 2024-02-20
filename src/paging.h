@@ -54,3 +54,4 @@ void *get_pte_addr(PTE_t *,uint16_t);
 int valid_pa(void *);
 int valid_va(void *);
 void map_kernel_text(void *);
+int init_entry(PTE_t *);

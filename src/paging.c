@@ -43,13 +43,13 @@ int alloc_pte(PTE_t *entry, int access)
     }
     
     entry->present = NEXT_PTE_PRESENT;
-    entry->user_access = access;
     entry->writable = PTE_WRITABLE;
+    entry->user_access = access;
     // disable TLB caching for now
-    entry->write_through = 1;
-    entry->cache_disabled = 1;
+    entry->write_through = 0;
+    entry->cache_disabled = 0;
     entry->ignore = 0;
-    entry->nx = 1;
+    entry->nx = 0;
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
@@ -97,10 +97,14 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                     }
                     return NULL;
                 }
-                else alloc_pte(entry,0);
+                else 
+                {
+                        alloc_pte(entry,0);
+                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
+                        init_entry(entry);
+                }
         }
-        
-        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
+        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
@@ -113,9 +117,14 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
 
                     return NULL;
                 }
-                else alloc_pte(entry,0);
+                else 
+                {
+                        alloc_pte(entry,0);
+                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
+                        init_entry(entry);
+                }
         }
-        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
+        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -132,11 +141,14 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 else if(op == SET_P1 || op == SET_PA) 
                 {
                         alloc_pte(entry,0);                
+                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
+                        init_entry(entry);
                 }
         }
-        else if(op == GET_P1) return get_pte_addr(entry,virt_addr.p1_index);
+        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
         
-        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
+        if(op == GET_P1) return entry;
+        
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
@@ -173,27 +185,32 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
 void *setup_pt4()
 {
     uint64_t *table_start = pf_alloc();
-    PTE_t entry;
-    entry.present = NEXT_PTE_ABSENT;
-    entry.writable = PTE_WRITABLE;
-    // disable TLB caching for now
-    entry.write_through = 1;
-    entry.cache_disabled = 1;
-    entry.ignore = 0;
-    entry.nx = 1;
     // set each entry in the pt4 frame
     for(int i = 0; i < num_pt_entries; i++)
     {
-        if(!memcpy(table_start + i,&entry,sizeof(PTE_t)))
-        {
-                printk("setup_pt4: memcpy error");
-                dbug_hlt(DBUG);
-                return NULL;
-        }
+            init_entry((PTE_t *)(table_start+i));
     }
     map_kernel_text(table_start);
     set_cr3((uint64_t)table_start);
     return table_start;
+}
+
+int init_entry(PTE_t *entry)
+{
+    if(!entry)
+    {
+            if(DBUG) printk("init_entry: ERR_NULL_PTR\n");
+            return ERR_NULL_PTR;
+    }
+
+    entry->present = NEXT_PTE_ABSENT;
+    entry->writable = PTE_WRITABLE;
+    // disable TLB caching for now
+    entry->write_through = 0;
+    entry->cache_disabled = 0;
+    entry->ignore = 0;
+    entry->nx = 0;
+    return SUCCESS;
 }
 
 void *get_full_addr(PTE_t *entry,uint16_t offset)
@@ -333,14 +350,12 @@ void pg_fault_isr(int int_num,int err_code)
 void map_kernel_text(void *p4_addr)
 {
     uint64_t curr_va = (uint64_t)elf_region.start;
-    int temp;
     while(curr_va < (uint64_t)elf_region.end)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
             if(DBUG) printk("successfully mapped %lx\n",curr_va);
             curr_va += 1;
             //if(curr_va > 0x101e24) break;
-            temp++;
     }
 
     printk("done mapping!\n");
