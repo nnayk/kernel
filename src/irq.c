@@ -12,6 +12,7 @@
 #include "ps2.h"
 #include "serial.h"
 #include "memutils.h"
+#include "paging.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
@@ -225,6 +226,7 @@ int irq_helper_init()
         irq_helper[KBD_INT_NO].handler = kbd_isr;
         irq_helper[COM1_INT_NO].handler = serial_consume;
         irq_helper[COM1_INT_NO].arg = &serial_buffer;
+        irq_helper[PF_INT_NO].handler = pg_fault_isr;
         return 1;
 }
 
