@@ -7,7 +7,7 @@
 
 #define KHEAP_START_VA (void *)0x10000000000
 #define KSTACK_START_VA (void *)0xF0000000000
-#define MAX_FRAME_ADDR 0x40000000 // first 1 GB
+#define MAX_FRAME_ADDR (void *)0x40000000 // first 3 GB
 
 typedef struct
 {
@@ -56,3 +56,4 @@ int valid_pa(void *);
 int valid_va(void *);
 void map_kernel_text(void *);
 int init_entry(PTE_t *);
+void pg_fault_isr(int,int,void *);

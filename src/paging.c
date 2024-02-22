@@ -163,7 +163,10 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                            //if(entry == (void *)0x4100) printk("Adjusting p1 entry 256: va = %p, page_start = %lx\n",va,(long)entry->addr);
                    }
                    // otherwise assign to an arbitrary free frame
-                   else alloc_pte(entry,0);
+                   else 
+                   {
+                           alloc_pte(entry,0);
+                   }
                    return get_full_addr(entry,virt_addr.frame_off);
                 }
                 else if(SET_P1)
@@ -239,7 +242,7 @@ void *get_pte_addr(PTE_t *entry,uint16_t offset)
 
 int valid_pa(void *addr)
 {
-    if (((low_region.start <= addr) && (addr < low_region.end)) && ((high_region.start <= addr) && (addr < high_region.end)))
+    if (((low_region.start <= addr) && (addr < low_region.end)) || ((high_region.start <= addr) && (addr < high_region.end)))
     {
             if(DBUG) printk("%p is a valid phys addr\n",(void *)addr);
             return 1;
@@ -323,7 +326,7 @@ void MMU_free_pages(void *va_start, int count)
     }
 }
 
-void pg_fault_isr(int int_num,int err_code)
+void pg_fault_isr(int int_num,int err_code,void *arg)
 {
     void *va = get_cr2();
     if(DBUG) printk("page fault va: %p\n",va);
@@ -351,17 +354,19 @@ void pg_fault_isr(int int_num,int err_code)
 void map_kernel_text(void *p4_addr)
 {
     //uint64_t curr_va = (uint64_t)elf_region.start;
-    uint64_t curr_va = 0x1;
-    int temp = 0;
-    while(curr_va < MAX_FRAME_ADDR)
+    uint64_t curr_va = 0x0;
+    //int temp = 0;
+    while((void *)curr_va < MAX_FRAME_ADDR)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
-            if(DBUG && temp%1000 == 0) 
+            /*
+            if(DBUG || temp % 10000 == 0) 
             {
                     printk("temp = %d: successfully mapped %lx\n",temp,curr_va);
             }
-            curr_va += 1;
-            temp++;
+            */
+            curr_va += PG_SIZE;
+            //temp++;
             //if(curr_va > 0x101e24) break;
     }
 
