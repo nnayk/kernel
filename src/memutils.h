@@ -1,4 +1,6 @@
 #define PAGE_SIZE 4096
+#define LOW_REGION_OFF 0
+#define HIGH_REGION_OFF 1
 
 #include <stddef.h>
 // generic tag header

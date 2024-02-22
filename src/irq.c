@@ -145,6 +145,12 @@ int irq_init()
         int timer_mask = irq_get_mask(0);
         if(DBUG) printk("kbd mask = %d,timer mask = %d\n",mask,timer_mask);
         if(DBUG) printk("are ints enabled? %d\n",are_interrupts_enabled());
+        if(DBUG) 
+        {
+                printk("idt_arr[14]:\n");
+                display_idt_entry(idt_arr[14]);
+                display_idt_entry(idt_arr[21]);
+        }
         /*asm volatile (
         "int $0x21"  // Use interrupt number 1 (IRQ 1 for keyboard)
     );*/
@@ -224,7 +230,16 @@ int irq_helper_init()
 
 void c_wrapper(int int_num,int err_code,void *buffer)
 {
-    if(DBUG && int_num != 36) printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
+    if(DBUG && int_num != 36) 
+    {
+            printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
+    }
+    /*
+    else
+    {
+            printk("in wrapper for int num = %d\n",int_num);
+    }
+    */
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_IRQS)))
     {
@@ -241,6 +256,7 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     }
     /* call the ISR */
     else (*entry.handler)(int_num,err_code,entry.arg);
+    
 }
 
 void display_idt_entry(idt_entry_t entry)

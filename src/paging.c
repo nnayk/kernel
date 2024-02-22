@@ -326,6 +326,7 @@ void MMU_free_pages(void *va_start, int count)
 void pg_fault_isr(int int_num,int err_code)
 {
     void *va = get_cr2();
+    if(DBUG) printk("page fault va: %p\n",va);
     //TODO: add chec that va > kheap and < kstack and valid_va check
     void *pa;
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
@@ -349,12 +350,18 @@ void pg_fault_isr(int int_num,int err_code)
 
 void map_kernel_text(void *p4_addr)
 {
-    uint64_t curr_va = (uint64_t)elf_region.start;
-    while(curr_va < (uint64_t)elf_region.end)
+    //uint64_t curr_va = (uint64_t)elf_region.start;
+    uint64_t curr_va = 0x1;
+    int temp = 0;
+    while(curr_va < MAX_FRAME_ADDR)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
-            if(DBUG) printk("successfully mapped %lx\n",curr_va);
+            if(DBUG && temp%1000 == 0) 
+            {
+                    printk("temp = %d: successfully mapped %lx\n",temp,curr_va);
+            }
             curr_va += 1;
+            temp++;
             //if(curr_va > 0x101e24) break;
     }
 

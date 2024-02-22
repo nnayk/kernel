@@ -24,6 +24,7 @@
 extern region low_region;
 extern region elf_region;
 extern region high_region;
+extern region ram[];
 extern void *free_head;
 extern uint8_t *multiboot_start;
 static uint64_t err;
@@ -224,6 +225,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(DBUG) printk("start = %p, end = %p\n",temp->start,temp->end);
                 temp = temp->next;
             }
+            if(DBUG) printk("elf start = %p, end = %p\n",elf_region.start,elf_region.end);
         }
 
         return SUCCESS;

@@ -7,6 +7,7 @@
 
 #define KHEAP_START_VA (void *)0x10000000000
 #define KSTACK_START_VA (void *)0xF0000000000
+#define MAX_FRAME_ADDR 0x40000000 // first 1 GB
 
 typedef struct
 {

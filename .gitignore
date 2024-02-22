@@ -6,3 +6,4 @@
 exp/
 qemu-int-dump
 qemu-data-dump
+*.swp
