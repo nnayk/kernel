@@ -158,7 +158,7 @@ isr14:
     push rsi ; will be used to store irq number
     push rdi
     mov rdi, 14
-    mov rsi,[rsp] ; push error code to a register
+    mov rsi,[rsp+16] ; push error code to a register
     jmp isr_glue
 
 global isr15

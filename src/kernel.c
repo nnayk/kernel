@@ -52,7 +52,7 @@ void kmain()
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
-        void *x = (void *)0x1;
+        void *x = (void *)0x100000000000;
         *(uint8_t *)x = 3; 
         //PTE_t temp;
         //temp.present=1;
