@@ -331,7 +331,6 @@ void pf_nonseq_test()
         {
                 pf_free(pages[i]);
         }
-        return; 
         for(int i = 0;i<COUNT;i++)
         {
                 pages[i] = pf_alloc();
@@ -367,7 +366,7 @@ int pf_stress_test()
                 }
                 */
                 page_start = pf_alloc();
-                printk("page_start %d = %p\n",i+1,page_start); 
+                if(DBUG) printk("page_start %d = %p\n",i+1,page_start); 
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
                         if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
@@ -388,6 +387,7 @@ int pf_stress_test()
         if(pf_alloc() != INVALID_START_ADDR)
         {
                 printk("pf_stress_test: Error with overallocation\n");
+                return ERR_PF_TEST; 
         }
         for(int j=0;j<2;j++)
         {

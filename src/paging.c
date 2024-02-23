@@ -18,7 +18,7 @@
 #define NOT_ALLOCED 0
 #define ALLOCED_RESET 0 // for clarity sake
 #define PTE_WRITABLE 1
-#define DBUG 0
+#define DBUG 1
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
 
@@ -32,14 +32,14 @@ extern region high_region;
 extern region elf_region;
 
 
-int alloc_pte(PTE_t *entry, int access)
+void *alloc_pte(PTE_t *entry, int access)
 {
     if(DBUG) printk("entry = %p\n",entry);
     void *phys_addr;
     if(!entry)
     {
             if(DBUG) printk("alloc_pte: ERR_NULL_PTR");
-            return ERR_NULL_PTR;
+            return (void *)ERR_NULL_PTR;
     }
     
     entry->present = NEXT_PTE_PRESENT;
@@ -48,7 +48,7 @@ int alloc_pte(PTE_t *entry, int access)
     // disable TLB caching for now
     entry->write_through = 0;
     entry->cache_disabled = 0;
-    entry->ignore = 0;
+    //entry->ignore = 0;
     entry->nx = 0;
     phys_addr = pf_alloc();
 
@@ -56,7 +56,7 @@ int alloc_pte(PTE_t *entry, int access)
     if(DBUG) printk("phys_addr = %p,entry->addr = %lx\n",
                     phys_addr,(long)entry->addr);
 
-    return SUCCESS;
+    return phys_addr;
 }
 
 // translates a virtual address to physical address
@@ -65,6 +65,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
         //void *p4_addr; // address of page table level 4 for current thread
         VA_t virt_addr = *((VA_t *)&va);
         PTE_t *entry;
+        void *frame_start = NULL; // frame given to a page table 
         if((err = valid_va(va)) < 0) 
         {
             if(DBUG) printk("va_to_pa: Invalid VA");
@@ -99,9 +100,8 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 }
                 else 
                 {
-                        alloc_pte(entry,0);
-                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
-                        init_entry(entry);
+                        frame_start = alloc_pte(entry,0);
+                        init_entry(frame_start);
                 }
         }
         else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
@@ -119,9 +119,8 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 }
                 else 
                 {
-                        alloc_pte(entry,0);
-                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
-                        init_entry(entry);
+                        frame_start = alloc_pte(entry,0);
+                        init_entry(frame_start);
                 }
         }
         else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
@@ -140,9 +139,8 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 // don't actually allocate the frame yet, just mark the virtual page as allocated
                 else if(op == SET_P1 || op == SET_PA) 
                 {
-                        alloc_pte(entry,0);                
-                        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
-                        init_entry(entry);
+                        frame_start = alloc_pte(entry,0);                
+                        init_entry(frame_start);
                 }
         }
         else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
@@ -152,9 +150,9 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
         // get physical frame (set if not alloced yet)
         if(!entry->present)
         {
-                if(SET_PA)
+                if(op == SET_PA)
                 {
-                if(DBUG) printk("va_to_pa (%ld): frame not present!\n",err);
+                //if(DBUG) printk("va_to_pa (%ld): frame not present!\n",err);
                    // identity map
                    if(va < (void *)VA_IDENTITY_MAP_MAX)
                    {
@@ -165,54 +163,55 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                    // otherwise assign to an arbitrary free frame
                    else 
                    {
-                           alloc_pte(entry,0);
+                           frame_start = alloc_pte(entry,0);
                    }
                    return get_full_addr(entry,virt_addr.frame_off);
                 }
-                else if(SET_P1)
+                else if(op == SET_P1)
                 {
                     entry->alloced = ALLOCED;
                     return entry;
                 }
         }
-        else if(entry->present && GET_PA)
+        else if(entry->present && op == GET_PA)
                 return get_full_addr(entry,virt_addr.frame_off);
-        else
-        {
-                if(DBUG) printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d\n",entry->present,op);
-                return NULL;
-        }
+        
+        if(DBUG) printk("va_to_pa: Invalid args for final frame alloc. entry->present = %d, op = %d,va = %p\n",entry->present,op,va);
+        return NULL;
 }
 
 // Allocates a frame for level 4 of PT, initializes it, and writes the addr to cr3
 void *setup_pt4()
 {
     uint64_t *table_start = pf_alloc();
-    // set each entry in the pt4 frame
-    for(int i = 0; i < num_pt_entries; i++)
-    {
-            init_entry((PTE_t *)(table_start+i));
-    }
+    init_entry(table_start);
     map_kernel_text(table_start);
     set_cr3((uint64_t)table_start);
     return table_start;
 }
 
-int init_entry(PTE_t *entry)
+int init_entry(void *table_start)
 {
-    if(!entry)
+    if(!table_start)
     {
             if(DBUG) printk("init_entry: ERR_NULL_PTR\n");
             return ERR_NULL_PTR;
     }
 
-    entry->present = NEXT_PTE_ABSENT;
-    entry->writable = PTE_WRITABLE;
-    // disable TLB caching for now
-    entry->write_through = 0;
-    entry->cache_disabled = 0;
-    entry->ignore = 0;
-    entry->nx = 0;
+    PTE_t *entry = (PTE_t *)(table_start);
+    for(int i=0;i<num_pt_entries;i++)
+    {
+            entry->present = NEXT_PTE_ABSENT;
+            entry->writable = PTE_WRITABLE;
+            entry->write_through = 0;
+            entry->cache_disabled = 0;
+            entry->alloced = 0;
+            entry->avl2 = 0;
+            //entry->ignore = 0;
+            entry->nx = 0;
+            entry->addr = 0;
+            entry++;
+    }
     return SUCCESS;
 }
 
@@ -244,7 +243,7 @@ int valid_pa(void *addr)
 {
     if (((low_region.start <= addr) && (addr < low_region.end)) || ((high_region.start <= addr) && (addr < high_region.end)))
     {
-            if(DBUG) printk("%p is a valid phys addr\n",(void *)addr);
+            //if(DBUG) printk("%p is a valid phys addr\n",(void *)addr);
             return 1;
     }
 
@@ -338,7 +337,10 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
             return;
     }
-    
+   if(!p1_entry)
+   {
+        va_to_pa(va,NULL,SET_P1);
+   }
    // identity map
    if(va < (void *)VA_IDENTITY_MAP_MAX)
    {

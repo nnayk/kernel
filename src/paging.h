@@ -7,7 +7,7 @@
 
 #define KHEAP_START_VA (void *)0x10000000000
 #define KSTACK_START_VA (void *)0xF0000000000
-#define MAX_FRAME_ADDR (void *)0x40000000 // first 3 GB
+#define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 
 typedef struct
 {
@@ -43,7 +43,7 @@ typedef enum {
 
 // Allocates a new frame and sets the given
 // entry to point to this frame
-int alloc_pte(PTE_t *,int);
+void *alloc_pte(PTE_t *,int);
 void *va_to_pa(void *,void *,PT_op);
 void *MMU_alloc_page();
 void *MMU_alloc_pages(int);
@@ -55,5 +55,5 @@ void *get_pte_addr(PTE_t *,uint16_t);
 int valid_pa(void *);
 int valid_va(void *);
 void map_kernel_text(void *);
-int init_entry(PTE_t *);
+int init_entry(void *frame_start);
 void pg_fault_isr(int,int,void *);
