@@ -17,7 +17,7 @@
 #define FREE_RAM_TYPE 1
 #define MEM_INFO_OFF 16
 #define SEC_INFO_OFF 20
-#define DBUG 1
+#define DBUG 0
 
 //extern region unused_head;
 //extern region free_head;
@@ -262,6 +262,7 @@ void *pf_alloc()
                         cli();
                 hlt();
         }
+        num_frames_total--;
         return pg_start;
 }
 
@@ -352,13 +353,15 @@ void pf_nonseq_test()
 int pf_stress_test()
 {
         printk("num_frames_low = %d,num_frames_high = %d\n",num_frames_low,num_frames_high);
+        printk("num frames total = %d\n",num_frames_total);
         uint8_t bitmap[PAGE_SIZE];
         void *page_start;
         void *region_start = low_region.start;
         int num_frames = num_frames_low; // for validation purposes
-        for(int i = 0; i<num_frames_total;i++)
+        int original_total_frames = num_frames_total;
+        for(int i = 0; i<original_total_frames;i++)
         {
-               /*
+                /*
                 if(i==160)
                 {
                         int loop=0;
@@ -366,6 +369,11 @@ int pf_stress_test()
                 }
                 */
                 page_start = pf_alloc();
+                if(!page_start) 
+                {
+                        printk("null page start\n");
+                        hlt();
+                }
                 if(DBUG) printk("page_start %d = %p\n",i+1,page_start); 
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
@@ -382,11 +390,12 @@ int pf_stress_test()
                                 return err;
                         }
         }
+        printk("num freames = %d\n",num_frames_total);
         if(DBUG) printk("done writing bit patterns\n");
         /* try to allocate more frames than are available in RAM */
         if(pf_alloc() != INVALID_START_ADDR)
         {
-                printk("pf_stress_test: Error with overallocation\n");
+                printk("pf_stress_test: Error with overallocation. Num frames remaining = %d\n",num_frames_total);
                 return ERR_PF_TEST; 
         }
         for(int j=0;j<2;j++)

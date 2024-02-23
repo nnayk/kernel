@@ -18,7 +18,7 @@
 #define NOT_ALLOCED 0
 #define ALLOCED_RESET 0 // for clarity sake
 #define PTE_WRITABLE 1
-#define DBUG 1
+#define DBUG 0
 #define RSHIFT_ADDR(ptr) ((uintptr_t)(ptr) >> 12)
 #define LSHIFT_ADDR(ptr) ((uintptr_t)(ptr) << 12)
 

@@ -57,7 +57,7 @@ void kmain()
         //PTE_t temp;
         //temp.present=1;
         //alloc_pte(&temp,1);
-        //pf_stress_test();
+        pf_stress_test();
         while(!loop);
         printk("a");
 }
