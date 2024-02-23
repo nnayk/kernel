@@ -39,7 +39,7 @@ void kmain()
                 if(data) print_char(data);
         }
         */
-        while(!loop);
+        //while(!loop);
         int y = 3;
         printk("%d\n",y);
         //while(!loop);
@@ -57,7 +57,7 @@ void kmain()
         //PTE_t temp;
         //temp.present=1;
         //alloc_pte(&temp,1);
-        pf_stress_test();
+        //pf_stress_test();
         while(!loop);
         printk("a");
 }

@@ -48,13 +48,14 @@ void *alloc_pte(PTE_t *entry, int access)
     // disable TLB caching for now
     entry->write_through = 0;
     entry->cache_disabled = 0;
-    //entry->ignore = 0;
+    entry->ignore = 0;
     entry->nx = 0;
+    entry->avl2=0;
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
-    if(DBUG) printk("phys_addr = %p,entry->addr = %lx\n",
-                    phys_addr,(long)entry->addr);
+    //if(DBUG) printk("phys_addr = %p,entry->addr = %lx\n",
+                 //   phys_addr,(long)entry->addr);
 
     return phys_addr;
 }
@@ -104,7 +105,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                         init_entry(frame_start);
                 }
         }
-        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p3_index);
         // get pt2 address and entry (set if not alloced yet)
         if(!entry->present)
         {
@@ -123,7 +124,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                         init_entry(frame_start);
                 }
         }
-        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p2_index);
         
         // get pt1 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -143,7 +144,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                         init_entry(frame_start);
                 }
         }
-        else entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
+        entry = (PTE_t *)get_pte_addr(entry,virt_addr.p1_index);
         
         if(op == GET_P1) return entry;
         
@@ -207,7 +208,7 @@ int init_entry(void *table_start)
             entry->cache_disabled = 0;
             entry->alloced = 0;
             entry->avl2 = 0;
-            //entry->ignore = 0;
+            entry->ignore = 0;
             entry->nx = 0;
             entry->addr = 0;
             entry++;
