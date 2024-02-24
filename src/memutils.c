@@ -239,7 +239,6 @@ void *pf_alloc()
         if(free_head != INVALID_START_ADDR)
         {
                 pg_start = free_head;
-                /* TODO: properly update free head to point to next free frame */
                 memcpy(&free_head,pg_start,sizeof(void *));
         }
         // check unused regions list
