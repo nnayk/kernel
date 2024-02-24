@@ -87,7 +87,7 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 return NULL;
         }
         // get pt4 entry
-        entry = (PTE_t *)((uint64_t)p4_addr+virt_addr.p4_index);
+        entry = (PTE_t *)((uint64_t)p4_addr+virt_addr.p4_index*sizeof(PTE_t));
 
         // get pt3 address and entry (set if not alloced yet)
         if(!entry->present)
@@ -330,6 +330,11 @@ void MMU_free_pages(void *va_start, int count)
 void pg_fault_isr(int int_num,int err_code,void *arg)
 {
     void *va = get_cr2();
+    if(!valid_va(va))
+    {
+            printk("Attempting to access invalid virtual address (%p)!\n",va);
+            return;
+    }
     if(DBUG) printk("page fault va: %p\n",va);
     //TODO: add chec that va > kheap and < kstack and valid_va check
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
