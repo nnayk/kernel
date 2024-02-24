@@ -39,7 +39,6 @@
 #define FMT_SHORT_PREFIX 'h'
 #define FMT_LONG_PREFIX 'l'
 #define FMT_LONG_LONG_PREFIX 'q'
-// TODO: define format constants for the 3 bracket cases listed in instructions
 
 typedef union{
    int int_val;

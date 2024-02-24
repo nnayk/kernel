@@ -8,8 +8,7 @@
 #include "utility.h"
 #include "error.h"
 #include "irq.h"
-#include "print.h" // DELETE
-#include "vga.h" // DELETE
+#include "vga.h"
 
 #define PORT_COM1 0x3f8          // COM1
 #define DBUG 0
