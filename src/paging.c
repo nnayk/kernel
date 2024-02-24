@@ -24,8 +24,8 @@
 
 static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
 static uint64_t err;
-static void *kheap = KHEAP_START_VA; //points to top of kernel heap
-static void *kstack; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
+static void *kheap = KHEAP_START; //points to top of kernel heap
+//static void *kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 
 extern region low_region;
 extern region high_region;
@@ -51,6 +51,7 @@ void *alloc_pte(PTE_t *entry, int access)
     entry->ignore = 0;
     entry->nx = 0;
     entry->avl2=0;
+    entry->alloced=0;
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
@@ -186,7 +187,7 @@ void *setup_pt4()
 {
     uint64_t *table_start = pf_alloc();
     init_entry(table_start);
-    map_kernel_text(table_start);
+    identity_map(table_start);
     set_cr3((uint64_t)table_start);
     return table_start;
 }
@@ -261,7 +262,7 @@ int valid_va(void *addr)
 void *MMU_alloc_page()
 {
     void *addr;
-    if(kheap > kstack)
+    if(kheap > KHEAP_LIMIT)
     {
             if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
             return NULL;
@@ -331,33 +332,26 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     void *va = get_cr2();
     if(DBUG) printk("page fault va: %p\n",va);
     //TODO: add chec that va > kheap and < kstack and valid_va check
-    void *pa;
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
     {
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
-            return;
+            //return;
     }
    if(!p1_entry)
    {
         va_to_pa(va,NULL,SET_P1);
    }
-   // identity map
-   if(va < (void *)VA_IDENTITY_MAP_MAX)
-   {
-           pa = va;
-           p1_entry->addr = RSHIFT_ADDR(pa);
-   }
-   // otherwise assign to an arbitrary free frame
-   else alloc_pte(p1_entry,0);
+   
+   va_to_pa(va,NULL,SET_PA);
 
    p1_entry->alloced = ALLOCED_RESET;
 }
 
-void map_kernel_text(void *p4_addr)
+void identity_map(void *p4_addr)
 {
     //uint64_t curr_va = (uint64_t)elf_region.start;
-    uint64_t curr_va = 0x0;
+    uint64_t curr_va = 0x1000;
     //int temp = 0;
     while((void *)curr_va < MAX_FRAME_ADDR)
     {
