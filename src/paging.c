@@ -336,11 +336,14 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
     {
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
-            //return;
+            return;
     }
    if(!p1_entry)
    {
-        va_to_pa(va,NULL,SET_P1);
+        if(!(p1_entry = va_to_pa(va,NULL,SET_P1)))
+        {
+                printk("pg_fault_isr: error setting p1 entry");
+        }
    }
    
    va_to_pa(va,NULL,SET_PA);
