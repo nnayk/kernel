@@ -7,6 +7,7 @@
 #include <stdint-gcc.h>
 #include "print.h"
 #include "constants.h"
+#include "utility.h"
 #include "error.h"
 #include "memutils.h"
 
@@ -19,7 +20,6 @@
     } while (0)
     */
 
-#define assert(condition) ((condition) ? 1 : -1)
 //#define assert(condition) do { if (ASSERT_SUCCESS(condition) == -1) return -1; } while(0)
 
 /* Simple test -- alloc a block, free it, alloc again and check that we’re 

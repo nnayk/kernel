@@ -1,6 +1,5 @@
 *.o
 *temp*
-*test*
 *.bin
 *.img
 exp/
