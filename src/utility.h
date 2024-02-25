@@ -27,3 +27,4 @@ int are_interrupts_enabled();
 void *get_p4_addr();
 void set_cr3(uint64_t);
 void *get_cr2();
+void bail();

@@ -1,6 +1,7 @@
 #define PAGE_SIZE 4096
 #define LOW_REGION_OFF 0
 #define HIGH_REGION_OFF 1
+#define NUM_POOLS 6
 
 #include <stddef.h>
 // generic tag header
@@ -60,17 +61,20 @@ struct region
 };
 typedef struct region region;
 
-struct FreeList {
-   struct FreeList *next;
+struct Block {
+   struct Block *next;
 };
 
-typedef struct FreeList FreeList;
+typedef struct Block Block;
 
-typedef struct {
+struct KmallocPool{
    int max_size;
    int avail;
-   FreeList *head;
-}KmallocPool;
+   Block *head;
+   struct KmallocPool *next;
+};
+
+typedef struct KmallocPool KmallocPool;
 
 typedef struct {
    KmallocPool *pool;
@@ -91,3 +95,5 @@ int are_pages_equal(const void *, const void *);
 void *page_align_up(void *);
 void *kmalloc(size_t);
 void kfree(void *);
+int init_pools();
+Block *alloc_pool_block(int);

@@ -24,9 +24,8 @@
 
 static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
 static uint64_t err;
-static void *kheap = KHEAP_START; //points to top of kernel heap
-//static void *kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
-
+extern void *kheap;
+extern void *kstack;
 extern region low_region;
 extern region high_region;
 extern region elf_region;
@@ -265,10 +264,12 @@ void *MMU_alloc_page()
     if(kheap > KHEAP_LIMIT)
     {
             if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
-            return NULL;
+            bail();
     }
     addr = kheap;
+    // allocate p1 entry for the page
     va_to_pa(kheap,NULL,SET_P1);
+    // point kheap to the start of next page
     kheap += PAGE_SIZE;
     return addr;
 }
@@ -327,9 +328,16 @@ void MMU_free_pages(void *va_start, int count)
     }
 }
 
+/*
+ * Performs demand paging 
+ * Params:
+ * Standard ISR params
+ * Returns:
+ * None
+ */
 void pg_fault_isr(int int_num,int err_code,void *arg)
 {
-    void *va = get_cr2();
+    void *va = get_cr2(); // fetch faulting address
     if(!valid_va(va))
     {
             printk("Attempting to access invalid virtual address (%p)!\n",va);
@@ -343,16 +351,26 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
             return;
     }
-   if(!p1_entry)
-   {
-        if(!(p1_entry = va_to_pa(va,NULL,SET_P1)))
-        {
-                printk("pg_fault_isr: error setting p1 entry");
-        }
-   }
-   
-   va_to_pa(va,NULL,SET_PA);
-
+    // check that the VA is within the current VA space
+    //identity map check
+    if(va < (void *)VA_IDENTITY_MAP_MAX)
+    {
+            if(DBUG) printk("pg_fault_isr: resolved %p w/identity map\n",va);
+            va_to_pa(va,NULL,SET_PA);
+    }
+    //kernel heap region check
+    else if((KHEAP_START <= va) && (va < KHEAP_LIMIT))
+    {
+            printk("unreachable code error: kheap does not use demand paging!\n");
+            bail();
+    }
+    // kernel stack region check
+    else if((va>=KHEAP_LIMIT) && (va < KSTACK_LIMIT))
+    {
+            va_to_pa(va,NULL,SET_PA);
+    }
+    // TODO: user space check
+// allocate block(s) from the pool for
    p1_entry->alloced = ALLOCED_RESET;
 }
 

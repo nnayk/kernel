@@ -5,10 +5,6 @@
 */
 #include <stdint-gcc.h>
 
-#define KHEAP_START (void *)0x10000000000 // bottom of heap (inclusive)
-#define KHEAP_LIMIT (void *)0xF0000000000 // top of heap (exclusive)
-#define KSTACK_START (void *)0xFFFFFFFFFFF // bottom of first stack (inclusive)
-#define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 
 typedef struct
 {

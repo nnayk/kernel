@@ -10,6 +10,7 @@
 #include "print.h"
 #include "constants.h"
 #include "utility.h"
+#include "paging.h"
 
 #define LIMIT 5000
 #define MMAP_TAG 6
@@ -19,6 +20,8 @@
 #define SEC_INFO_OFF 20
 #define DBUG 0
 
+void *kheap = KHEAP_START; //points to top of kernel heap
+void *kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 //extern region unused_head;
 //extern region free_head;
 extern region low_region;
@@ -31,7 +34,7 @@ static uint64_t err;
 static uint32_t num_frames_total; // total number of physical frames
 static uint32_t num_frames_low; // number of physical frames in low region
 static uint32_t num_frames_high; // number of physical frames in high region
-KmallocPool ram_pools;
+static KmallocPool ram_pools[NUM_POOLS];
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -63,7 +66,12 @@ int mem_setup()
                 return err;
         if((err = setup_unused(mmap_data,elf_data)) < 0)
         {
-                printk("error = %ld\n",err);
+                printk("mem_setup: error = %ld\n",err);
+                return err;
+        }
+        if((err = init_pools()) < 0)
+        {
+                printk("mem_setup: error = %ld\n",err);
                 return err;
         }
         return SUCCESS;
@@ -257,9 +265,7 @@ void *pf_alloc()
         else
         {
                 printk("Ran out of physical  memory\n");
-                if(are_interrupts_enabled())
-                        cli();
-                hlt();
+                bail();
         }
         num_frames_total--;
         return pg_start;
@@ -454,14 +460,66 @@ void *page_align_up(void *addr)
         return addr;
 }
 
+/*
+ * Initializes fixed size allocator pools 
+ * Params:
+ * Returns:
+ * status code
+ */
+int init_pools()
+{
+    const int POOL_SIZES[] = {32, 64, 128, 512, 1024, 2048};
+    int curr_size = -1;
+    // allocate a frames worth of blocks for each pool
+    for(int i=0;i<NUM_POOLS;i++)
+    {
+        curr_size = POOL_SIZES[i];
+        ram_pools[i].max_size = curr_size;
+        ram_pools[i].avail = INITIAL_BLOCKS_PER_POOL;
+        ram_pools[i].head = alloc_pool_block(curr_size);
+
+    }
+
+    return SUCCESS;
+}
+
+/*
+ * Dynamically allocates a pool of the requested size 
+ * Params:
+ * size -- pool size
+ * Returns:
+ * pointer to start of the block
+ */
+Block *alloc_pool_block(int size)
+{
+        void *pool_pa = NULL;
+        if(!(pool_pa = pf_alloc()))
+        {
+                printk("alloc_pool: pf_alloc() failed for size = %d\n",size);
+                bail();
+        }
+        return (Block *)pool_pa; 
+}
+
+/*
+ * Dynamically allocates virtual memory 
+ * Params:
+ * size -- number of bytes requested
+ * Returns:
+ * pointer to start of usable allocated region
+ */
 void *kmalloc(size_t size)
 {
-    void *start_addr = NULL;
+    void *start_addr;
     size += sizeof(KmallocExtra);
+    int num_pages = size/PAGE_SIZE;
+    start_addr = MMU_alloc_pages(num_pages);
+    // allocate an extra page
+    if(size%PAGE_SIZE)
+            MMU_alloc_page();
     return start_addr;
 }
 
 void kfree(void *addr)
 {
 }
-
