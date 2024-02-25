@@ -8,6 +8,7 @@
 #include "serial.h"
 #include "shared_buff.h"
 #include "paging.h"
+#include "tests.h"
 
 static int err;
 State serial_buffer;
@@ -59,8 +60,6 @@ void kmain()
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
-        void *x = kmalloc(32);
-        printk("x addr = %p\n",x);
         //void *x = MMU_alloc_page();
         //void *x=(void *)0xD0000000;
         //*(uint8_t *)x = 3; 
@@ -68,6 +67,7 @@ void kmain()
         //temp.present=1;
         //alloc_pte(&temp,1);
         //pf_stress_test();
+        kmalloc_tests();
         while(!loop);
         printk("a");
 }
