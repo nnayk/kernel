@@ -485,9 +485,9 @@ int init_pools()
  * Returns:
  * VA corresponding to start of the block
  */
-void *alloc_pool_block(int size)
+Block *alloc_pool_block(int size)
 {
-        void *block_start = MMU_alloc_page(); // VA  of first block in pool
+        Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
         uint64_t *temp = NULL;
         int num_blocks = PAGE_SIZE/size;
         if(!(va_to_pa((void *)block_start,NULL,SET_PA)))
@@ -506,6 +506,25 @@ void *alloc_pool_block(int size)
         }
 
         return block_start;
+}
+
+void display_pools()
+{
+    KmallocPool pool;
+    Block *block = NULL;
+    int count;
+    for(int i=0;i<NUM_POOLS;i++)
+    {
+        count = 0;
+        pool = ram_pools[i];
+        printk("Pool %d: size = %d, avail = %d\n",i+1,pool.max_size,pool.avail);
+        block = pool.head;
+        while(block)
+        {
+                printk("Block %d addr = %p\n",++count,block);
+                block = block->next;
+        }
+    }
 }
 
 /*

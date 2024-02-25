@@ -61,8 +61,8 @@ struct region
 };
 typedef struct region region;
 
-struct Block {
-   struct Block *next;
+struct Block{
+    struct Block *next;
 };
 
 typedef struct Block Block;
@@ -70,7 +70,7 @@ typedef struct Block Block;
 struct KmallocPool{
    int max_size;
    int avail;
-   void *head; // VA corresponding to first block in pool
+   Block *head; // VA corresponding to first block in pool
 };
 
 typedef struct KmallocPool KmallocPool;
@@ -95,4 +95,5 @@ void *page_align_up(void *);
 void *kmalloc(size_t);
 void kfree(void *);
 int init_pools();
-void *alloc_pool_block(int);
+Block *alloc_pool_block(int);
+void display_pools();

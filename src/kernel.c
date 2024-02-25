@@ -52,6 +52,7 @@ void kmain()
                 printk("init_pool error");
                 return;
         }
+        display_pools();
         //int x[2000];
         //x[900] = 2;
         //printk("x[900]=%d\n",x[900]);
@@ -64,7 +65,7 @@ void kmain()
         //PTE_t temp;
         //temp.present=1;
         //alloc_pte(&temp,1);
-        pf_stress_test();
+        //pf_stress_test();
         while(!loop);
         printk("a");
 }
