@@ -70,8 +70,7 @@ typedef struct Block Block;
 struct KmallocPool{
    int max_size;
    int avail;
-   Block *head;
-   struct KmallocPool *next;
+   void *head; // VA corresponding to first block in pool
 };
 
 typedef struct KmallocPool KmallocPool;
@@ -96,4 +95,4 @@ void *page_align_up(void *);
 void *kmalloc(size_t);
 void kfree(void *);
 int init_pools();
-Block *alloc_pool_block(int);
+void *alloc_pool_block(int);

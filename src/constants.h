@@ -32,9 +32,9 @@
 #define STACK_SIZE 4096
 #define INVALID_START_ADDR (void *)(0xFFFFFFFFFFFFFFFF)
 
-#define KHEAP_START (void *)0x10000000000 // bottom of heap (inclusive)
-#define KHEAP_LIMIT (void *)0xF0000000000 // top of heap (exclusive)
-#define KSTACK_START (void *)0xFFFFFFFFFFF // bottom of first stack (inclusive)
-#define KSTACK_LIMIT (void *)0x100000000000
+#define KHEAP_START 0x10000000000 // bottom of heap (inclusive)
+#define KHEAP_LIMIT 0xF0000000000 // top of heap (exclusive)
+#define KSTACK_START 0xFFFFFFFFFFF // bottom of first stack (inclusive)
+#define KSTACK_LIMIT 0x100000000000
 #define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 #define INITIAL_BLOCKS_PER_POOL 1

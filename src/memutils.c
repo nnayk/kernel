@@ -20,8 +20,8 @@
 #define SEC_INFO_OFF 20
 #define DBUG 0
 
-void *kheap = KHEAP_START; //points to top of kernel heap
-void *kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
+uint64_t kheap = KHEAP_START; //points to top of kernel heap
+uint64_t kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 //extern region unused_head;
 //extern region free_head;
 extern region low_region;
@@ -65,11 +65,6 @@ int mem_setup()
         if((err = track_unused(&mmap_data,&elf_data)) < 0)
                 return err;
         if((err = setup_unused(mmap_data,elf_data)) < 0)
-        {
-                printk("mem_setup: error = %ld\n",err);
-                return err;
-        }
-        if((err = init_pools()) < 0)
         {
                 printk("mem_setup: error = %ld\n",err);
                 return err;
@@ -488,17 +483,29 @@ int init_pools()
  * Params:
  * size -- pool size
  * Returns:
- * pointer to start of the block
+ * VA corresponding to start of the block
  */
-Block *alloc_pool_block(int size)
+void *alloc_pool_block(int size)
 {
-        void *pool_pa = NULL;
-        if(!(pool_pa = pf_alloc()))
+        void *block_start = MMU_alloc_page(); // VA  of first block in pool
+        uint64_t *temp = NULL;
+        int num_blocks = PAGE_SIZE/size;
+        if(!(va_to_pa((void *)block_start,NULL,SET_PA)))
         {
-                printk("alloc_pool: pf_alloc() failed for size = %d\n",size);
+                printk("alloc_pool: va_to_pa() failed for size = %d\n",size);
                 bail();
         }
-        return (Block *)pool_pa; 
+        // partition the frame into multiple blocks
+        for(int i=0;i<num_blocks;i++)
+        {
+            temp = (uint64_t *)((uint64_t)block_start + (size * i));
+            if(i != num_blocks-1)
+                    *temp = (uint64_t)temp+size;
+            else
+                    *temp = 0; // zero out next pointer for last block
+        }
+
+        return block_start;
 }
 
 /*
@@ -513,10 +520,10 @@ void *kmalloc(size_t size)
     void *start_addr;
     size += sizeof(KmallocExtra);
     int num_pages = size/PAGE_SIZE;
-    start_addr = MMU_alloc_pages(num_pages);
     // allocate an extra page
-    if(size%PAGE_SIZE)
-            MMU_alloc_page();
+    if(size%PAGE_SIZE) num_pages++;
+
+    start_addr = MMU_alloc_pages(num_pages);
     return start_addr;
 }
 

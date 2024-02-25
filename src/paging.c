@@ -261,7 +261,7 @@ int valid_va(void *addr)
 void *MMU_alloc_page()
 {
     void *addr;
-    if(kheap > KHEAP_LIMIT)
+    if(kheap > (void *)KHEAP_LIMIT)
     {
             if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
             bail();
@@ -343,7 +343,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             printk("Attempting to access invalid virtual address (%p)!\n",va);
             return;
     }
-    if(DBUG) printk("page fault va: %p\n",va);
+    printk("page fault va: %p\n",va);
     //TODO: add chec that va > kheap and < kstack and valid_va check
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
@@ -359,13 +359,13 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             va_to_pa(va,NULL,SET_PA);
     }
     //kernel heap region check
-    else if((KHEAP_START <= va) && (va < KHEAP_LIMIT))
+    else if(((void *)KHEAP_START <= va) && (va < (void *)KHEAP_LIMIT))
     {
             printk("unreachable code error: kheap does not use demand paging!\n");
             bail();
     }
     // kernel stack region check
-    else if((va>=KHEAP_LIMIT) && (va < KSTACK_LIMIT))
+    else if((va>=(void *)KHEAP_LIMIT) && (va < (void *)KSTACK_LIMIT))
     {
             va_to_pa(va,NULL,SET_PA);
     }
