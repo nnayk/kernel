@@ -589,19 +589,20 @@ void *kmalloc(size_t usable_size)
     }
 
     // find best fit pool and allocate a block
-    while(i++<NUM_POOLS && !done)
+    while(i<NUM_POOLS && !done)
     {
             pool_size = ram_pools[i].max_size; 
             if(true_size <= pool_size)
             {
                 hdr.pool_index = i;
                 hdr.usable_size = usable_size;
-                if(!(start_addr = (void *)alloc_block(pool_size)))
+                if(!(start_addr = (void *)alloc_block(hdr.pool_index)))
                 {
                     start_addr = alloc_pool_blocks(pool_size);
                 }
                 done = 1;
             }
+            i++;
     }
     /* requested size is larger than biggest pool, allocate frames (MMU_alloc_pages() + va_to_pa()) */
     if(!done)

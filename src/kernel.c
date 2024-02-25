@@ -59,6 +59,8 @@ void kmain()
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
+        void *x = kmalloc(32);
+        printk("x addr = %p\n",x);
         //void *x = MMU_alloc_page();
         //void *x=(void *)0xD0000000;
         //*(uint8_t *)x = 3; 
