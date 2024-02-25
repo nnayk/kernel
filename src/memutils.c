@@ -35,6 +35,8 @@ static uint32_t num_frames_total; // total number of physical frames
 static uint32_t num_frames_low; // number of physical frames in low region
 static uint32_t num_frames_high; // number of physical frames in high region
 static KmallocPool ram_pools[NUM_POOLS];
+static const int POOL_SIZES[] = {32, 64, 128, 512, 1024, 2048};
+static const size_t KMALLOCEXTRA_SIZE = sizeof(KmallocExtra);
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -458,12 +460,12 @@ void *page_align_up(void *addr)
 /*
  * Initializes fixed size allocator pools 
  * Params:
+ * None
  * Returns:
  * status code
  */
 int init_pools()
 {
-    const int POOL_SIZES[] = {32, 64, 128, 512, 1024, 2048};
     int curr_size = -1;
     // allocate a frames worth of blocks for each pool
     for(int i=0;i<NUM_POOLS;i++)
@@ -471,7 +473,7 @@ int init_pools()
         curr_size = POOL_SIZES[i];
         ram_pools[i].max_size = curr_size;
         ram_pools[i].avail = INITIAL_BLOCKS_PER_POOL;
-        ram_pools[i].head = alloc_pool_block(curr_size);
+        ram_pools[i].head = alloc_pool_blocks(curr_size);
 
     }
 
@@ -485,7 +487,7 @@ int init_pools()
  * Returns:
  * VA corresponding to start of the block
  */
-Block *alloc_pool_block(int size)
+Block *alloc_pool_blocks(int size)
 {
         Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
         uint64_t *temp = NULL;
@@ -528,24 +530,126 @@ void display_pools()
 }
 
 /*
- * Dynamically allocates virtual memory 
+ * Returns the next block in the requested pool (or null if pool is empty) 
+ * Params:
+ * pool_index
+ * Returns:
+ * pointer to the block to use
+ */
+Block *alloc_block(int pool_index)
+{
+    Block *head = ram_pools[pool_index].head;
+    Block *next = head->next;
+    ram_pools[pool_index].head = next;
+    return head;
+}
+
+/*
+ * Frees the next block in the requested pool (or null if pool is empty) 
+ * Params:
+ * pointer to block
+ * pool_index
+ * Returns:
+ * None
+ */
+void free_block(Block *blk,int pool_index)
+{
+        if(pool_index < 0 || pool_index > NUM_POOLS)
+        {
+                printk("free_block: invalid pool_index %d\n",pool_index);
+                bail();
+        }
+
+        Block *old_head = ram_pools[pool_index].head;
+        blk->next = old_head;
+        ram_pools[pool_index].head = blk;
+}
+
+/*
+ * Dynamically allocates memory 
  * Params:
  * size -- number of bytes requested
  * Returns:
  * pointer to start of usable allocated region
  */
-void *kmalloc(size_t size)
+void *kmalloc(size_t usable_size)
 {
     void *start_addr;
-    size += sizeof(KmallocExtra);
-    int num_pages = size/PAGE_SIZE;
-    // allocate an extra page
-    if(size%PAGE_SIZE) num_pages++;
+    size_t true_size = usable_size + KMALLOCEXTRA_SIZE;
+    KmallocExtra hdr;
+    int num_pages = 0;
+    int pool_size = 0;
+    int done = 0; // indicator if raw paging is needed
+    int i = 0; // for loop below
 
-    start_addr = MMU_alloc_pages(num_pages);
-    return start_addr;
+    if(usable_size <= 0)
+    {
+            printk("kmalloc: cannot allocate %ld bytes\n",usable_size);
+            return NULL;
+    }
+
+    // find best fit pool and allocate a block
+    while(i++<NUM_POOLS && !done)
+    {
+            pool_size = ram_pools[i].max_size; 
+            if(true_size <= pool_size)
+            {
+                hdr.pool_index = i;
+                hdr.usable_size = usable_size;
+                if(!(start_addr = (void *)alloc_block(pool_size)))
+                {
+                    start_addr = alloc_pool_blocks(pool_size);
+                }
+                done = 1;
+            }
+    }
+    /* requested size is larger than biggest pool, allocate frames (MMU_alloc_pages() + va_to_pa()) */
+    if(!done)
+    {
+        num_pages = (true_size + PAGE_SIZE - 1) / PAGE_SIZE;
+        start_addr = MMU_alloc_pages(num_pages);
+        // map the new page
+        va_to_pa(start_addr,NULL,SET_PA);
+        hdr.pool_index = -1;
+        hdr.usable_size = usable_size;
+    }
+
+    memcpy(start_addr,&hdr,KMALLOCEXTRA_SIZE);
+    return (void *)((uint64_t)start_addr+KMALLOCEXTRA_SIZE);
 }
 
+/*
+ * Frees dynamically allocated memory
+ * Params:
+ * addr -- starting address of data to free
+ * Returns:
+ * None
+ */
 void kfree(void *addr)
 {
+        if(!valid_va(addr))
+        {
+                printk("kfree: invalid va %p\n",addr);
+                bail();
+        }
+
+        KmallocExtra *hdr = (void *)((uint64_t)addr-KMALLOCEXTRA_SIZE);
+        int pool_index = hdr->pool_index;
+        int count; // number of blocks to free up (or frames if raw paging was used)
+        // raw paging, need to free up each frame
+        if(pool_index < 0)
+        {
+            count = (hdr->usable_size + KMALLOCEXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
+            MMU_free_pages(addr,count);
+        }
+
+        // return the blocks to the corresponding pool
+        free_block(addr,hdr->pool_index); 
+
+        // TODO: coalesce with next chunk if possible
+        //if(addr + 
+        
+        // reset header to indicate chunk is free
+        hdr->usable_size = -1;
+        hdr->pool_index = -2;
 }

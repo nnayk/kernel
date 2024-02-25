@@ -76,8 +76,8 @@ struct KmallocPool{
 typedef struct KmallocPool KmallocPool;
 
 typedef struct {
-   KmallocPool *pool;
-   size_t size;
+   int pool_index;
+   size_t usable_size;
 }KmallocExtra;
 
 void *memset(void *dst, int c, size_t n);
@@ -95,5 +95,7 @@ void *page_align_up(void *);
 void *kmalloc(size_t);
 void kfree(void *);
 int init_pools();
-Block *alloc_pool_block(int);
+Block *alloc_pool_blocks(int);
 void display_pools();
+Block *alloc_block(int);
+void free_block(Block *,int);
