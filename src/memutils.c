@@ -86,8 +86,6 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
         if((err=(uint64_t)memcpy(&total_size,multiboot_start,sizeof(uint32_t))) <= 0)
                 return err;
         printk("total struct size = %d\n",total_size);
-        int loop=1;
-        while(!loop);
         // loop until tag type = 8 reached
         while(curr_off < total_size)
         {
@@ -544,7 +542,7 @@ Block *alloc_block(int pool_index)
 }
 
 /*
- * Frees the next block in the requested pool (or null if pool is empty) 
+ * Frees the given block in the requested pool (or null if pool is empty) 
  * Params:
  * pointer to block
  * pool_index
@@ -652,6 +650,4 @@ void kfree(void *addr)
         //if(addr + 
         
         // reset header to indicate chunk is free
-        hdr->usable_size = -1;
-        hdr->pool_index = -2;
 }

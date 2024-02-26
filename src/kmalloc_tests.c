@@ -69,10 +69,10 @@ static int alloc_each_pool()
         int status = SUCCESS;
         int *first_addr;
         int *second_addr;
-        int largest_pool_size = POOL_SIZES[NUM_POOLS-1];
-        uint8_t bitmap[largest_pool_size];
+        uint8_t bitmap[PAGE_SIZE];
         for(int i=0;i<NUM_POOLS;i++)
         {
+            printk("alloc_each_pool: mallocing for pool %d\n",i);
             first_addr = kmalloc(POOL_SIZES[i]);
             if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]))
             {
