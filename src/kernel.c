@@ -66,8 +66,8 @@ void kmain()
         //PTE_t temp;
         //temp.present=1;
         //alloc_pte(&temp,1);
-        //pf_stress_test();
-        kmalloc_tests();
+        pf_stress_test();
+        //kmalloc_tests();
         while(!loop);
         printk("a");
 }

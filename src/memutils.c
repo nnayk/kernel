@@ -376,7 +376,13 @@ int pf_stress_test()
                         printk("null page start\n");
                         hlt();
                 }
-                if(DBUG) printk("page_start %d = %p\n",i+1,page_start); 
+                if(DBUG) printk("page_start %d = %p\n",i+1,page_start);
+                if(write_bitmap(bitmap,page_start,PAGE_SIZE) < 0)
+                {
+                        printk("pf_stress_test: write_bitmap() error\n");
+                        bail();
+                }
+#if 0
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
                         if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
@@ -391,6 +397,7 @@ int pf_stress_test()
                                 printk("pf_stress_test: memcpy error\n");
                                 return err;
                         }
+#endif
         }
         printk("num freames = %d\n",num_frames_total);
         if(DBUG) printk("done writing bit patterns\n");
@@ -406,6 +413,12 @@ int pf_stress_test()
         for(int i=0;i<num_frames;i++)
         {
                 page_start = region_start + i*PAGE_SIZE;
+                if(write_bitmap(bitmap,page_start,PAGE_SIZE) < 0)
+                {
+                        printk("pf_stress_test: write_bitmap() error\n");
+                        bail();
+                }
+                /*
                 for(int j = 0;j<PAGE_SIZE;j+=sizeof(void *))
                 {
                         if((err=(uint64_t)memcpy(bitmap+j,&page_start,sizeof(void *))) < 0)
@@ -414,11 +427,12 @@ int pf_stress_test()
                                 return err;
                         }
                 }
-           if(!are_pages_equal(page_start,bitmap))
-           {
-                   printk("pf_stress_test: validation error for page %d: %p\n",i+1,page_start);
-                   return -1;
-           }
+                */
+                if(!are_buffers_equal(page_start,bitmap,PAGE_SIZE))
+                {
+                    printk("pf_stress_test: validation error for page %d: %p\n",i+1,page_start);
+                    return -1;
+                }
            //else printk("pf_stress_test: SUCCESS for page %d, %p\n",i+1,page_start);
         }
         printk("low region validation complete!\n");
@@ -431,21 +445,6 @@ int pf_stress_test()
         return SUCCESS;
 }
 
-int are_pages_equal(const void *ptr1, const void *ptr2) {
-    const unsigned char *byte_ptr1 = ptr1;
-    const unsigned char *byte_ptr2 = ptr2;
-
-    for (size_t i = 0; i < PAGE_SIZE; ++i) {
-        if (byte_ptr1[i] != byte_ptr2[i]) {
-            if(DBUG)
-            {
-                    printk("bytes %ld differ: for ptr1 = %d,ptr2=%d\n",i,byte_ptr1[i],byte_ptr2[i]);
-            }
-            return 0; // Not equal
-        }
-    }
-    return 1; // Equal
-}
 
 void *page_align_up(void *addr)
 {

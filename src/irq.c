@@ -20,10 +20,10 @@
 #define DBUG 1
 #define NUM_ISTS 4
 
-extern void (*asm_wrappers[NUM_IRQS])();
+extern void (*asm_wrappers[NUM_INTS])();
 extern State serial_buffer;
-idt_entry_t idt_arr[NUM_IRQS];
-irq_helper_t irq_helper[NUM_IRQS];
+idt_entry_t idt_arr[NUM_INTS];
+irq_helper_t irq_helper[NUM_INTS];
 tss_t tss;
 static int err = 0; // error code
 uint8_t ists[STACK_SIZE*NUM_ISTS];
@@ -75,7 +75,7 @@ int irq_init()
         if(!(err=irq_helper_init()))
                 return err;
         // init each idt entry
-        for(int i=0;i<NUM_IRQS;i++)
+        for(int i=0;i<NUM_INTS;i++)
         {
             idt_arr[i].cs = KERNEL_CS;
             idt_arr[i].ist = KERNEL_IST;
@@ -217,7 +217,7 @@ void load_idtr(idtr_t idtr)
 
 int irq_helper_init()
 {
-        for(int i=0;i<NUM_IRQS;i++)
+        for(int i=0;i<NUM_INTS;i++)
         {
                 irq_helper[i].handler = NULL;
                 irq_helper[i].arg = NULL;
@@ -243,7 +243,7 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     }
     */
     /* validate int. num */
-    if(!((0<=int_num) && (int_num < NUM_IRQS)))
+    if(!((0<=int_num) && (int_num < NUM_INTS)))
     {
         printk("Error: Invalid interrupt number %d",int_num);
         hlt();

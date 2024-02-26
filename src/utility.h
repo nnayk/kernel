@@ -29,3 +29,5 @@ void *get_p4_addr();
 void set_cr3(uint64_t);
 void *get_cr2();
 void bail();
+int write_bitmap(uint8_t *,void *,uint16_t);
+int are_buffers_equal(const void *, const void *,int);

@@ -4,7 +4,8 @@
  * Description:
 */
 
-#define NUM_IRQS 256
+#define PAGE_SIZE 4096
+#define NUM_INTS 256
 #define KERNEL_CS 0x08
 #define TSS_DESC_SELECTOR 0x10
 #define CURR_STACK 0

@@ -16,5 +16,7 @@
 #define ERR_INVALID_ADDR -8
 #define PTE_NOT_SET -9
 #define ERR_PF_TEST -10
+#define ERR_KMALLOC_TEST -11
+#define ERR_BAD_INPUT -12
 
 #define SUCCESS 1

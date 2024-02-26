@@ -1,4 +1,3 @@
-#define PAGE_SIZE 4096
 #define LOW_REGION_OFF 0
 #define HIGH_REGION_OFF 1
 #define NUM_POOLS 6
@@ -90,7 +89,6 @@ void pf_simple_test();
 int pf_free(void *);
 void pf_nonseq_test();
 int pf_stress_test();
-int are_pages_equal(const void *, const void *);
 void *page_align_up(void *);
 void *kmalloc(size_t);
 void kfree(void *);

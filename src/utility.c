@@ -9,7 +9,11 @@
 
 #include "error.h"
 #include "utility.h"
+#include "memutils.h"
+#include "constants.h"
+#include "print.h"
 
+#define DBUG 1
 
 size_t strlen(const char *s)
 {
@@ -132,6 +136,62 @@ void bail()
     if(are_interrupts_enabled())
         cli();
     hlt();
+}
+
+/*
+ * Description: Repeatedly fills a buffer starting from a given address with the bytesthat make up the address.
+ * Params:
+ * given_map -- OPTIONAL: buffer to fill
+ * addr
+ * size -- size of buffer to fill (must be a multiple of sizeof(void *) (i.e. 8))
+ * Returns
+ * status code
+ */
+int write_bitmap(uint8_t *given_map,void *addr,uint16_t size)
+{
+    if(size%sizeof(void *))
+    {
+            printk("write_bitmap: invalid size %d\n",size);
+            return ERR_BAD_INPUT;
+    }
+
+    uint8_t bitmap[PAGE_SIZE]; // max bitmap size is PAGE_SIZE, only <size> 
+                               //  bytes will be used though
+    uint8_t *ptr = bitmap; // either <bitmap> or <given_map>
+    if(given_map) ptr = given_map;
+    /* populate bitmap */
+    for(int i = 0;i<size;i+=sizeof(void *))
+    {
+        if((uint64_t)memcpy(ptr+i,&addr,sizeof(void *)) < 0)
+        {
+                printk("write_ptr: memcpy error\n");
+                bail();
+        }
+    }
+    /* write the bit pattern to the page */
+    if((uint64_t)memcpy(addr,ptr,size) < 0)
+    {
+            printk("write_ptr: memcpy error\n");
+            bail();
+    }
+
+    return SUCCESS; 
+}
+
+int are_buffers_equal(const void *ptr1, const void *ptr2,int size) {
+    const unsigned char *byte_ptr1 = ptr1;
+    const unsigned char *byte_ptr2 = ptr2;
+
+    for (int i = 0; i < size; ++i) {
+        if (byte_ptr1[i] != byte_ptr2[i]) {
+            if(DBUG)
+            {
+                    printk("bytes %d differ: for ptr1 = %d,ptr2=%d\n",i,byte_ptr1[i],byte_ptr2[i]);
+            }
+            return 0; // Not equal
+        }
+    }
+    return SUCCESS; // Equal
 }
 
 #if 0

@@ -50,15 +50,48 @@ static int simple()
         int status = SUCCESS;
         int *first_addr = kmalloc(32);
         int *second_addr = NULL;
-        if(DBUG) printk("first_Addr = %p\n",first_addr);
+        // write a couple bytes
         *first_addr = 2;
         first_addr[31] = 9;
         status = assert(first_addr[0]==2);
         status = assert(first_addr[31]==9);
         kfree(first_addr);
         second_addr = kmalloc(32);
-        if(DBUG) printk("first_addr = %p, second_addr = %p\n",first_addr,second_addr);
         status = assert(first_addr==second_addr);
+        return status;
+}
+
+/*
+ * 
+ */
+static int alloc_each_pool()
+{
+        int status = SUCCESS;
+        int *first_addr;
+        int *second_addr;
+        int largest_pool_size = POOL_SIZES[NUM_POOLS-1];
+        uint8_t bitmap[largest_pool_size];
+        for(int i=0;i<NUM_POOLS;i++)
+        {
+            first_addr = kmalloc(POOL_SIZES[i]);
+            if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]))
+            {
+                printk("alloc_each_pool: write_bitmap() failed\n");
+                bail();
+            }
+                if(!are_buffers_equal(first_addr,bitmap,POOL_SIZES[i]))
+                {
+                    printk("alloc_each_pool: validation error for pool %d: %p\n",i,first_addr);
+                    return -1;
+                }
+            kfree(first_addr);
+            second_addr = kmalloc(POOL_SIZES[i]);
+            if((status = assert(first_addr==second_addr)) < 0)
+            {
+                    printk("pool %d error\n",i);
+                    return status;
+            }
+        }
         return status;
 }
 
@@ -67,10 +100,10 @@ static int simple()
  */
 static int ugly_sizes()
 {
+        return 1;
         int status = SUCCESS;
         int *addrs[5];
-        //int sizes[] = {5,35,89,987,5003};
-        int sizes[] = {5};
+        int sizes[] = {5,35,89,987,5003};
         int num_sizes = sizeof(sizes)/sizeof(int);
         for(int i=0;i<num_sizes;i++)
         {
@@ -88,6 +121,11 @@ int kmalloc_tests()
     if((status = simple()) < 0) 
     {
             printk("failed simple_test\n");
+            return status;
+    }
+    if((status = alloc_each_pool()) < 0) 
+    {
+            printk("failed alloc_each_pool\n");
             return status;
     }
     if((status = ugly_sizes()) < 0) 

@@ -2,8 +2,8 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop25
-loop1 := /dev/loop26
+loop0 := /dev/loop22
+loop1 := /dev/loop23
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o kmalloc_tests.o
@@ -13,7 +13,7 @@ my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 .PHONY: empty clean lo_status
 
 run: $(image)
-	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -no-reboot -no-shutdown 1>qemu-data-dump # -d int 2>qemu-int-dump
+	qemu-system-x86_64 -s -serial stdio -drive format=raw,file=fat.img -no-reboot -no-shutdown 1>qemu-data-dump -d int #2>qemu-int-dump
 clean:
 	rm *.o
 	rm kernel.bin
