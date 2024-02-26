@@ -14,29 +14,84 @@
 
 #define DBUG 1
 
-static int simple_test()
+extern const int POOL_SIZES[];
+extern const size_t KMALLOC_EXTRA_SIZE[];
+
+/*
+ * Description: Validate the kmalloc header pool and size
+ * Params:
+ * addr -- VA returned from a kmalloc() call
+ * usable_size -- size requested to kmalloc()
+ */ 
+int validate_header(void *addr,int usable_size)
+{
+        KmallocExtra *hdr = (KmallocExtra *)((uint64_t)addr - (uint64_t)KMALLOC_EXTRA_SIZE);
+        int status = SUCCESS; 
+        for(int i=0;i<NUM_POOLS;i++)
+        {
+                if(usable_size <= POOL_SIZES[i])
+                {
+                        status = assert(hdr->pool_index==i && hdr->usable_size == usable_size);
+                        return status;
+                }
+        }
+        // raw paging
+        status = assert(hdr->pool_index == -1 && hdr->usable_size == usable_size);
+        return status;
+}
+
+/*
+ * Simple test -- alloc a block, free it, alloc again and check that we’re 
+ * given the same block
+ */
+static int simple()
 {
         int status = SUCCESS;
         int *first_addr = kmalloc(32);
         int *second_addr = NULL;
-        printk("first_Addr = %p\n",first_addr);
+        if(DBUG) printk("first_Addr = %p\n",first_addr);
         *first_addr = 2;
         first_addr[31] = 9;
         status = assert(first_addr[0]==2);
         status = assert(first_addr[31]==9);
         kfree(first_addr);
         second_addr = kmalloc(32);
-        printk("first_addr = %p, second_addr = %p\n",first_addr,second_addr);
+        if(DBUG) printk("first_addr = %p, second_addr = %p\n",first_addr,second_addr);
         status = assert(first_addr==second_addr);
         return status;
+}
+
+/*
+ * Alloc and free odd numbers of bytes
+ */
+static int ugly_sizes()
+{
+        int status = SUCCESS;
+        int *addrs[5];
+        //int sizes[] = {5,35,89,987,5003};
+        int sizes[] = {5};
+        int num_sizes = sizeof(sizes)/sizeof(int);
+        for(int i=0;i<num_sizes;i++)
+        {
+                addrs[i] = kmalloc(sizes[i]);
+                // validate the headers
+                if((status = validate_header(addrs[i],sizes[i])) < 0)
+                    return status;
+        }
+        return SUCCESS;
 }
 
 int kmalloc_tests()
 {
     int status = SUCCESS;
-    if((status = simple_test()) < 0) 
+    if((status = simple()) < 0) 
     {
             printk("failed simple_test\n");
+            return status;
+    }
+    if((status = ugly_sizes()) < 0) 
+    {
+            printk("failed ugly_sizes\n");
             return status;
     }
     printk("kmalloc_tests: SUCCEESS\n");

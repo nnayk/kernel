@@ -35,8 +35,8 @@ static uint32_t num_frames_total; // total number of physical frames
 static uint32_t num_frames_low; // number of physical frames in low region
 static uint32_t num_frames_high; // number of physical frames in high region
 static KmallocPool ram_pools[NUM_POOLS];
-static const int POOL_SIZES[] = {32, 64, 128, 512, 1024, 2048};
-static const size_t KMALLOCEXTRA_SIZE = sizeof(KmallocExtra);
+const int POOL_SIZES[] = {32, 64, 128, 512, 1024, 2048};
+const size_t KMALLOC_EXTRA_SIZE = sizeof(KmallocExtra);
 
 void *memset(void *dst, int c, size_t n)
 {
@@ -576,7 +576,7 @@ void free_block(Block *blk,int pool_index)
 void *kmalloc(size_t usable_size)
 {
     void *start_addr;
-    size_t true_size = usable_size + KMALLOCEXTRA_SIZE;
+    size_t true_size = usable_size + KMALLOC_EXTRA_SIZE;
     KmallocExtra hdr;
     int num_pages = 0;
     int pool_size = 0;
@@ -616,8 +616,8 @@ void *kmalloc(size_t usable_size)
         hdr.usable_size = usable_size;
     }
 
-    memcpy(start_addr,&hdr,KMALLOCEXTRA_SIZE);
-    return (void *)((uint64_t)start_addr+KMALLOCEXTRA_SIZE);
+    memcpy(start_addr,&hdr,KMALLOC_EXTRA_SIZE);
+    return (void *)((uint64_t)start_addr+KMALLOC_EXTRA_SIZE);
 }
 
 /*
@@ -635,13 +635,13 @@ void kfree(void *addr)
                 bail();
         }
 
-        KmallocExtra *hdr = (void *)((uint64_t)addr-KMALLOCEXTRA_SIZE);
+        KmallocExtra *hdr = (void *)((uint64_t)addr-KMALLOC_EXTRA_SIZE);
         int pool_index = hdr->pool_index;
         int count; // number of blocks to free up (or frames if raw paging was used)
         // raw paging, need to free up each frame
         if(pool_index < 0)
         {
-            count = (hdr->usable_size + KMALLOCEXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
+            count = (hdr->usable_size + KMALLOC_EXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
             MMU_free_pages(addr,count);
         }
 
