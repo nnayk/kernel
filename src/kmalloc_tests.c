@@ -15,7 +15,7 @@
 #define DBUG 1
 
 extern const int POOL_SIZES[];
-extern const size_t KMALLOC_EXTRA_SIZE[];
+extern const size_t KMALLOC_EXTRA_SIZE;
 
 /*
  * Description: Validate the kmalloc header pool and size
@@ -26,6 +26,7 @@ extern const size_t KMALLOC_EXTRA_SIZE[];
 int validate_header(void *addr,int usable_size)
 {
         KmallocExtra *hdr = (KmallocExtra *)((uint64_t)addr - (uint64_t)KMALLOC_EXTRA_SIZE);
+        printk("hdr = %p, hdr_addr = %lx\n",hdr,(uint64_t)addr - (uint64_t)KMALLOC_EXTRA_SIZE);
         int status = SUCCESS; 
         for(int i=0;i<NUM_POOLS;i++)
         {
