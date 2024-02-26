@@ -341,6 +341,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     if(!valid_va(va))
     {
             printk("Attempting to access invalid virtual address (%p)!\n",va);
+            bail();
             return;
     }
     printk("page fault va: %p\n",va);
@@ -349,7 +350,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
     {
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
-            return;
+            bail();
     }
     // check that the VA is within the current VA space
     //identity map check
