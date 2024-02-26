@@ -9,7 +9,6 @@
 #include <stddef.h>
 #include <stdint-gcc.h>
 
-#define assert(condition) ((condition) ? 1 : -1)
 
 size_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);

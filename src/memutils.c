@@ -563,6 +563,7 @@ void free_block(Block *blk,int pool_index)
         Block *old_head = ram_pools[pool_index].head;
         blk->next = old_head;
         ram_pools[pool_index].head = blk;
+        printk("old head = %p, new head = %p\n",old_head,ram_pools[pool_index].head);
 }
 
 /*
@@ -645,7 +646,8 @@ void kfree(void *addr)
         }
 
         // return the blocks to the corresponding pool
-        free_block(addr,hdr->pool_index); 
+        printk("freeing block w/index = %d\n",hdr->pool_index);
+        free_block((void *)hdr,hdr->pool_index); 
 
         // TODO: coalesce with next chunk if possible
         //if(addr + 
