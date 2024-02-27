@@ -31,7 +31,7 @@ int validate_header(void *addr,int usable_size)
         int status = SUCCESS; 
         for(int i=0;i<NUM_POOLS;i++)
         {
-                if(usable_size <= POOL_SIZES[i])
+                if(usable_size < POOL_SIZES[i])
                 {
                         status = assert(hdr->pool_index==i && hdr->usable_size == usable_size);
                         return status;
@@ -133,15 +133,38 @@ static int ugly_sizes()
 
 /* 
  * Allocate more bytes than the largest pool size such that raw paging is
- * invoked. 
+ * invoked. Performs this twice similar to earlier tests, but checks that VAs
+ * are DIFFERENT but underlying frames are the same.
  */
-#if 0
 static int raw_paging()
 {
+        int status = SUCCESS;
         void *first_addr = kmalloc(POOL_SIZES[NUM_POOLS-1]); // with the header overhead this should be sufficient to invoke raw paging
-        void *first_addr = kmalloc(POOL_SIZES[NUM_POOLS-1]); 
+        void *second_addr;
+        void *first_frame;
+        void *second_frame;
+        int size = POOL_SIZES[NUM_POOLS-1]; 
+        if((status = validate_header(first_addr,size)) < 0)
+            return status;
+        first_frame = va_to_pa(first_addr,NULL,GET_PA);
+        kfree(first_addr);
+        second_addr = kmalloc(size); 
+        second_frame = va_to_pa(second_addr,NULL,GET_PA);
+        if((status = validate_header(second_addr,size)) < 0)
+            return status;
+        if((status = assert(first_addr != second_addr)) < -1)
+        {
+                printk("raw_paging: VAs are equal!\n");
+                return status;
+        }
+        if((status = assert(first_frame == second_frame)) < -1)
+        {
+                printk("raw_paging: PAs are unequal! first = %p, second = %p\n",first_frame,second_frame);
+                return status;
+        }
+
+        return status;
 }
-#endif
 
 int kmalloc_tests()
 {
@@ -159,6 +182,11 @@ int kmalloc_tests()
     if((status = ugly_sizes()) < 0) 
     {
             printk("failed ugly_sizes\n");
+            return status;
+    }
+    if((status = raw_paging()) < 0) 
+    {
+            printk("failed raw_paging\n");
             return status;
     }
     printk("kmalloc_tests: SUCCEESS\n");
