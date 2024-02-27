@@ -31,7 +31,7 @@ extern region ram[];
 extern void *free_head;
 extern uint8_t *multiboot_start;
 static uint64_t err;
-static uint32_t num_frames_total; // total number of physical frames
+uint32_t num_frames_total; // total number of physical frames
 static uint32_t num_frames_low; // number of physical frames in low region
 static uint32_t num_frames_high; // number of physical frames in high region
 static KmallocPool ram_pools[NUM_POOLS];
@@ -282,6 +282,7 @@ int pf_free(void *frame_start)
                 free_head = frame_start;
         }
         if(DBUG) printk("pf_free: old head = %lx,new_head = %p\n",*(uint64_t *)free_head,free_head);
+        num_frames_total++;
         return SUCCESS;
 }
 void pf_simple_test()
@@ -469,7 +470,7 @@ int init_pools()
     {
         curr_size = POOL_SIZES[i];
         ram_pools[i].max_size = curr_size;
-        ram_pools[i].avail = INITIAL_BLOCKS_PER_POOL;
+        ram_pools[i].avail = PAGE_SIZE/curr_size;
         ram_pools[i].head = alloc_pool_blocks(curr_size);
 
     }
@@ -531,13 +532,15 @@ void display_pools()
  * Params:
  * pool_index
  * Returns:
- * pointer to the block to use
+ * pointer to the block to use, NULL if no blocks left
  */
 Block *alloc_block(int pool_index)
 {
+    if(!ram_pools[pool_index].avail) return NULL;
     Block *head = ram_pools[pool_index].head;
     Block *next = head->next;
     ram_pools[pool_index].head = next;
+    ram_pools[pool_index].avail--;
     return head;
 }
 
@@ -560,6 +563,7 @@ void free_block(Block *blk,int pool_index)
         Block *old_head = ram_pools[pool_index].head;
         blk->next = old_head;
         ram_pools[pool_index].head = blk;
+        ram_pools[pool_index].avail++;
         printk("old head = %p, new head = %p\n",old_head,ram_pools[pool_index].head);
 }
 
@@ -607,8 +611,11 @@ void *kmalloc(size_t usable_size)
     {
         num_pages = (true_size + PAGE_SIZE - 1) / PAGE_SIZE;
         start_addr = MMU_alloc_pages(num_pages);
-        // map the new page
-        va_to_pa(start_addr,NULL,SET_PA);
+        // map the new pages
+        for(int i=0;i<num_pages;i++)
+        {
+            va_to_pa((void *)((uint64_t)start_addr+PAGE_SIZE*i),NULL,SET_PA);
+        }
         hdr.pool_index = -1;
         hdr.usable_size = usable_size;
     }

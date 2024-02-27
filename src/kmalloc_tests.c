@@ -17,6 +17,7 @@
 
 extern const int POOL_SIZES[];
 extern const size_t KMALLOC_EXTRA_SIZE;
+extern int num_frames_total;
 
 /*
  * Description: Validate the kmalloc header pool and size
@@ -85,12 +86,12 @@ static int alloc_each_pool()
             size = POOL_SIZES[i]-KMALLOC_EXTRA_SIZE;
             first_addr = kmalloc(size);
             first_frame = va_to_pa(first_addr,NULL,GET_PA);
-            if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]) < 0)
+            if(write_bitmap(bitmap,first_addr,size) < 0)
             {
                 printk("alloc_each_pool: write_bitmap() failed\n");
                 bail();
             }
-                if(!are_buffers_equal(first_addr,bitmap,POOL_SIZES[i]))
+                if(!are_buffers_equal(first_addr,bitmap,size))
                 {
                     printk("alloc_each_pool: validation error for pool %d: %p\n",i,first_addr);
                     return -1;
@@ -98,6 +99,7 @@ static int alloc_each_pool()
             kfree(first_addr);
             second_addr = kmalloc(size);
             second_frame = va_to_pa(second_addr,NULL,GET_PA);
+            kfree(second_addr);
             if((status = assert(first_addr==second_addr)) < 0)
             {
                     printk("pool %d error. size = %d, first=%p,second=%p\n",i,size,first_addr,second_addr);
@@ -118,7 +120,7 @@ static int alloc_each_pool()
 static int ugly_sizes()
 {
         int status = SUCCESS;
-        int *addrs[5];
+        void *addrs[5];
         int sizes[] = {5,35,89,987,5003};
         int num_sizes = sizeof(sizes)/sizeof(int);
         for(int i=0;i<num_sizes;i++)
@@ -127,6 +129,7 @@ static int ugly_sizes()
                 // validate the headers
                 if((status = validate_header(addrs[i],sizes[i])) < 0)
                     return status;
+                kfree(addrs[i]);
         }
         return SUCCESS;
 }
@@ -150,6 +153,7 @@ static int raw_paging()
         kfree(first_addr);
         second_addr = kmalloc(size); 
         second_frame = va_to_pa(second_addr,NULL,GET_PA);
+        kfree(second_addr);
         if((status = validate_header(second_addr,size)) < 0)
             return status;
         if((status = assert(first_addr - second_addr == PAGE_SIZE)) < -1)
@@ -166,9 +170,48 @@ static int raw_paging()
         return status;
 }
 
+/* 
+ * Allocate memory right until running out, then free some memory, and finally
+ * allocate until system runts out of memory
+ */
+static void stress()
+{
+    void *free_addr;
+    int fill_count = 0; // number of kmalloc() calls to take up a page for each pool size
+    while(num_frames_total>0)
+    {
+        if(num_frames_total < 1000) printk("stress: num_frames_total = %d\n",num_frames_total);    
+        free_addr = kmalloc(4080);
+    }
+    kfree(free_addr);
+    if(assert(num_frames_total == 1) < 0)
+    {
+            printk("stress: num_frames_total != 1 (= %d)\n",num_frames_total);
+    }
+    kmalloc(4080);
+    printk("num_frames_total = %d\n",num_frames_total);
+    //int loop=0;
+    //while(!loop);
+    for(int i=0;i<NUM_POOLS;i++)
+    {
+            fill_count = PAGE_SIZE/POOL_SIZES[i];
+            for(int j=0;j<fill_count;j++)
+            {
+                printk("j=%d\n",j);
+                kmalloc(POOL_SIZES[i]-KMALLOC_EXTRA_SIZE);
+            }
+    }
+    int loop=0;
+    while(!loop);
+    printk("Expect a failure now!\n");
+    kmalloc(1);
+}
+
 int kmalloc_tests()
 {
     int status = SUCCESS;
+    //int loop=0;
+    //while(!loop);
     if((status = simple()) < 0) 
     {
             printk("failed simple_test\n");
@@ -190,5 +233,6 @@ int kmalloc_tests()
             return status;
     }
     printk("kmalloc_tests: SUCCEESS\n");
+    stress();
     return status;
 }
