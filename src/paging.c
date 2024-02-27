@@ -26,8 +26,7 @@ static int num_pt_entries = PAGE_SIZE/sizeof(PTE_t *);
 static uint64_t err;
 extern void *kheap;
 extern void *kstack;
-extern region low_region;
-extern region high_region;
+extern region ram[];
 extern region elf_region;
 
 
@@ -242,7 +241,7 @@ void *get_pte_addr(PTE_t *entry,uint16_t offset)
 
 int valid_pa(void *addr)
 {
-    if (((low_region.start <= addr) && (addr < low_region.end)) || ((high_region.start <= addr) && (addr < high_region.end)))
+    if (((ram[REGION0_OFF].start <= addr) && (addr < ram[REGION0_OFF].end)) || ((ram[REGION1_OFF].start <= addr) && (addr < ram[REGION1_OFF].end)))
     {
             //if(DBUG) printk("%p is a valid phys addr\n",(void *)addr);
             return 1;

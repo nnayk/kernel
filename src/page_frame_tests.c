@@ -14,8 +14,7 @@
 
 #define DBUG 0
 
-extern region low_region;
-extern region high_region;
+extern region ram[];
 extern int num_frames_low;
 extern int num_frames_high;
 extern int num_frames_total;
@@ -71,7 +70,7 @@ int pf_stress_test()
         printk("num frames total = %d\n",num_frames_total);
         uint8_t bitmap[PAGE_SIZE];
         void *page_start;
-        void *region_start = low_region.start;
+        void *region_start = ram[REGION0_OFF].start;
         int num_frames = num_frames_low; // for validation purposes
         int original_total_frames = num_frames_total;
         for(int i = 0; i<original_total_frames;i++)
@@ -91,7 +90,7 @@ int pf_stress_test()
         }
         printk("num freames = %d\n",num_frames_total);
         if(DBUG) printk("done writing bit patterns\n");
-        printk("low_region.start = %p\n",low_region.start);
+        printk("ram[REGION0_OFF].start = %p\n",ram[REGION0_OFF].start);
         for(int j=0;j<2;j++)
         {
         /* validate all frames in low region */
@@ -110,7 +109,7 @@ int pf_stress_test()
                 }
         }
         printk("low region validation complete!\n");
-        region_start = high_region.start;
+        region_start = ram[REGION1_OFF].start;
         num_frames = num_frames_high;
         }
 

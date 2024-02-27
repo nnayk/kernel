@@ -181,28 +181,23 @@ static void stress()
     while(num_frames_total>0)
     {
         if(num_frames_total < 1000) printk("stress: num_frames_total = %d\n",num_frames_total);    
-        free_addr = kmalloc(4080);
+        free_addr = kmalloc(PAGE_SIZE-KMALLOC_EXTRA_SIZE);
     }
     kfree(free_addr);
     if(assert(num_frames_total == 1) < 0)
     {
             printk("stress: num_frames_total != 1 (= %d)\n",num_frames_total);
     }
-    kmalloc(4080);
+    kmalloc(PAGE_SIZE-KMALLOC_EXTRA_SIZE);
     printk("num_frames_total = %d\n",num_frames_total);
-    //int loop=0;
-    //while(!loop);
     for(int i=0;i<NUM_POOLS;i++)
     {
             fill_count = PAGE_SIZE/POOL_SIZES[i];
             for(int j=0;j<fill_count;j++)
             {
-                printk("j=%d\n",j);
                 kmalloc(POOL_SIZES[i]-KMALLOC_EXTRA_SIZE);
             }
     }
-    int loop=0;
-    while(!loop);
     printk("Expect a failure now!\n");
     kmalloc(1);
 }

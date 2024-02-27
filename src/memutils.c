@@ -24,9 +24,7 @@ uint64_t kheap = KHEAP_START; //points to top of kernel heap
 uint64_t kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
 //extern region unused_head;
 //extern region free_head;
-extern region low_region;
 extern region elf_region;
-extern region high_region;
 extern region ram[];
 extern void *free_head;
 extern uint8_t *multiboot_start;
@@ -130,7 +128,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         int num_elf_entries = elfhdr.entry_count;
         uint8_t *mem_addr = mmaphdr.entry_start;
         uint8_t *elf_addr = elfhdr.entry_start;
-        uint8_t low_region_set = 0; // need to use this var. b/c low region starts at 0x0
+        uint8_t region0_set = 0; // need to use this var. b/c low region starts at 0x0
         memtag_entry_t mementry;
         elf_entry_t elfentry;
         printk("inside setup_unused\n");
@@ -147,24 +145,24 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(DBUG) printk("mem entry %d: start_addr = %p,size=%ld,type=%d\n",i,mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
-                        if(!low_region_set)
+                        if(region0_set)
                         {
-                                low_region_set = 1;
-                                low_region.start = mementry.start_addr;
-                                if(!low_region.start)
-                                        low_region.start += PAGE_SIZE;
-                                low_region.curr = low_region.start;
-                                low_region.end = low_region.start+mementry.size; //exclusive end address
+                                region0_set = 1;
+                                ram[REGION0_OFF].start = mementry.start_addr;
+                                if(!ram[REGION0_OFF].start)
+                                        ram[REGION0_OFF].start += PAGE_SIZE;
+                                ram[REGION0_OFF].curr = ram[REGION0_OFF].start;
+                                ram[REGION0_OFF].end = ram[REGION0_OFF].start+mementry.size; //exclusive end address
                                 num_frames_low = mementry.size/PAGE_SIZE;
                                 num_frames_total = num_frames_low;
                                 if(DBUG) printk("Number of frames in low = %d\n",num_frames_total);
                         }
                         else
                         {
-                                high_region.start = mementry.start_addr;
-                                high_region.curr = high_region.start;
-                                high_region.end = mementry.start_addr+mementry.size;
-                                low_region.next = &high_region;
+                                ram[REGION1_OFF].start = mementry.start_addr;
+                                ram[REGION1_OFF].curr = ram[REGION1_OFF].start;
+                                ram[REGION1_OFF].end = mementry.start_addr+mementry.size;
+                                ram[REGION0_OFF].next = &ram[REGION1_OFF];
                                 num_frames_high = mementry.size/PAGE_SIZE;
                                 num_frames_total += num_frames_high;
                                 if(DBUG) printk("number of frames in total = %d\n",num_frames_total);
@@ -185,7 +183,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                     if(DBUG)
                     {
                             // check no high region overlap
-                            if(high_region.start < elfentry.seg_addr && high_region.end < elfentry.seg_addr)
+                            if(ram[REGION1_OFF].start < elfentry.seg_addr && ram[REGION1_OFF].end < elfentry.seg_addr)
                                     printk("No overlap for high region\n");
                     }
                 }
@@ -196,7 +194,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
 #endif
         // handle the memory and elf overlap
         // check no low region overlap
-        if(low_region.start < elf_region.start && low_region.start < elf_region.end)
+        if(ram[REGION0_OFF].start < elf_region.start && ram[REGION0_OFF].start < elf_region.end)
         {
                 printk("No low region overlap!\n");
         }
@@ -205,25 +203,25 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 printk("There IS low region overlap!\n");
         }
         // check no high region overlap
-        if(high_region.start < elf_region.start && high_region.end < elf_region.end)
+        if(ram[REGION1_OFF].start < elf_region.start && ram[REGION1_OFF].end < elf_region.end)
         {
                 printk("No high region overlap!\n");
         }
         else
         {
                 if(DBUG) printk("There IS high region overlap!\n");
-                high_region.start = page_align_up(elf_region.end);
-                high_region.curr = high_region.start;
+                ram[REGION1_OFF].start = page_align_up(elf_region.end);
+                ram[REGION1_OFF].curr = ram[REGION1_OFF].start;
                 num_frames_total -= num_frames_high;
-                num_frames_high = (high_region.end-high_region.start)/PAGE_SIZE;
+                num_frames_high = (ram[REGION1_OFF].end-ram[REGION1_OFF].start)/PAGE_SIZE;
                 num_frames_total += num_frames_high;
                 if(DBUG) printk("new num_frames_high = %d, num_frames_total = %d\n",num_frames_high,num_frames_total);
                 
         }
-        high_region.next = INVALID_START_ADDR;
+        ram[REGION1_OFF].next = INVALID_START_ADDR;
         if(DBUG)
         {
-            region *temp = &low_region;
+            region *temp = &ram[REGION0_OFF];
             if(DBUG) printk("temp.start = %p\n",temp->start);
             while(temp != INVALID_START_ADDR)
             {
@@ -247,16 +245,16 @@ void *pf_alloc()
                 memcpy(&free_head,pg_start,sizeof(void *));
         }
         // check unused regions list
-        else if((low_region.curr + PAGE_SIZE < low_region.end))
+        else if((ram[REGION0_OFF].curr + PAGE_SIZE < ram[REGION0_OFF].end))
         {
-            pg_start = low_region.curr;
-            low_region.curr += PAGE_SIZE;
+            pg_start = ram[REGION0_OFF].curr;
+            ram[REGION0_OFF].curr += PAGE_SIZE;
         }
-        else if((high_region.curr < high_region.end))
+        else if((ram[REGION1_OFF].curr < ram[REGION1_OFF].end))
         {
             //printk("page_start=%p\n",pg_start);
-            pg_start = high_region.curr;
-            high_region.curr += PAGE_SIZE;
+            pg_start = ram[REGION1_OFF].curr;
+            ram[REGION1_OFF].curr += PAGE_SIZE;
         }
         // no free memory
         else

@@ -39,3 +39,6 @@
 #define KSTACK_LIMIT 0x100000000000
 #define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 #define INITIAL_BLOCKS_PER_POOL 1
+
+#define REGION0_OFF 0
+#define REGION1_OFF 1
