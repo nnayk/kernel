@@ -641,11 +641,12 @@ void kfree(void *addr)
             count = (hdr->usable_size + KMALLOC_EXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
             MMU_free_pages(addr,count);
         }
-
         // return the blocks to the corresponding pool
-        printk("freeing block w/index = %d\n",hdr->pool_index);
-        free_block((void *)hdr,hdr->pool_index); 
-
+        else
+        {
+            printk("freeing block w/index = %d\n",hdr->pool_index);
+            free_block((void *)hdr,hdr->pool_index); 
+        }
         // TODO: coalesce with next chunk if possible
         //if(addr + 
         
