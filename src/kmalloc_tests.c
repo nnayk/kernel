@@ -57,6 +57,7 @@ static int simple()
         status = assert(first_addr[31]==9);
         kfree(first_addr);
         second_addr = kmalloc(32);
+        kfree(second_addr);
         status = assert(first_addr==second_addr);
         return status;
 }
@@ -70,11 +71,13 @@ static int alloc_each_pool()
         int *first_addr;
         int *second_addr;
         uint8_t bitmap[PAGE_SIZE];
+        int size;
         for(int i=0;i<NUM_POOLS;i++)
         {
             printk("alloc_each_pool: mallocing for pool %d\n",i);
-            first_addr = kmalloc(POOL_SIZES[i]);
-            if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]))
+            size = POOL_SIZES[i]-KMALLOC_EXTRA_SIZE;
+            first_addr = kmalloc(size);
+            if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]) < 0)
             {
                 printk("alloc_each_pool: write_bitmap() failed\n");
                 bail();
@@ -85,10 +88,10 @@ static int alloc_each_pool()
                     return -1;
                 }
             kfree(first_addr);
-            second_addr = kmalloc(POOL_SIZES[i]);
+            second_addr = kmalloc(size);
             if((status = assert(first_addr==second_addr)) < 0)
             {
-                    printk("pool %d error\n",i);
+                    printk("pool %d error. size = %d, first=%p,second=%p\n",i,size,first_addr,second_addr);
                     return status;
             }
         }
