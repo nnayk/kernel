@@ -11,6 +11,7 @@
 #include "utility.h"
 #include "error.h"
 #include "memutils.h"
+#include "paging.h"
 
 #define DBUG 1
 
@@ -49,6 +50,8 @@ static int simple()
 {
         int status = SUCCESS;
         int *first_addr = kmalloc(32);
+        void *first_frame = va_to_pa(first_addr,NULL,GET_PA);
+        void *second_frame = NULL;
         int *second_addr = NULL;
         // write a couple bytes
         *first_addr = 2;
@@ -57,8 +60,10 @@ static int simple()
         status = assert(first_addr[31]==9);
         kfree(first_addr);
         second_addr = kmalloc(32);
+        second_frame = va_to_pa(second_addr,NULL,GET_PA);
         kfree(second_addr);
         status = assert(first_addr==second_addr);
+        status = assert(first_frame==second_frame);
         return status;
 }
 
@@ -70,6 +75,8 @@ static int alloc_each_pool()
         int status = SUCCESS;
         int *first_addr;
         int *second_addr;
+        void *first_frame;
+        void *second_frame;
         uint8_t bitmap[PAGE_SIZE];
         int size;
         for(int i=0;i<NUM_POOLS;i++)
@@ -77,6 +84,7 @@ static int alloc_each_pool()
             printk("alloc_each_pool: mallocing for pool %d\n",i);
             size = POOL_SIZES[i]-KMALLOC_EXTRA_SIZE;
             first_addr = kmalloc(size);
+            first_frame = va_to_pa(first_addr,NULL,GET_PA);
             if(write_bitmap(bitmap,first_addr,POOL_SIZES[i]) < 0)
             {
                 printk("alloc_each_pool: write_bitmap() failed\n");
@@ -89,7 +97,13 @@ static int alloc_each_pool()
                 }
             kfree(first_addr);
             second_addr = kmalloc(size);
+            second_frame = va_to_pa(second_addr,NULL,GET_PA);
             if((status = assert(first_addr==second_addr)) < 0)
+            {
+                    printk("pool %d error. size = %d, first=%p,second=%p\n",i,size,first_addr,second_addr);
+                    return status;
+            }
+            if((status = assert(first_frame==second_frame)) < 0)
             {
                     printk("pool %d error. size = %d, first=%p,second=%p\n",i,size,first_addr,second_addr);
                     return status;
@@ -116,6 +130,18 @@ static int ugly_sizes()
         }
         return SUCCESS;
 }
+
+/* 
+ * Allocate more bytes than the largest pool size such that raw paging is
+ * invoked. 
+ */
+#if 0
+static int raw_paging()
+{
+        void *first_addr = kmalloc(POOL_SIZES[NUM_POOLS-1]); // with the header overhead this should be sufficient to invoke raw paging
+        void *first_addr = kmalloc(POOL_SIZES[NUM_POOLS-1]); 
+}
+#endif
 
 int kmalloc_tests()
 {
