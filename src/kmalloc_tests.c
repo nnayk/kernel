@@ -152,7 +152,7 @@ static int raw_paging()
         second_frame = va_to_pa(second_addr,NULL,GET_PA);
         if((status = validate_header(second_addr,size)) < 0)
             return status;
-        if((status = assert(first_addr != second_addr)) < -1)
+        if((status = assert(first_addr - second_addr == PAGE_SIZE)) < -1)
         {
                 printk("raw_paging: VAs are equal!\n");
                 return status;
