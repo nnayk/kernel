@@ -4,7 +4,7 @@
  * Description:
 */
 
-struct Context{
+struct Process{
   // minimal register set
   uint64_t rax;
   uint64_t rbx;
@@ -35,9 +35,15 @@ struct Context{
   // proc metadata
   uint64_t pid;
   void *stack_start;
-  struct Context *allNext;
-  struct Context *readyNext;
-  struct Context *blockedNext;
+  struct Process *allNext;
+  struct Process *readyNext;
+  struct Process *blockedNext;
 };
 
-typedef struct Context Context;
+typedef struct Process Process;
+
+typedef void (*kproc_t)(void*);
+void PROC_run(void);
+struct Process *PROC_create_kthread(kproc_t, void*);
+void PROC_reschedule(void);
+void yield(void);

@@ -9,7 +9,7 @@
 #include "shared_buff.h"
 #include "paging.h"
 #include "tests.h"
-#include "proc.h"
+#include "process.h"
 
 static int err;
 State serial_buffer;
@@ -18,11 +18,11 @@ State serial_buffer;
 region ram[2];
 region elf_region;
 void *free_head;
-Context *allCtx;
-Context *readyCtx;
-Context *blockedCtx;
-Context *currCtx;
-Context *nextCtx;
+Process *allCtx;
+Process *readyCtx;
+Process *blockedCtx;
+Process *currCtx;
+Process *nextCtx;
 
 void kmain()
 {
