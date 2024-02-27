@@ -31,42 +31,24 @@ void kmain()
                 printk("irq_init failed w/error = %d\n",err);
         init_state(&serial_buffer);
         serial_init();
-        /*
-        while(!loop)
-        {
-                data = ps2_poll_read();
-                //printk("scan code = %x\n",data);
-                data = mapScanCodeToAscii(data);
-                if(data) print_char(data);
-        }
-        */
-        //while(!loop);
         int y = 3;
         printk("%d\n",y);
         mem_setup();
-        pf_alloc(); // ignore 0x0
-        setup_pt4();
-        //while(!loop);
+        //pf_alloc(); // ignore 0x0
+        //setup_pt4();
+        /*
         if(init_pools() < 0)
         {
                 printk("init_pool error");
                 return;
         }
         display_pools();
-        //int x[2000];
-        //x[900] = 2;
-        //printk("x[900]=%d\n",x[900]);
+        */
         //pf_simple_test();
         //pf_nonseq_test();
         printk("VGA_display_str addr = %p\n",VGA_display_str);
-        //void *x = MMU_alloc_page();
-        //void *x=(void *)0xD0000000;
-        //*(uint8_t *)x = 3; 
-        //PTE_t temp;
-        //temp.present=1;
-        //alloc_pte(&temp,1);
-        //pf_stress_test();
-        kmalloc_tests();
+        pf_stress_test();
+        //kmalloc_tests();
         while(!loop);
         printk("a");
 }
