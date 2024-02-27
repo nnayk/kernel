@@ -103,7 +103,6 @@ static int alloc_each_pool()
  */
 static int ugly_sizes()
 {
-        return 1;
         int status = SUCCESS;
         int *addrs[5];
         int sizes[] = {5,35,89,987,5003};
