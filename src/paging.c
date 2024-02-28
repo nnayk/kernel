@@ -260,7 +260,7 @@ int valid_va(void *addr)
 void *MMU_alloc_page()
 {
     void *addr;
-    if(kheap > (void *)KHEAP_LIMIT)
+    if(kheap + PAGE_SIZE >= kstack)
     {
             if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
             bail();
@@ -388,7 +388,7 @@ void identity_map(void *p4_addr)
                     printk("temp = %d: successfully mapped %lx\n",temp,curr_va);
             }
             */
-            curr_va += PG_SIZE;
+            curr_va += PAGE_SIZE;
             //temp++;
             //if(curr_va > 0x101e24) break;
     }
