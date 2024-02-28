@@ -24,19 +24,22 @@
 #define DF_INT_NO 0x08
 #define PF_INT_NO 0x0E
 #define GPF_INT_NO 0x0D
+#define YIELD_INT_NO 0x48
+#define EXIT_INT_NO 0x49
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
 #define VA_IDENTITY_MAP_MAX (void *)0x10000000000 // max virtual address for identity map
 #define VA_MAX (void *)0x110000000000 // max virtual address for any VA space
 
-#define PG_SIZE 4096
-#define STACK_SIZE 4096
+#define IST_STACK_SIZE 4096
 #define INVALID_START_ADDR (void *)(0xFFFFFFFFFFFFFFFF)
 
 #define KHEAP_START 0x10000000000 // bottom of heap (inclusive)
 #define KHEAP_LIMIT 0xF0000000000 // top of heap (exclusive)
 #define KSTACK_START 0xFFFFFFFFFFF // bottom of first stack (inclusive)
 #define KSTACK_LIMIT 0x100000000000
+#define STACK_SIZE 2000000
+#define STACK_PAGES STACK_SIZE/PAGE_SIZE
 #define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 #define INITIAL_BLOCKS_PER_POOL 1
 
