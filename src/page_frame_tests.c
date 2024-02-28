@@ -76,11 +76,6 @@ int pf_stress_test()
         for(int i = 0; i<original_total_frames;i++)
         {
                 page_start = pf_alloc();
-                if(!page_start) 
-                {
-                        printk("null page start\n");
-                        hlt();
-                }
                 if(DBUG) printk("page_start %d = %p\n",i+1,page_start);
                 if(write_bitmap(bitmap,page_start,PAGE_SIZE) < 0)
                 {
@@ -88,9 +83,8 @@ int pf_stress_test()
                         bail();
                 }
         }
-        printk("num freames = %d\n",num_frames_total);
+        printk("num frames left = %d\n",num_frames_total);
         if(DBUG) printk("done writing bit patterns\n");
-        printk("ram[REGION0_OFF].start = %p\n",ram[REGION0_OFF].start);
         for(int j=0;j<2;j++)
         {
         /* validate all frames in low region */
