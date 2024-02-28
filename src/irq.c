@@ -26,7 +26,7 @@ idt_entry_t idt_arr[NUM_INTS];
 irq_helper_t irq_helper[NUM_INTS];
 tss_t tss;
 static int err = 0; // error code
-uint8_t ists[STACK_SIZE*NUM_ISTS];
+uint8_t ists[IST_STACK_SIZE*NUM_ISTS];
 
 void pic_remap(int offset1, int offset2)
 {
@@ -126,13 +126,13 @@ int irq_init()
         if(!memcpy(gdt64+16,&tss_desc,16)) return ERR_MEMCPY; 
         idtr.limit = idt_size - 1;
         // tss setup
-        tss.rsp0 = (uint64_t)&ists[STACK_SIZE]; // TODO: update this value
+        tss.rsp0 = (uint64_t)&ists[IST_STACK_SIZE]; // TODO: update this value
         tss.rsp1 = 0; 
         tss.rsp2 = 0;
         tss.ist1 = (uint64_t)ists; // kernel IST
-        tss.ist2 = (uint64_t)&ists[STACK_SIZE]; // double fault
-        tss.ist3 = (uint64_t)&ists[STACK_SIZE*2 -1]; // page fault
-        tss.ist4 = (uint64_t)&ists[STACK_SIZE*3 -1]; // GPF
+        tss.ist2 = (uint64_t)&ists[IST_STACK_SIZE]; // double fault
+        tss.ist3 = (uint64_t)&ists[IST_STACK_SIZE*2 -1]; // page fault
+        tss.ist4 = (uint64_t)&ists[IST_STACK_SIZE*3 -1]; // GPF
         tss.ist5 = 0; 
         tss.ist6 = 0; 
         tss.ist7 = 0;
