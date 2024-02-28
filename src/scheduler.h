@@ -15,7 +15,7 @@ typedef struct
 ProcQueue *sched_init_queue();
 int sched_admit(ProcQueue *,Process *);
 int sched_remove(ProcQueue *,Process *);
-Process *sched_next(ProcQueue *);
+Process *reschedule();
 int sched_proc_count(ProcQueue *);
 int PROC_unblock_head(ProcQueue *); 
 int PROC_unblock_all(ProcQueue *);

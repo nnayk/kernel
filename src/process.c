@@ -53,8 +53,8 @@ Process *PROC_create_kthread(kproc_t entry_pt, void* arg)
 
 }
 
-void PROC_reschedule(void)
+void yield_isr()
 {
-            
+   reschedule();             
 }
 
