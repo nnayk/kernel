@@ -145,7 +145,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                 if(DBUG) printk("mem entry %d: start_addr = %p,size=%ld,type=%d\n",i,mementry.start_addr,mementry.size,mementry.type);
                 if(mementry.type == FREE_RAM_TYPE)
                 {
-                        if(region0_set)
+                        if(!region0_set)
                         {
                                 region0_set = 1;
                                 ram[REGION0_OFF].start = mementry.start_addr;
@@ -499,4 +499,28 @@ void kfree(void *addr)
         //if(addr + 
         
         // reset header to indicate chunk is free
+}
+
+/*
+ * Allocates a kernel stack
+ * Params:
+ * None
+ * Returns:
+ * pointer to start of stack (i.e. highest address)
+ */
+void *alloc_kstack()
+{
+        void *stack_start=(void *)kstack;
+        for(int i=0;i<STACK_PAGES;i++)
+        {
+                if((kstack - STACK_SIZE) <= kheap)
+                {
+                        printk("alloc_kstack: out of memory!\n");
+                        bail();
+                }
+
+                va_to_pa((void *)kstack,NULL,SET_P1);
+                kstack -= PAGE_SIZE;
+        }
+        return stack_start;
 }
