@@ -10,19 +10,17 @@
 #include "paging.h"
 #include "tests.h"
 #include "process.h"
+#include "scheduler.h"
 
 static int err;
 State serial_buffer;
-//region ram[0];
-//region high_region;
 region ram[2];
 region elf_region;
 void *free_head;
-Process *allCtx;
-Process *readyCtx;
-Process *blockedCtx;
-Process *currCtx;
-Process *nextCtx;
+ProcQueue *all_procs;
+ProcQueue *ready_procs;
+Process *curr_proc;
+Process *next_proc;
 
 void kmain()
 {
@@ -36,9 +34,9 @@ void kmain()
                 printk("irq_init failed w/error = %d\n",err);
         init_state(&serial_buffer);
         serial_init();
-        int y = 3;
-        printk("%d\n",y);
         mem_setup();
+        //PROC_init();
+#if 0
         setup_pt4();
         if(init_pools() < 0)
         {
@@ -46,11 +44,15 @@ void kmain()
                 return;
         }
         display_pools();
-        //pf_simple_test();
-        //pf_nonseq_test();
-        printk("VGA_display_str addr = %p\n",VGA_display_str);
-        //pf_stress_test();
-        kmalloc_tests();
+#endif
+        pf_simple_test();
+        pf_nonseq_test();
+        pf_stress_test();
+        //kmalloc_tests();
         while(!loop);
-        printk("a");
+        while(1)
+        {
+            PROC_run();
+            hlt();
+        }
 }
