@@ -4,12 +4,26 @@
  * Description:
 */
 
+#include <stddef.h>
+#include "scheduler.h"
+#include "memutils.h"
+#include "utility.h"
+#include "constants.h"
+#include "error.h"
+#include "print.h"
+
+extern ProcQueue *all_procs;
+extern ProcQueue *ready_procs;
+extern Process *curr_proc;
+extern Process *next_proc;
+
 ProcQueue *sched_init_queue()
 {
         ProcQueue *q = kmalloc(sizeof(ProcQueue *));
         q->head = NULL;
         q->tail = NULL;
         q->proc_count = 0;
+        return q;
 }
 int sched_admit(ProcQueue *q,Process *proc)
 {
@@ -31,12 +45,13 @@ int sched_admit(ProcQueue *q,Process *proc)
             q->tail = proc;
     }
 
-    q->qlen++;
+    q->proc_count++;
+    return SUCCESS;
 }
 
 int sched_remove(ProcQueue *q, Process *victim)
 {
-        Process prev; /* saves Process that points to victim */
+        Process *prev; /* saves Process that points to victim */
         if(!victim || !q->head) 
         {
                 printk("sched_remove: bad args\n");
@@ -51,8 +66,8 @@ int sched_remove(ProcQueue *q, Process *victim)
                {
                        q->tail = NULL;
                }
-               q->qlen--;
-               return;
+               q->proc_count--;
+               return SUCCESS;
         }
 
         prev = q->head;
@@ -65,7 +80,7 @@ int sched_remove(ProcQueue *q, Process *victim)
 
         if(!prev)
         {
-                printf("sched_remove: invalid victim\n");
+                printk("sched_remove: invalid victim\n");
                 bail();
         }
 
@@ -76,7 +91,9 @@ int sched_remove(ProcQueue *q, Process *victim)
 
         /* remove prev's pointer to victim */
         prev->next = victim->next;
-        q->qlen--;
+        q->proc_count--;
+
+        return SUCCESS;
 }
 
 #if 0
@@ -105,7 +122,7 @@ Process *reschedule()
         return next_proc;
 }
 
-int sched_qlen(ProcQueue *q)
+int sched_proc_count(ProcQueue *q)
 {
-        return q->qlen;
+        return q->proc_count;
 }

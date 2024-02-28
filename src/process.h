@@ -6,6 +6,7 @@
  * Description:
 */
 
+#include <stdint-gcc.h>
 
 struct Process{
   // minimal register set
@@ -48,5 +49,5 @@ typedef void (*kproc_t)(void*);
 void PROC_run(void);
 Process *PROC_create_kthread(kproc_t, void*);
 void PROC_reschedule(void);
-void yield(void);
+void yield_isr(void);
 #endif

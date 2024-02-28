@@ -94,4 +94,4 @@ Block *alloc_pool_blocks(int);
 void display_pools();
 Block *alloc_block(int);
 void free_block(Block *,int);
-void *alloc_stack();
+void *alloc_kstack();

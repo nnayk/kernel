@@ -29,12 +29,13 @@
  *
  */
 
+#include <stdint-gcc.h>
 #include "snakes.h"
-#include "types.h"
-#include "kmalloc.h"
-#include "vga_console.h"
-#include "asm.h"
-#include "proc.h"
+//#include "types.h" DON'T NEED THIS?
+#include "memutils.h"
+#include "vga.h"
+//#include "asm.h"
+#include "process.h"
 
 #define SN_LENGTH 10
 #define SN_BODY_CHAR '*'
