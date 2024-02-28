@@ -1,8 +1,11 @@
+#ifndef _PROCESS_H
+#define _PROCESS_H
 /*
  * Nakul Nayak
  * Kernel Project
  * Description:
 */
+
 
 struct Process{
   // minimal register set
@@ -34,16 +37,16 @@ struct Process{
   
   // proc metadata
   uint64_t pid;
-  void *stack_start;
+  void *stack_start; // not sure if this is needed
   struct Process *allNext;
-  struct Process *readyNext;
-  struct Process *blockedNext;
+  struct Process *next; // either next proc in blocked queue or ready queue
 };
 
 typedef struct Process Process;
 
 typedef void (*kproc_t)(void*);
 void PROC_run(void);
-struct Process *PROC_create_kthread(kproc_t, void*);
+Process *PROC_create_kthread(kproc_t, void*);
 void PROC_reschedule(void);
 void yield(void);
+#endif
