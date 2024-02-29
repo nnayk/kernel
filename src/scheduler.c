@@ -16,6 +16,7 @@ extern ProcQueue *all_procs;
 extern ProcQueue *ready_procs;
 extern Process *curr_proc;
 extern Process *next_proc;
+extern Process main_proc;
 
 ProcQueue *sched_init_queue()
 {
@@ -104,16 +105,25 @@ int PROC_block_on(ProcQueue *, int enable_ints);
 
 Process *reschedule()
 {
-        if(ready_procs->proc_count == 0)
+        // if only main thread is on the queue then return
+        if(ready_procs->proc_count == 1)
         {
+                if(ready_procs->head != &main_proc)
+                {
+                        printk("reschedule: ERROR only ready proc and it's not the main proc!\n");
+                        bail();
+
+                }
                 printk("reschedule: no processes to schedule\n");
                 return NULL;
         }
         
         Process *temp = ready_procs->head;
+        // don't run the main thread if there are other threads to run
+        if(temp == &main_proc) temp = temp->next;
         sched_remove(ready_procs,temp);
         sched_admit(ready_procs,temp);
-        next_proc = ready_procs->head;
+        next_proc = temp;
         return next_proc;
 }
 

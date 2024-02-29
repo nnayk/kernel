@@ -21,11 +21,11 @@ ProcQueue *all_procs;
 ProcQueue *ready_procs;
 Process *curr_proc;
 Process *next_proc;
+Process main_proc;  
 
 void kmain()
 {
         int loop = 0;
-        while(!loop);
         ram[0].start = INVALID_START_ADDR;
         elf_region.start = INVALID_START_ADDR;
         free_head = INVALID_START_ADDR;
@@ -36,8 +36,6 @@ void kmain()
         init_state(&serial_buffer);
         serial_init();
         mem_setup();
-        PROC_init();
-#if 0
         setup_pt4();
         if(init_pools() < 0)
         {
@@ -45,16 +43,13 @@ void kmain()
                 return;
         }
         display_pools();
-#endif
-        //pf_simple_test();
-        //pf_nonseq_test();
-        //pf_stress_test();
         //kmalloc_tests();
+        PROC_init();
         while(!loop);
-        int *x=(void *)0x1000000000;
-        *x=2;
-        printk("x=%p\n",x);
-        while(1)
+        //int *x=(void *)0x1000000000;
+        //*x=2;
+        //printk("x=%p\n",x);
+        while(!loop)
         {
             PROC_run();
             hlt();

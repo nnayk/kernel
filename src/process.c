@@ -18,6 +18,7 @@ extern ProcQueue *all_procs;
 extern ProcQueue *ready_procs;
 extern Process *curr_proc;
 extern Process *next_proc;
+extern Process main_proc;
 static int pid = 1;
 
 void yield(void)
@@ -35,7 +36,9 @@ void kexit(void)
 void PROC_init()
 {
     all_procs = sched_init_queue();            
-    ready_procs = sched_init_queue();            
+    ready_procs = sched_init_queue();
+    curr_proc = NULL;
+    next_proc = NULL;
 }
 
 void PROC_run(void)
@@ -45,6 +48,10 @@ void PROC_run(void)
             return;        
         }
         
+        curr_proc = &main_proc;
+        next_proc = curr_proc;
+        // save current (caller's context) in order to return to kmain after 
+        // yield call
         yield();
 }
 
