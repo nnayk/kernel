@@ -59,7 +59,7 @@ int sched_remove(ProcQueue *q, Process *victim)
                 bail();
         }
 
-        /* remove head Process from q->eue */
+        /* remove head Process from queue */
         if(victim == q->head)
         {
                q->head = victim->next;

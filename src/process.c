@@ -50,9 +50,11 @@ void PROC_run(void)
         
         curr_proc = &main_proc;
         next_proc = curr_proc;
+        sched_admit(ready_procs,curr_proc);
         // save current (caller's context) in order to return to kmain after 
         // yield call
         yield();
+        printk("returned from yield\n");
 }
 
 Process *PROC_create_kthread(kproc_t entry_pt, void* arg)
