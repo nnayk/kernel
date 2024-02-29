@@ -25,6 +25,7 @@ Process *next_proc;
 void kmain()
 {
         int loop = 0;
+        while(!loop);
         ram[0].start = INVALID_START_ADDR;
         elf_region.start = INVALID_START_ADDR;
         free_head = INVALID_START_ADDR;
@@ -45,11 +46,14 @@ void kmain()
         }
         display_pools();
 #endif
-        pf_simple_test();
-        pf_nonseq_test();
-        pf_stress_test();
+        //pf_simple_test();
+        //pf_nonseq_test();
+        //pf_stress_test();
         //kmalloc_tests();
         while(!loop);
+        int *x=(void *)0x1000000000;
+        *x=2;
+        printk("x=%p\n",x);
         while(1)
         {
             PROC_run();

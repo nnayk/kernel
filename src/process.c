@@ -9,6 +9,7 @@
 #include "utility.h"
 #include "memutils.h"
 #include "scheduler.h"
+#include "print.h"
 
 #define STR(x) #x
 #define XSTR(s) STR(s)
@@ -19,9 +20,15 @@ extern Process *curr_proc;
 extern Process *next_proc;
 static int pid = 1;
 
-static inline void PROC_yield(void)
+void yield(void)
 {
     asm volatile ("INT $" XSTR(YIELD_INT_NO));
+}
+
+void kexit(void)
+{
+    asm volatile ("INT $" XSTR(KEXIT_INT_NO));
+    yield();
 }
 
 void PROC_run(void)
@@ -31,7 +38,7 @@ void PROC_run(void)
             return;        
         }
         
-        PROC_yield();
+        yield();
 }
 
 Process *PROC_create_kthread(kproc_t entry_pt, void* arg)
@@ -53,8 +60,25 @@ Process *PROC_create_kthread(kproc_t entry_pt, void* arg)
 
 }
 
-void yield_isr()
+void yield_isr(int int_num,int err_code,void *arg)
 {
    reschedule();             
+}
+
+void kexit_isr(int int_num, int err_code,void *arg)
+{
+    if(!curr_proc)
+    {
+            printk("kexit_isr: curr_proc is null\n");
+            bail();
+    }
+
+    /* free up the thread's resources */
+    void *stack_low = curr_proc->stack_start - STACK_SIZE;
+    kfree(stack_low);
+    sched_remove(all_procs,curr_proc);
+    sched_remove(ready_procs,curr_proc);
+    kfree(curr_proc);
+    curr_proc = NULL;
 }
 

@@ -104,14 +104,9 @@ int PROC_block_on(ProcQueue *, int enable_ints);
 
 Process *reschedule()
 {
-        if(!curr_proc)
+        if(ready_procs->proc_count == 0)
         {
                 printk("reschedule: no processes to schedule\n");
-                return NULL;
-        }
-        if(!ready_procs)
-        {
-                printk("sched_next: ready procs queue not set\n");
                 return NULL;
         }
         

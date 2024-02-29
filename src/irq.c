@@ -13,12 +13,13 @@
 #include "serial.h"
 #include "memutils.h"
 #include "paging.h"
+#include "process.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
 #define INTERRUPT_GATE 0xE
 #define DBUG 1
-#define NUM_ISTS 4
+#define NUM_ISTS 6
 
 extern void (*asm_wrappers[NUM_INTS])();
 extern State serial_buffer;
@@ -88,10 +89,12 @@ int irq_init()
             idt_arr[i].isr_high = (isr_addr >> 32) & 0xFFFFFFFF;
         }
 
-        // set the ists for the special faults
+        // set the ists for the special faults + traps
         idt_arr[DF_INT_NO].ist = DF_IST;
         idt_arr[PF_INT_NO].ist = PF_IST;
         idt_arr[GPF_INT_NO].ist = GPF_IST;
+        idt_arr[YIELD_INT_NO].ist = YIELD_IST;
+        idt_arr[KEXIT_INT_NO].ist = KEXIT_IST;
         
 
         if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n", idt_size,tss_desc_size,tss_size);
@@ -129,12 +132,12 @@ int irq_init()
         tss.rsp0 = (uint64_t)&ists[IST_STACK_SIZE]; // TODO: update this value
         tss.rsp1 = 0; 
         tss.rsp2 = 0;
-        tss.ist1 = (uint64_t)ists; // kernel IST
-        tss.ist2 = (uint64_t)&ists[IST_STACK_SIZE]; // double fault
-        tss.ist3 = (uint64_t)&ists[IST_STACK_SIZE*2 -1]; // page fault
-        tss.ist4 = (uint64_t)&ists[IST_STACK_SIZE*3 -1]; // GPF
-        tss.ist5 = 0; 
-        tss.ist6 = 0; 
+        tss.ist1 = (uint64_t)&ists[IST_STACK_SIZE]; // kernel IST (use for kustack?)
+        tss.ist2 = (uint64_t)&ists[IST_STACK_SIZE*2]; // double fault
+        tss.ist3 = (uint64_t)&ists[IST_STACK_SIZE*3]; // page fault
+        tss.ist4 = (uint64_t)&ists[IST_STACK_SIZE*4]; // GPF
+        tss.ist5 = (uint64_t)&ists[IST_STACK_SIZE*5]; // yield
+        tss.ist6 = (uint64_t)&ists[IST_STACK_SIZE*6]; // kexit
         tss.ist7 = 0;
         // load tss
         ltr(TSS_DESC_SELECTOR);
@@ -227,6 +230,8 @@ int irq_helper_init()
         irq_helper[COM1_INT_NO].handler = serial_consume;
         irq_helper[COM1_INT_NO].arg = &serial_buffer;
         irq_helper[PF_INT_NO].handler = pg_fault_isr;
+        irq_helper[YIELD_INT_NO].handler = yield_isr;
+        irq_helper[KEXIT_INT_NO].handler = kexit_isr;
         return 1;
 }
 

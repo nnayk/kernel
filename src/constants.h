@@ -13,6 +13,8 @@
 #define DF_IST 2
 #define PF_IST 3
 #define GPF_IST 4
+#define YIELD_IST 5
+#define KEXIT_IST 6
 #define KERNEL_MODE 0
 #define USER_MODE 3
 #define PIT_IRQ_NO 0
@@ -25,7 +27,7 @@
 #define PF_INT_NO 0x0E
 #define GPF_INT_NO 0x0D
 #define YIELD_INT_NO 0x48
-#define EXIT_INT_NO 0x49
+#define KEXIT_INT_NO 0x49
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
 #define VA_IDENTITY_MAP_MAX (void *)0x10000000000 // max virtual address for identity map

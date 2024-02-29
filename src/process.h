@@ -49,5 +49,8 @@ typedef void (*kproc_t)(void*);
 void PROC_run(void);
 Process *PROC_create_kthread(kproc_t, void*);
 void PROC_reschedule(void);
-void yield_isr(void);
+void yield();
+void kexit();
+void yield_isr(int,int,void *);
+void kexit_isr(int,int,void *);
 #endif
