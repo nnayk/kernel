@@ -23,47 +23,50 @@ isr_glue:
     pop rdx
     pop rcx
     pop rax
-    mov rdi, qword[curr_proc]
-    mov rsi, qword[next_proc]
+    mov rdi, [curr_proc]
+    mov rsi, [next_proc]
     cmp rdi,rsi
     je no_swap 
 ;; next_proc differs from curr_prox, perform context swap
 yes_swap:
     ;; first, save curr_proc's state
-    mov qword ptr [rdi], rax
-    mov qword ptr [rdi+8], rbx
-    mov qword ptr [rdi+16], rcx
-    mov qword ptr [rdi+24], rdx
+    mov [rdi], rax
+    mov [rdi+8], rbx
+    mov [rdi+16], rcx
+    mov [rdi+24], rdx
     ;; move rdi and rsi directly from stack into curr_proc state
-    mov rax, qword ptr [rsp+8]
-    mov qword ptr [rdi+32], rax
-    mov rax, qword ptr [rsp]
-    mov qword ptr [rdi+40], rax
-    mov qword ptr [rdi+48], r8
-    mov qword ptr [rdi+56], r9
-    mov qword ptr [rdi+64], r10
-    mov qword ptr [rdi+72], r11
-    mov qword ptr [rdi+80], r12
-    mov qword ptr [rdi+88], r13
-    mov qword ptr [rdi+96], r14
-    mov qword ptr [rdi+104], r15
+    mov rax, [rsp+8]
+    mov [rdi+32], rax
+    mov rax, [rsp]
+    mov [rdi+40], rax
+    mov [rdi+48], r8
+    mov [rdi+56], r9
+    mov [rdi+64], r10
+    mov [rdi+72], r11
+    mov [rdi+80], r12
+    mov [rdi+88], r13
+    mov [rdi+96], r14
+    mov [rdi+104], r15
+    ;; save old rbp
+    mov rax, [rbp] ; load the value pointed to by rbp into rax
+    mov [curr_proc + 112], rax
     add rsp, 24 ;; pop off rdi,rsi,error code
-    ;;mov qword ptr [rdi+112], rbp
-    ;;mov qword ptr [rdi+120], rsp
+    ;;mov [rdi+112], rbp
+    ;;mov [rdi+120], rsp
     pop rax ;; pop rip into rax
-    mov qword ptr [rdi+128], rax ;; save rip
+    mov [rdi+128], rax ;; save rip
     ;; save cs
     pop rax ;; pop cs into rax
-    mov qword ptr [rdi+136], rax ;; save cs
+    mov [rdi+136], rax ;; save cs
     ;; save rflags
     pop rax ;; pop rflags into rax
-    mov qword ptr [rdi+144], rax ;; save rflags
+    mov [rdi+144], rax ;; save rflags
     ;; save return rsp
     pop rax ;; pop return rsp into rax
-    mov qword ptr [rdi+120], rax ;; save return rsp
+    mov [rdi+120], rax ;; save return rsp
     ;; save ss
     pop rax ;; pop return ss into rax
-    mov qword ptr [rdi+152], rax ;; save return ss
+    mov [rdi+152], rax ;; save return ss
     ;; save ds
     ;; save es
     ;; save fs
@@ -71,9 +74,8 @@ yes_swap:
     ;; save cr3
     
     ;; load next context and return
-    
+    mov rax, [next_proc + 24]
     iretq
-
 
 no_swap:
     pop rdi 
