@@ -74,7 +74,46 @@ yes_swap:
     ;; save cr3
     
     ;; load next context and return
-    mov rax, [next_proc + 24]
+    ;;mov rax, [next_proc]
+    mov rbx, [next_proc+8]
+    mov rcx, [next_proc+16]
+    mov rdx, [next_proc+24]
+    mov rdi, [next_proc+32]
+    mov rsi, [next_proc+40]
+    mov r8, [next_proc+48]
+    mov r9, [next_proc+56]
+    mov r10, [next_proc+64]
+    mov r11, [next_proc+72]
+    mov r12, [next_proc+80]
+    mov r13, [next_proc+88]
+    mov r14, [next_proc+96]
+    mov r15, [next_proc+104]
+    mov rbp, [next_proc+112]
+    ;;mov rsp, [next_proc+120]
+    ;;mov rax, [next_proc+128]
+    ;;mov rax, [next_proc+136]
+    ;;mov rax, [next_proc+144]
+    ;;mov rax, [next_proc+152]
+    ;;mov rax, [next_proc+160]
+    ;;mov rax, [next_proc+168]
+    
+    ;; push ss onto stack
+    mov rax, [next_proc+152] 
+    push rax
+    ;; push return rsp onto stack
+    mov rax, [next_proc+120] 
+    push rax
+    ;; push rflags onto stack
+    mov rax, [next_proc+144] 
+    push rax
+    ;; push return cs onto stack
+    mov rax, [next_proc+136] 
+    push rax
+    ;; push return rip onto stack
+    mov rax, [next_proc+128] 
+    push rax
+    ;; save rax
+    mov rax, [next_proc]
     iretq
 
 no_swap:
