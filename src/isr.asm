@@ -29,7 +29,10 @@ isr_glue:
     je no_swap 
 ;; next_proc differs from curr_prox, perform context swap
 yes_swap:
-    ;; first, save curr_proc's state
+    ;; first, save curr_proc's state if it exists
+    test rdi, rdi ;; performs bitwise and
+    jz load_next_proc
+save_curr_proc:
     mov [rdi], rax
     mov [rdi+8], rbx
     mov [rdi+16], rcx
@@ -73,7 +76,8 @@ yes_swap:
     ;; save gs
     ;; save cr3
     
-    ;; load next context and return
+;; load next context and return
+load_next_proc:
     ;;mov rax, [next_proc]
     mov rbx, [next_proc+8]
     mov rcx, [next_proc+16]

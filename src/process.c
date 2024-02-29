@@ -23,6 +23,7 @@ static int pid = 1;
 void yield(void)
 {
     asm volatile ("INT $" XSTR(YIELD_INT_NO));
+    curr_proc = next_proc;
 }
 
 void kexit(void)
