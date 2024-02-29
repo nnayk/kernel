@@ -11,6 +11,7 @@
 #include "tests.h"
 #include "process.h"
 #include "scheduler.h"
+#include "mt_tests.h"
 
 static int err;
 State serial_buffer;
@@ -21,11 +22,11 @@ ProcQueue *all_procs;
 ProcQueue *ready_procs;
 Process *curr_proc;
 Process *next_proc;
-Process main_proc;  
+Process main_proc; 
 
 void kmain()
 {
-#if 0
+#if 1
         int loop = 0;
         while(!loop);
 #endif
@@ -48,6 +49,7 @@ void kmain()
         display_pools();
         //kmalloc_tests();
         PROC_init();
+        simple_test();
         //while(!loop);
         //int *x=(void *)0x1000000000;
         //*x=2;
