@@ -60,11 +60,11 @@ Process *PROC_create_kthread(kproc_t entry_pt, void* arg)
     Process *proc = kmalloc(sizeof(Process));
     proc->stack_start = alloc_kstack();          
     proc->rsp = (uint64_t)proc->stack_start - 32;
-    proc->rdi = (uint64_t)arg;
-    proc->rip = (uint64_t)entry_pt;
+    proc->rip = (uint64_t)PROC_wrapper;
     proc->cs = KERNEL_CS;
-    proc->rdi = (uint64_t)arg;
-    proc->cr3 =  (uint64_t)get_p4_addr();
+    proc->rdi = (uint64_t)entry_pt;
+    proc->rsi = (uint64_t)arg;
+    proc->cr3 = (uint64_t)get_p4_addr();
     proc->pid = pid++;
 
     sched_admit(all_procs,proc);
@@ -96,3 +96,8 @@ void kexit_isr(int int_num, int err_code,void *arg)
     curr_proc = NULL;
 }
 
+void PROC_wrapper(kproc_t func, void * arg)
+{
+    (func)(arg);
+    kexit();
+}

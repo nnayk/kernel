@@ -48,6 +48,7 @@ typedef struct Process Process;
 typedef void (*kproc_t)(void*);
 void PROC_run(void);
 Process *PROC_create_kthread(kproc_t, void*);
+void PROC_wrapper(kproc_t, void *);
 void PROC_reschedule(void);
 void PROC_init();
 void yield();
