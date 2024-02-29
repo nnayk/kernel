@@ -36,7 +36,7 @@ void kmain()
         init_state(&serial_buffer);
         serial_init();
         mem_setup();
-        //PROC_init();
+        PROC_init();
 #if 0
         setup_pt4();
         if(init_pools() < 0)

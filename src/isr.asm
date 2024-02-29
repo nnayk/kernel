@@ -1,4 +1,7 @@
 extern c_wrapper
+extern curr_proc
+extern next_proc
+
 section .text
 bits 64
 
@@ -12,6 +15,7 @@ isr_glue:
     push r10
     push r11
     call c_wrapper
+    ;; compare curr_proc and next_proc
     pop r11
     pop r10
     pop r9
@@ -19,6 +23,59 @@ isr_glue:
     pop rdx
     pop rcx
     pop rax
+    mov rdi, qword[curr_proc]
+    mov rsi, qword[next_proc]
+    cmp rdi,rsi
+    je no_swap 
+;; next_proc differs from curr_prox, perform context swap
+yes_swap:
+    ;; first, save curr_proc's state
+    mov qword ptr [rdi], rax
+    mov qword ptr [rdi+8], rbx
+    mov qword ptr [rdi+16], rcx
+    mov qword ptr [rdi+24], rdx
+    ;; move rdi and rsi directly from stack into curr_proc state
+    mov rax, qword ptr [rsp+8]
+    mov qword ptr [rdi+32], rax
+    mov rax, qword ptr [rsp]
+    mov qword ptr [rdi+40], rax
+    mov qword ptr [rdi+48], r8
+    mov qword ptr [rdi+56], r9
+    mov qword ptr [rdi+64], r10
+    mov qword ptr [rdi+72], r11
+    mov qword ptr [rdi+80], r12
+    mov qword ptr [rdi+88], r13
+    mov qword ptr [rdi+96], r14
+    mov qword ptr [rdi+104], r15
+    add rsp, 24 ;; pop off rdi,rsi,error code
+    ;;mov qword ptr [rdi+112], rbp
+    ;;mov qword ptr [rdi+120], rsp
+    pop rax ;; pop rip into rax
+    mov qword ptr [rdi+128], rax ;; save rip
+    ;; save cs
+    pop rax ;; pop cs into rax
+    mov qword ptr [rdi+136], rax ;; save cs
+    ;; save rflags
+    pop rax ;; pop rflags into rax
+    mov qword ptr [rdi+144], rax ;; save rflags
+    ;; save return rsp
+    pop rax ;; pop return rsp into rax
+    mov qword ptr [rdi+120], rax ;; save return rsp
+    ;; save ss
+    pop rax ;; pop return ss into rax
+    mov qword ptr [rdi+152], rax ;; save return ss
+    ;; save ds
+    ;; save es
+    ;; save fs
+    ;; save gs
+    ;; save cr3
+    
+    ;; load next context and return
+    
+    iretq
+
+
+no_swap:
     pop rdi 
     pop rsi
     add rsp, 8 ;; pop off error code

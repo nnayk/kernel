@@ -31,6 +31,12 @@ void kexit(void)
     yield();
 }
 
+void PROC_init()
+{
+    all_procs = sched_init_queue();            
+    ready_procs = sched_init_queue();            
+}
+
 void PROC_run(void)
 {
         if(!ready_procs)

@@ -27,8 +27,8 @@ struct Process{
   uint64_t rbp;
   uint64_t rsp;     
   uint64_t rip;    
-  uint64_t rflags; 
   uint64_t cs; 
+  uint64_t rflags; 
   uint64_t ss;
   uint64_t ds;
   uint64_t es;
@@ -49,6 +49,7 @@ typedef void (*kproc_t)(void*);
 void PROC_run(void);
 Process *PROC_create_kthread(kproc_t, void*);
 void PROC_reschedule(void);
+void PROC_init();
 void yield();
 void kexit();
 void yield_isr(int,int,void *);
