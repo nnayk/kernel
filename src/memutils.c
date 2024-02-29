@@ -484,16 +484,21 @@ void kfree(void *addr)
         int pool_index = hdr->pool_index;
         int count; // number of blocks to free up (or frames if raw paging was used)
         // raw paging, need to free up each frame
-        if(pool_index < 0)
+        if(pool_index == -1)
         {
             count = (hdr->usable_size + KMALLOC_EXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
             MMU_free_pages(addr,count);
         }
         // return the blocks to the corresponding pool
-        else
+        else if((pool_index >=0) && (pool_index <= 5))
         {
             printk("freeing block w/index = %d\n",hdr->pool_index);
             free_block((void *)hdr,hdr->pool_index); 
+        }
+        else
+        {
+            printk("kfree: ERROR -- invalid pool_index = %d,addr = %p\n",pool_index,addr);
+            bail();
         }
         // TODO: coalesce with next chunk if possible
         //if(addr + 
