@@ -83,46 +83,47 @@ save_curr_proc:
 ;; load next context and return
 load_next_proc:
     ;;mov rax, [next_proc]
-    mov rbx, [next_proc+8]
-    mov rcx, [next_proc+16]
-    mov rdx, [next_proc+24]
-    mov rdi, [next_proc+32]
-    mov rsi, [next_proc+40]
-    mov r8, [next_proc+48]
-    mov r9, [next_proc+56]
-    mov r10, [next_proc+64]
-    mov r11, [next_proc+72]
-    mov r12, [next_proc+80]
-    mov r13, [next_proc+88]
-    mov r14, [next_proc+96]
-    mov r15, [next_proc+104]
-    mov rbp, [next_proc+112]
-    mov rax, [next_proc+152]
+    mov rbx, [rsi+8]
+    mov rcx, [rsi+16]
+    mov rdx, [rsi+24]
+    mov rdi, [rsi+32]
+    mov r8, [rsi+48]
+    mov r9, [rsi+56]
+    mov r10, [rsi+64]
+    mov r11, [rsi+72]
+    mov r12, [rsi+80]
+    mov r13, [rsi+88]
+    mov r14, [rsi+96]
+    mov r15, [rsi+104]
+    mov rbp, [rsi+112]
+    mov rax, [rsi+152]
     mov ds, rax
-    mov rax, [next_proc+160]
+    mov rax, [rsi+160]
     mov es, rax
-    mov rax, [next_proc+168]
+    mov rax, [rsi+168]
     mov fs, rax
-    mov rax, [next_proc+168]
+    mov rax, [rsi+168]
     mov gs, rax
     
     ;; push ss onto stack
-    mov rax, [next_proc+152] 
+    mov rax, [rsi+152] 
     push rax
     ;; push return rsp onto stack
-    mov rax, [next_proc+120] 
+    mov rax, [rsi+120] 
     push rax
     ;; push rflags onto stack
-    mov rax, [next_proc+144] 
+    mov rax, [rsi+144] 
     push rax
     ;; push return cs onto stack
-    mov rax, [next_proc+136] 
+    mov rax, [rsi+136] 
     push rax
     ;; push return rip onto stack
-    mov rax, [next_proc+128] 
+    mov rax, [rsi+128] 
     push rax
     ;; set rax
-    mov rax, [next_proc]
+    mov rax, [rsi]
+    ;; set rsi 
+    mov rsi, [rsi+40]
     iretq
 
 no_swap:

@@ -26,7 +26,7 @@ Process main_proc;
 
 void kmain()
 {
-#if 1
+#if 0
         int loop = 0;
         while(!loop);
 #endif
