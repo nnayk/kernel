@@ -50,12 +50,8 @@ save_curr_proc:
     mov [rdi+88], r13
     mov [rdi+96], r14
     mov [rdi+104], r15
-    ;; save old rbp
-    mov rax, [rbp] ; load the value pointed to by rbp into rax
-    mov [curr_proc + 112], rax
+    mov [rdi + 112], rbp
     add rsp, 24 ;; pop off rdi,rsi,error code
-    ;;mov [rdi+112], rbp
-    ;;mov [rdi+120], rsp
     pop rax ;; pop rip into rax
     mov [rdi+128], rax ;; save rip
     ;; save cs
@@ -71,9 +67,17 @@ save_curr_proc:
     pop rax ;; pop return ss into rax
     mov [rdi+152], rax ;; save return ss
     ;; save ds
+    mov rax, ds
+    mov [rdi+160], rax
     ;; save es
+    mov rax, es
+    mov [rdi+168], rax
     ;; save fs
+    mov rax, fs
+    mov [rdi+176], rax
     ;; save gs
+    mov rax, gs
+    mov [rdi+184], rax
     ;; save cr3
     
 ;; load next context and return
@@ -93,13 +97,14 @@ load_next_proc:
     mov r14, [next_proc+96]
     mov r15, [next_proc+104]
     mov rbp, [next_proc+112]
-    ;;mov rsp, [next_proc+120]
-    ;;mov rax, [next_proc+128]
-    ;;mov rax, [next_proc+136]
-    ;;mov rax, [next_proc+144]
-    ;;mov rax, [next_proc+152]
-    ;;mov rax, [next_proc+160]
-    ;;mov rax, [next_proc+168]
+    mov rax, [next_proc+152]
+    mov ds, rax
+    mov rax, [next_proc+160]
+    mov es, rax
+    mov rax, [next_proc+168]
+    mov fs, rax
+    mov rax, [next_proc+168]
+    mov gs, rax
     
     ;; push ss onto stack
     mov rax, [next_proc+152] 
@@ -116,7 +121,7 @@ load_next_proc:
     ;; push return rip onto stack
     mov rax, [next_proc+128] 
     push rax
-    ;; save rax
+    ;; set rax
     mov rax, [next_proc]
     iretq
 
@@ -128,8 +133,6 @@ no_swap:
 
 global isr0
 isr0:
-    ;;mov rax, 0x2f542f452f452f45
-    ;;mov qword [0xb8080], rax
     push rsi ; placeholder for error code
     push rsi ; will be used to store irq number
     push rdi
