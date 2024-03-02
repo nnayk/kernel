@@ -89,3 +89,17 @@ int scroll()
         return SUCCESS;
 }
 
+int VGA_row_count()
+{
+        return VGA_HEIGHT;
+}
+
+int VGA_col_count()
+{
+        return VGA_WIDTH;
+}
+
+void VGA_display_attr_char(int x, int y, char c, int fg, int bg)
+{
+
+}
