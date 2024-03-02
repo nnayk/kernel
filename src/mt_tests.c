@@ -19,7 +19,7 @@ void foo()
 void numbers_test()
 {
   long i;
-  int numThreads = 3;
+  int numThreads = 10;
 
   /* spawn a number of individual LWPs */
   for(i=1;i<=numThreads;i++) {
