@@ -131,10 +131,10 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         uint8_t region0_set = 0; // need to use this var. b/c low region starts at 0x0
         memtag_entry_t mementry;
         elf_entry_t elfentry;
-        printk("inside setup_unused\n");
-        printk("addr arrays in struct = %p,version=%d\n",mmaphdr.entry_start,mmaphdr.entry_version);
         if(DBUG) 
         {
+                printk("inside setup_unused\n");
+                printk("addr arrays in struct = %p,version=%d\n",mmaphdr.entry_start,mmaphdr.entry_version);
                 printk("mmap info entry size (should be 24)  = %d, num_mem_entries = %d\n",mmaphdr.entry_size,num_mem_entries);
                 printk("number of section entries = %d\n",num_elf_entries);
         }
@@ -435,7 +435,7 @@ void free_block(Block *blk,int pool_index)
         blk->next = old_head;
         ram_pools[pool_index].head = blk;
         ram_pools[pool_index].avail++;
-        printk("old head = %p, new head = %p\n",old_head,ram_pools[pool_index].head);
+        if(DBUG) printk("old head = %p, new head = %p\n",old_head,ram_pools[pool_index].head);
 }
 
 /*

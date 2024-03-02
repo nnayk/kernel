@@ -5,3 +5,4 @@
 */
 
 void simple_test();
+void numbers_test();

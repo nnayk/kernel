@@ -349,11 +349,11 @@ void kstack_free_pages(void *va_start, int count)
     printk("freeing %d pages\n",count);
     for(int i=0;i<count-1;i++)
     {
-            va_start -= PAGE_SIZE;
             //printk("va_start=%p,i=%d\n",va_start,i);
             //virt_addr = *((VA_t *)&va_start);
             //printk("va_start = %p,virt_addr p4 = %d, p1 = %d\n",va_start,virt_addr.p4_index,virt_addr.p1_index);
             MMU_free_page(va_start);
+            va_start -= PAGE_SIZE;
     }
 }
 

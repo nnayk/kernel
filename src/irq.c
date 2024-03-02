@@ -18,7 +18,7 @@
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
 #define INTERRUPT_GATE 0xE
-#define DBUG 1
+#define DBUG 0
 #define NUM_ISTS 6
 
 extern void (*asm_wrappers[NUM_INTS])();

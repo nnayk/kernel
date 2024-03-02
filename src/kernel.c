@@ -32,7 +32,7 @@ void kmain()
         va = (void *)(0x7FFFFFFFFFF);
         virt_addr = *((VA_t *)&va);
         printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
-#if 1
+#if 0
         int loop = 0;
         while(!loop);
 #endif
@@ -52,10 +52,11 @@ void kmain()
                 printk("init_pool error");
                 return;
         }
-        display_pools();
+        //display_pools();
         //kmalloc_tests();
         PROC_init();
-        simple_test();
+        //simple_test();
+        numbers_test();
         //pf_simple_test();
         //pf_nonseq_test();
         //pf_stress_test();
