@@ -86,7 +86,6 @@ load_next_proc:
     mov rbx, [rsi+8]
     mov rcx, [rsi+16]
     mov rdx, [rsi+24]
-    mov rdi, [rsi+32]
     mov r8, [rsi+48]
     mov r9, [rsi+56]
     mov r10, [rsi+64]
@@ -122,6 +121,11 @@ load_next_proc:
     push rax
     ;; set rax
     mov rax, [rsi]
+    ;; set curr_proc to next_proc
+    mov rdi, curr_proc ;; rdi has curr_proc's address
+    mov [rdi], rsi
+    ;; set rdi 
+    mov rdi, [rsi+32]
     ;; set rsi 
     mov rsi, [rsi+40]
     iretq

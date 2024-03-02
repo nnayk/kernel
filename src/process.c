@@ -10,6 +10,7 @@
 #include "memutils.h"
 #include "scheduler.h"
 #include "print.h"
+#include "paging.h"
 
 #define STR(x) #x
 #define XSTR(s) STR(s)
@@ -83,15 +84,16 @@ void yield_isr(int int_num,int err_code,void *arg)
 
 void kexit_isr(int int_num, int err_code,void *arg)
 {
-    if(!curr_proc)
+    if(!curr_proc || curr_proc == &main_proc)
     {
-            printk("kexit_isr: curr_proc is null\n");
+            printk("kexit_isr: curr_proc is invalid\n");
             bail();
     }
 
     /* free up the thread's resources */
-    void *stack_low = curr_proc->stack_start - STACK_SIZE;
-    kfree(stack_low);
+    void *stack_start = curr_proc->stack_start;
+    //kfree(stack_low);
+    MMU_free_pages(stack_start,STACK_PAGES);
     sched_remove(all_procs,curr_proc);
     sched_remove(ready_procs,curr_proc);
     kfree(curr_proc);

@@ -26,7 +26,13 @@ Process main_proc;
 
 void kmain()
 {
-#if 0
+        void *va = (void *)(0x8000000000);
+        VA_t virt_addr = *((VA_t *)&va);
+        printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
+        va = (void *)(0x7FFFFFFFFFF);
+        virt_addr = *((VA_t *)&va);
+        printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
+#if 1
         int loop = 0;
         while(!loop);
 #endif

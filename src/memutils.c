@@ -319,6 +319,7 @@ int init_pools()
     return SUCCESS;
 }
 
+#if 0
 /*
  * Dynamically allocates a pool of the requested size 
  * Params:
@@ -326,6 +327,35 @@ int init_pools()
  * Returns:
  * VA corresponding to start of the block
  */
+Block *alloc_pool_blocks(int size)
+{
+        Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
+        Block *temp = NULL;
+        int num_blocks = PAGE_SIZE/size;
+        if(!(va_to_pa((void *)block_start,NULL,SET_PA)))
+        {
+                printk("alloc_pool: va_to_pa() failed for size = %d\n",size);
+                bail();
+        }
+        // partition the frame into multiple blocks
+        for(int i=0;i<num_blocks;i++)
+        {
+            temp = (Block *)((uint64_t)block_start + (size * i));
+            temp->next=(Block *)0xABCD;
+            printk("%p\n",(Block *)((uint64_t)temp+size));
+            if(i != num_blocks-1)
+            {
+                    temp->next = (Block *)((uint64_t)temp+size);
+            }
+                    
+            else
+                    temp->next = 0; // zero out next pointer for last block
+        }
+
+        return block_start;
+}
+#endif
+
 Block *alloc_pool_blocks(int size)
 {
         Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool

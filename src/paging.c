@@ -306,8 +306,19 @@ void MMU_free_page(void *va)
             return;
     }
 
+    // TODO: first check if the page is alloced and not actually present. if so, then mark it as not alloced and then just return bc there's no underlying frame to free
     // mark the p1 entry as not present 
     p1_entry = va_to_pa(va,NULL,GET_P1);
+    if(p1_entry->alloced == ALLOCED)
+    {
+            if(p1_entry->present == NEXT_PTE_PRESENT)
+            {
+                    printk("MMU_free_page: %p both alloced and present!\n",va);
+                    bail();
+            }
+            p1_entry->alloced = NOT_ALLOCED;
+            return;
+    }
     p1_entry->present = NEXT_PTE_ABSENT;
     // free the underlying frame associated with the page
     frame_start = get_full_addr(p1_entry,virt_addr.frame_off);
