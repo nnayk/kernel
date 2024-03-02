@@ -12,6 +12,7 @@
 #include "process.h"
 #include "scheduler.h"
 #include "mt_tests.h"
+#include "snakes.h"
 
 static int err;
 State serial_buffer;
@@ -26,16 +27,17 @@ Process main_proc;
 
 void kmain()
 {
+        /*
         void *va = (void *)(0x8000000000);
         VA_t virt_addr = *((VA_t *)&va);
         printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
         va = (void *)(0x7FFFFFFFFFF);
         virt_addr = *((VA_t *)&va);
         printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
-#if 0
-        int loop = 0;
+        */
+        int loop = 1;
         while(!loop);
-#endif
+        
         ram[0].start = INVALID_START_ADDR;
         elf_region.start = INVALID_START_ADDR;
         free_head = INVALID_START_ADDR;
@@ -56,7 +58,9 @@ void kmain()
         //kmalloc_tests();
         PROC_init();
         //simple_test();
-        numbers_test();
+        //numbers_test();
+        PROC_run();
+        setup_snakes(1);
         //pf_simple_test();
         //pf_nonseq_test();
         //pf_stress_test();

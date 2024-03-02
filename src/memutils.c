@@ -74,7 +74,7 @@ int mem_setup()
 
 int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
 {
-        printk("multiboot_start = %p\n",multiboot_start);
+        if(DBUG) printk("multiboot_start = %p\n",multiboot_start);
         // get size of the entire multiboot struct
         uint32_t total_size;
         uint32_t curr_off = 2 * sizeof(uint32_t); // current offset into multiboot struct
@@ -83,14 +83,14 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
 
         if((err=(uint64_t)memcpy(&total_size,multiboot_start,sizeof(uint32_t))) <= 0)
                 return err;
-        printk("total struct size = %d\n",total_size);
+        if(DBUG) printk("total struct size = %d\n",total_size);
         // loop until tag type = 8 reached
         while(curr_off < total_size)
         {
              addr = multiboot_start+curr_off;
              if(((uint64_t)addr)%8)
              {
-                     printk("not an even multiple!\n");
+                     if(DBUG) printk("not an even multiple!\n");
                      curr_off += (8-(uint64_t)addr%8);
                      addr = multiboot_start+curr_off;
              }
@@ -98,22 +98,22 @@ int track_unused(memtag_hdr_t *memhdr,elftag_hdr_t *elfhdr)
              if(DBUG) printk("type = %d\n,size=%hx\n",temp.type,temp.size);
              if(temp.type == MMAP_TAG)
              {
-                     printk("addr arrays = %p\n",addr+16);
+                     if(DBUG) printk("addr arrays = %p\n",addr+16);
                      if((err=(uint64_t)memcpy(memhdr,addr,sizeof(memtag_hdr_t))) < 0)
                              return err;
                      memhdr->entry_start = addr+MEM_INFO_OFF;
-                     printk("addr arrays in struct = %p\n",memhdr->entry_start);
+                     if(DBUG) printk("addr arrays in struct = %p\n",memhdr->entry_start);
              }
              else if(temp.type == ELF_TAG)
              {
-                     printk("entry 1: type = %d, seg. addr = %p\n",*(uint32_t *)(addr+24),addr+36);
+                     if(DBUG) printk("entry 1: type = %d, seg. addr = %p\n",*(uint32_t *)(addr+24),addr+36);
                      if((err=(uint64_t)memcpy(elfhdr,addr,sizeof(elftag_hdr_t))) < 0)
                              return err;
                      elfhdr->entry_start = addr+SEC_INFO_OFF;
              }
              else if(temp.type == 4)
         {
-                printk("low mem size = %d, high mem size = %d\n",(uint32_t)*(addr+8),(uint32_t)*(addr+12));
+                if(DBUG) printk("low mem size = %d, high mem size = %d\n",(uint32_t)*(addr+8),(uint32_t)*(addr+12));
         }
 
              curr_off += temp.size;
@@ -179,7 +179,7 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
                     // mark the start of the kernel code region
                     if(elf_region.start == INVALID_START_ADDR)
                             elf_region.start = elfentry.seg_addr;
-                    printk("Found the kernel code!\n");
+                    if(DBUG) printk("Found the kernel code!\n");
                     if(DBUG)
                     {
                             // check no high region overlap
@@ -196,16 +196,16 @@ int setup_unused(memtag_hdr_t mmaphdr,elftag_hdr_t elfhdr)
         // check no low region overlap
         if(ram[REGION0_OFF].start < elf_region.start && ram[REGION0_OFF].start < elf_region.end)
         {
-                printk("No low region overlap!\n");
+                if(DBUG) printk("No low region overlap!\n");
         }
         else
         {
-                printk("There IS low region overlap!\n");
+                if(DBUG) printk("There IS low region overlap!\n");
         }
         // check no high region overlap
         if(ram[REGION1_OFF].start < elf_region.start && ram[REGION1_OFF].end < elf_region.end)
         {
-                printk("No high region overlap!\n");
+                if(DBUG) printk("No high region overlap!\n");
         }
         else
         {
@@ -259,7 +259,7 @@ void *pf_alloc()
         // no free memory
         else
         {
-                printk("Ran out of physical  memory\n");
+                if(DBUG) printk("Ran out of physical  memory\n");
                 bail();
         }
         num_frames_total--;
@@ -388,11 +388,11 @@ void display_pools()
     {
         count = 0;
         pool = ram_pools[i];
-        printk("Pool %d: size = %d, avail = %d\n",i+1,pool.max_size,pool.avail);
+        if(DBUG) printk("Pool %d: size = %d, avail = %d\n",i+1,pool.max_size,pool.avail);
         block = pool.head;
         while(block)
         {
-                printk("Block %d addr = %p\n",++count,block);
+                if(DBUG) printk("Block %d addr = %p\n",++count,block);
                 block = block->next;
         }
     }
@@ -522,7 +522,7 @@ void kfree(void *addr)
         // return the blocks to the corresponding pool
         else if((pool_index >=0) && (pool_index <= 5))
         {
-            printk("freeing block w/index = %d\n",hdr->pool_index);
+            if(DBUG) printk("freeing block w/index = %d\n",hdr->pool_index);
             free_block((void *)hdr,hdr->pool_index); 
         }
         else
@@ -559,6 +559,6 @@ void *alloc_kstack()
                 va_to_pa((void *)kstack,NULL,SET_P1);
                 kstack -= PAGE_SIZE;
         }
-        printk("final kstack = %lx\n",kstack);
+        if(DBUG) printk("final kstack = %lx\n",kstack);
         return stack_start;
 }

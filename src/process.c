@@ -14,6 +14,7 @@
 
 #define STR(x) #x
 #define XSTR(s) STR(s)
+#define DBUG 0
 
 extern ProcQueue *all_procs;
 extern ProcQueue *ready_procs;
@@ -56,7 +57,7 @@ void PROC_run(void)
         // yield call
         yield();
         sched_admit(ready_procs,&main_proc);
-        printk("returned from yield\n");
+        if(DBUG) printk("returned from yield\n");
 }
 
 Process *PROC_create_kthread(kproc_t entry_pt, void* arg)

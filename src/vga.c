@@ -101,5 +101,10 @@ int VGA_col_count()
 
 void VGA_display_attr_char(int x, int y, char c, int fg, int bg)
 {
-
+        if(!((0 < x) && (x < VGA_WIDTH)) || !((0 < y) && (y < VGA_HEIGHT))) 
+                        return; 
+        int temp_cursor = VGA_WIDTH*y + x;
+        int color = (bg << 12) | (fg << 8);
+        unsigned short final_char = color | c;
+        vgaBuff[temp_cursor] = final_char;
 }

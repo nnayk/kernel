@@ -61,6 +61,7 @@ static char colors[] = { VGA_BLACK, VGA_BLUE, VGA_RED,
 VGA_GREEN, VGA_MAGENTA, VGA_CYAN, VGA_YELLOW, VGA_WHITE, VGA_BLACK };
 
 snake allsnakes=NULL;
+extern Process *curr_proc;
 
 static int rows;                /* global for the obvious reasons */
 static int cols;

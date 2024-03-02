@@ -219,7 +219,7 @@ void *get_full_addr(PTE_t *entry,uint16_t offset)
 {
         if(!entry)
         {
-                printk("get_full_addr: %d\n",ERR_NULL_PTR);
+                if(DBUG) printk("get_full_addr: %d\n",ERR_NULL_PTR);
                 dbug_hlt(DBUG);
                 return NULL;
         }
@@ -231,7 +231,7 @@ void *get_pte_addr(PTE_t *entry,uint16_t offset)
 {
         if(!entry)
         {
-                printk("get_full_addr: %d\n",ERR_NULL_PTR);
+                if(DBUG) printk("get_full_addr: %d\n",ERR_NULL_PTR);
                 dbug_hlt(DBUG);
                 return NULL;
         }
@@ -302,7 +302,7 @@ void MMU_free_page(void *va)
     VA_t virt_addr = *((VA_t *)&va);
     if(!valid_va(va))
     {
-            printk("MMU_free_page: Invalid VA %p\n",va);
+            if(DBUG) printk("MMU_free_page: Invalid VA %p\n",va);
             return;
     }
 
@@ -313,7 +313,7 @@ void MMU_free_page(void *va)
     {
             if(p1_entry->present == NEXT_PTE_PRESENT)
             {
-                    printk("MMU_free_page: %p both alloced and present!\n",va);
+                    if(DBUG) printk("MMU_free_page: %p both alloced and present!\n",va);
                     bail();
             }
             p1_entry->alloced = NOT_ALLOCED;
@@ -321,7 +321,7 @@ void MMU_free_page(void *va)
     }
     if(p1_entry->present != NEXT_PTE_PRESENT)
     {
-            printk("MMU_free_page: entry for va %p not present nor alloced\n",va);
+            if(DBUG) printk("MMU_free_page: entry for va %p not present nor alloced\n",va);
             bail();
     }
     p1_entry->present = NEXT_PTE_ABSENT;
@@ -329,7 +329,7 @@ void MMU_free_page(void *va)
     frame_start = get_full_addr(p1_entry,virt_addr.frame_off);
     if((err = pf_free(frame_start) < 0))
     {
-            printk("MMU_free_page (%ld): pf_free() failed\n",err);
+            if(DBUG) printk("MMU_free_page (%ld): pf_free() failed\n",err);
             dbug_hlt(DBUG);
     }
 }
@@ -346,7 +346,7 @@ void MMU_free_pages(void *va_start, int count)
 void kstack_free_pages(void *va_start, int count)
 {
     //VA_t virt_addr;
-    printk("freeing %d pages\n",count);
+    if(DBUG) printk("freeing %d pages\n",count);
     for(int i=0;i<count-1;i++)
     {
             //printk("va_start=%p,i=%d\n",va_start,i);
@@ -373,7 +373,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             bail();
             return;
     }
-    printk("page fault va: %p\n",va);
+    if(DBUG) printk("page fault va: %p\n",va);
     //TODO: add chec that va > kheap and < kstack and valid_va check
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
@@ -423,5 +423,5 @@ void identity_map(void *p4_addr)
             //if(curr_va > 0x101e24) break;
     }
 
-    printk("done mapping!\n");
+    if(DBUG) printk("done mapping!\n");
 }
