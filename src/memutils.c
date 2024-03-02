@@ -554,8 +554,11 @@ void *alloc_kstack()
                         bail();
                 }
 
+                VA_t virt_addr = *((VA_t *)&kstack);
+                if(DBUG) printk("kstack=%lx, p1 ind = %d\n",kstack,virt_addr.p1_index);
                 va_to_pa((void *)kstack,NULL,SET_P1);
                 kstack -= PAGE_SIZE;
         }
+        printk("final kstack = %lx\n",kstack);
         return stack_start;
 }

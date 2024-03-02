@@ -94,11 +94,10 @@ void kexit_isr(int int_num, int err_code,void *arg)
     /* free up the thread's resources */
     void *stack_start = curr_proc->stack_start;
     //kfree(stack_low);
-    MMU_free_pages(stack_start,STACK_PAGES);
+    kstack_free_pages(stack_start,STACK_PAGES);
     sched_remove(all_procs,curr_proc);
     sched_remove(ready_procs,curr_proc);
     kfree(curr_proc);
-    curr_proc = NULL;
 }
 
 void PROC_wrapper(kproc_t func, void * arg)

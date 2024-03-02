@@ -46,6 +46,7 @@ void *MMU_alloc_page();
 void *MMU_alloc_pages(int);
 void MMU_free_page(void *);
 void MMU_free_pages(void *,int);
+void kstack_free_pages(void *,int);
 void *setup_pt4();
 void *get_full_addr(PTE_t *,uint16_t);
 void *get_pte_addr(PTE_t *,uint16_t);

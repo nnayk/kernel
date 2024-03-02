@@ -65,7 +65,7 @@ int sched_remove(ProcQueue *q, Process *victim)
                q->head = victim->next;
                if(victim == q->tail)
                {
-                       q->tail = NULL;
+                       q->tail = q->head;
                }
                q->proc_count--;
                return SUCCESS;
@@ -114,13 +114,11 @@ Process *reschedule()
                         bail();
 
                 }
-                printk("reschedule: no processes to schedule\n");
-                return NULL;
         }
         
         Process *temp = ready_procs->head;
         // don't run the main thread if there are other threads to run
-        if(temp == &main_proc) temp = temp->next;
+        if((temp == &main_proc) && (ready_procs->proc_count > 1)) temp = temp->next;
         sched_remove(ready_procs,temp);
         sched_admit(ready_procs,temp);
         next_proc = temp;

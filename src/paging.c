@@ -319,6 +319,11 @@ void MMU_free_page(void *va)
             p1_entry->alloced = NOT_ALLOCED;
             return;
     }
+    if(p1_entry->present != NEXT_PTE_PRESENT)
+    {
+            printk("MMU_free_page: entry for va %p not present nor alloced\n",va);
+            bail();
+    }
     p1_entry->present = NEXT_PTE_ABSENT;
     // free the underlying frame associated with the page
     frame_start = get_full_addr(p1_entry,virt_addr.frame_off);
@@ -333,7 +338,21 @@ void MMU_free_pages(void *va_start, int count)
 {
     for(int i=0;i<count;i++)
     {
-            va_start += (PAGE_SIZE*i);
+            va_start += PAGE_SIZE;
+            MMU_free_page(va_start);
+    }
+}
+
+void kstack_free_pages(void *va_start, int count)
+{
+    //VA_t virt_addr;
+    printk("freeing %d pages\n",count);
+    for(int i=0;i<count-1;i++)
+    {
+            va_start -= PAGE_SIZE;
+            //printk("va_start=%p,i=%d\n",va_start,i);
+            //virt_addr = *((VA_t *)&va_start);
+            //printk("va_start = %p,virt_addr p4 = %d, p1 = %d\n",va_start,virt_addr.p4_index,virt_addr.p1_index);
             MMU_free_page(va_start);
     }
 }
