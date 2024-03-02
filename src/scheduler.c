@@ -46,6 +46,7 @@ int sched_admit(ProcQueue *q,Process *proc)
             q->tail = proc;
     }
 
+    proc->next = NULL;
     q->proc_count++;
     return SUCCESS;
 }
@@ -62,7 +63,8 @@ int sched_remove(ProcQueue *q, Process *victim)
         /* remove head Process from queue */
         if(victim == q->head)
         {
-               q->head = victim->next;
+               if(q==all_procs) q->head = victim->allNext;
+               else q->head = victim->next;
                if(victim == q->tail)
                {
                        q->tail = q->head;
@@ -73,15 +75,27 @@ int sched_remove(ProcQueue *q, Process *victim)
 
         prev = q->head;
 
-        /* iterate till victim is reached */
-        while(prev && prev->next != victim)
+        if(q==all_procs)
         {
-                prev = prev->next;
+                /* iterate till victim is reached */
+                while(prev && prev->allNext != victim)
+                {
+                        prev = prev->allNext;
+                }
+        }
+        
+        else
+        {
+                /* iterate till victim is reached */
+                while(prev && prev->next != victim)
+                {
+                        prev = prev->next;
+                }
         }
 
         if(!prev)
         {
-                printk("sched_remove: invalid victim\n");
+                printk("sched_remove: invalid victim pid = %ld, ready count = %d\n",victim->pid,ready_procs->proc_count);
                 bail();
         }
 
@@ -91,7 +105,17 @@ int sched_remove(ProcQueue *q, Process *victim)
         }
 
         /* remove prev's pointer to victim */
-        prev->next = victim->next;
+        if(q==all_procs)
+        {
+                prev->allNext = victim->allNext;
+                victim->allNext = NULL;
+        }
+        /* remove prev's pointer to victim */
+        else
+        {
+                prev->next = victim->next;
+                victim->next = NULL;
+        }
         q->proc_count--;
 
         return SUCCESS;
@@ -118,7 +142,12 @@ Process *reschedule()
         
         Process *temp = ready_procs->head;
         // don't run the main thread if there are other threads to run
-        if((temp == &main_proc) && (ready_procs->proc_count > 1)) temp = temp->next;
+        if((temp == &main_proc) && (ready_procs->proc_count > 1)) 
+        {
+                sched_remove(ready_procs,temp);
+                sched_admit(ready_procs,temp);
+                temp = ready_procs->head;
+        }
         sched_remove(ready_procs,temp);
         sched_admit(ready_procs,temp);
         next_proc = temp;
@@ -128,4 +157,26 @@ Process *reschedule()
 int sched_proc_count(ProcQueue *q)
 {
         return q->proc_count;
+}
+
+void display_threads(ProcQueue *q)
+{
+        Process *proc = q->head;
+        if(q->proc_count == 0)
+        {
+                printk("no procs on the given queue\n");
+                return;
+        }
+        for(int i=0;i<q->proc_count;i++)
+        {
+            printk("thread %d id = %ld\n",i,proc->pid);
+            if(q==ready_procs) proc = proc->next;
+            else if(q==all_procs) proc = proc->allNext;
+        }
+
+        if(proc)
+        {
+            printk("uhoh\n");
+            bail();
+        }
 }

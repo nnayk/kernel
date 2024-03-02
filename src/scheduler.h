@@ -20,3 +20,4 @@ int sched_proc_count(ProcQueue *);
 int PROC_unblock_head(ProcQueue *); 
 int PROC_unblock_all(ProcQueue *);
 int PROC_block_on(ProcQueue *, int enable_ints); 
+void display_threads();

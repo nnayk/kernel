@@ -25,6 +25,7 @@ static int pid = 1;
 
 void yield(void)
 {
+    //printk("yielding to next thread\n");
     asm volatile ("INT $" XSTR(YIELD_INT_NO));
     curr_proc = next_proc;
 }
@@ -32,6 +33,8 @@ void yield(void)
 void kexit(void)
 {
     asm volatile ("INT $" XSTR(KEXIT_INT_NO));
+    kfree(curr_proc);
+    curr_proc = NULL;
     yield();
 }
 
@@ -52,11 +55,9 @@ void PROC_run(void)
         
         curr_proc = &main_proc;
         next_proc = curr_proc;
-        sched_admit(ready_procs,curr_proc);
         // save current (caller's context) in order to return to kmain after 
         // yield call
         yield();
-        sched_admit(ready_procs,&main_proc);
         if(DBUG) printk("returned from yield\n");
 }
 
@@ -98,7 +99,6 @@ void kexit_isr(int int_num, int err_code,void *arg)
     kstack_free_pages(stack_start,STACK_PAGES);
     sched_remove(all_procs,curr_proc);
     sched_remove(ready_procs,curr_proc);
-    kfree(curr_proc);
 }
 
 void PROC_wrapper(kproc_t func, void * arg)

@@ -37,6 +37,8 @@ void kmain()
         */
         int loop = 1;
         while(!loop);
+
+        main_proc.pid = 0;
         
         ram[0].start = INVALID_START_ADDR;
         elf_region.start = INVALID_START_ADDR;
@@ -59,8 +61,11 @@ void kmain()
         PROC_init();
         //simple_test();
         //numbers_test();
+        sched_admit(ready_procs,&main_proc);
         PROC_run();
         setup_snakes(1);
+        //display_threads(all_procs);
+        //display_threads(ready_procs);
         //pf_simple_test();
         //pf_nonseq_test();
         //pf_stress_test();
@@ -71,6 +76,7 @@ void kmain()
         while(1)
         {
             PROC_run();
+            if(ready_procs->proc_count == 1) display_threads(all_procs);
             hlt();
         }
 }
