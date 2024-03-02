@@ -56,6 +56,9 @@ void kmain()
         //kmalloc_tests();
         PROC_init();
         simple_test();
+        //pf_simple_test();
+        //pf_nonseq_test();
+        //pf_stress_test();
         //while(!loop);
         //int *x=(void *)0x1000000000;
         //*x=2;

@@ -55,6 +55,7 @@ void PROC_run(void)
         // save current (caller's context) in order to return to kmain after 
         // yield call
         yield();
+        sched_admit(ready_procs,&main_proc);
         printk("returned from yield\n");
 }
 

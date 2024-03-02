@@ -376,7 +376,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
             bail();
     }
     // kernel stack region check
-    else if((va>=(void *)KHEAP_LIMIT) && (va < (void *)KSTACK_LIMIT))
+    else if((va <= (void *)KSTACK_START) && (va > (void *)KSTACK_LIMIT))
     {
             va_to_pa(va,NULL,SET_PA);
     }
