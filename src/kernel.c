@@ -37,7 +37,7 @@ void kmain()
         virt_addr = *((VA_t *)&va);
         printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
         */
-        int loop = 1;
+        int loop = 0;
         while(!loop);
 
         main_proc.pid = 0;
@@ -50,6 +50,7 @@ void kmain()
         if((err=irq_init()) < 0)
                 printk("irq_init failed w/error = %d\n",err);
         init_state(&serial_buffer);
+        init_state(&kbd_buffer);
         serial_init();
         mem_setup();
         setup_pt4();
@@ -65,7 +66,8 @@ void kmain()
         //numbers_test();
         sched_admit(ready_procs,&main_proc);
         PROC_run();
-        setup_snakes(1);
+        //setup_snakes(1);
+        kbd_tests();
         //display_threads(all_procs);
         //display_threads(ready_procs);
         //pf_simple_test();
@@ -78,7 +80,7 @@ void kmain()
         while(1)
         {
             PROC_run();
-            if(ready_procs->proc_count == 1) display_threads(all_procs);
+            //if(ready_procs->proc_count == 1) display_threads(all_procs);
             hlt();
         }
 }
