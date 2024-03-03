@@ -2,6 +2,8 @@
 #include "print.h"
 #include "utility.h"
 #include "irq.h"
+#include "process.h"
+#include "shared_buff.h"
 
 #define PS2_DATA 0x60
 #define PS2_CMD 0x64
@@ -26,7 +28,8 @@
 
 //void outb(uint16_t, uint8_t);
 //uint8_t inb(uint16_t );
-
+extern State kbd_buffer;
+extern ProcQueue *kbd_blocked;
 
 char ps2_poll_read(void)
 {
@@ -126,12 +129,32 @@ void kbd_init()
 
 void kbd_isr(int int_num,int err_code,void *buffer)
 {
+        printk("inside kbd_isr\n");
         unsigned char data = ps2_poll_read();
-        if(data < RELEASE_KEY_START)
-        {
-            data = mapScanCodeToAscii(data);
-            print_char(data);
-        }
+        // TODO: write the char to kbd buffer instead of this
+        buff_write(&kbd_buffer,data);
         irq_end_of_interrupt(KBD_IRQ_NO);
 }
 
+unsigned char KBD_read(void)
+{
+        cli();
+        unsigned char data;
+        while (buff_empty(&kbd_buffer)) 
+        {
+                PROC_block_on(kbd_blocked, 1);
+                // read the key code from the buffer
+                // process the key code
+                // case 1: the key code corresponds to a single byte ascii char
+                data = buff_read(&kbd_buffer);
+                if(data < RELEASE_KEY_START)
+                {
+                    data = mapScanCodeToAscii(data);
+                    break;
+                }
+                // TODO case 2: the key code corresponds to a multi byte command. Currently I plan to check if the key code corresponds to end of command. If so, I'll walk through the entire buffer from consumer to producer to form the single char. Note that I'll probably need to use some buff_peek() call instead of buff_read() above to avoid moving the consumer. Alternaitvely I could just store a local var to keep track of initial consumer index.
+                cli();
+        }
+        sti();
+        return data;
+}

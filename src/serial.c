@@ -48,7 +48,7 @@ void serial_consume(int int_num,int error_code,void *arg)
                 read_LSR(); 
         }
         // empty buffer, turn off TX interrupts and set idle bit
-        else if (state->consumer == state->producer)  
+        else if (buff_empty(state))  
         {
                 if(DBUG) VGA_display_str("EMPTY BUFFER!\n");
                 irq_set_mask(COM1_IRQ_NO);
@@ -57,12 +57,9 @@ void serial_consume(int int_num,int error_code,void *arg)
         {
             if(DBUG) VGA_display_str("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
-            consume_byte(*state->consumer++); 
+            consume_byte(buff_read(state)); 
             state->idle = 0;
         }
-        // wrap consumer pointer back to "front" of circular queue
-        if (state->consumer >= &state->buff[BUFF_SIZE])
-                state->consumer = &state->buff[0];
         irq_end_of_interrupt(COM1_IRQ_NO); 
         return; 
 }
@@ -84,8 +81,7 @@ int serial_write(char toAdd, State *state)
                 return SUCCESS; 
         }
         
-        if ((state->producer == (state->consumer - 1)) ||
-        (state->consumer == &(state->buff[0]) && state->producer == &(state->buff[BUFF_SIZE-1])))
+        if (buff_full(state))
         {
             if(DBUG) VGA_display_str("buffer full!\n");
             if(int_enabled) sti();
@@ -93,13 +89,7 @@ int serial_write(char toAdd, State *state)
         }else
         {
             if(DBUG) VGA_display_str("writing to buffer\n");
-            *state->producer++ = toAdd;
-        }
-
-        if (state->producer >= &state->buff[BUFF_SIZE])
-        {
-            if(DBUG) VGA_display_str("buffer wrap\n");
-            state->producer = &state->buff[0];
+            buff_write(state,toAdd);
         }
         if(int_enabled) sti();
         return SUCCESS; 

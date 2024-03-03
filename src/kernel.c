@@ -16,14 +16,16 @@
 
 static int err;
 State serial_buffer;
+State kbd_buffer;
 region ram[2];
 region elf_region;
 void *free_head;
 ProcQueue *all_procs;
 ProcQueue *ready_procs;
+ProcQueue *kbd_blocked;
 Process *curr_proc;
 Process *next_proc;
-Process main_proc; 
+Process main_proc;
 
 void kmain()
 {

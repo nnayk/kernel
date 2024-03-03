@@ -16,6 +16,10 @@ typedef struct{
         uint8_t idle; // 1 = idle
 } State;
 
- void init_state(State *);
+void init_state(State *);
 void show_state(State *);
+int buff_full(State *);
+int buff_empty(State *);
+char buff_read(State *);
+int buff_write(State *,char);
 #endif

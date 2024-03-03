@@ -23,6 +23,7 @@
 
 extern void (*asm_wrappers[NUM_INTS])();
 extern State serial_buffer;
+extern State kbd_buffer;
 idt_entry_t idt_arr[NUM_INTS];
 irq_helper_t irq_helper[NUM_INTS];
 tss_t tss;
@@ -227,6 +228,7 @@ int irq_helper_init()
         }
         /* init the entries for the interrupts I'll handle */
         irq_helper[KBD_INT_NO].handler = kbd_isr;
+        irq_helper[KBD_INT_NO].arg = &kbd_buffer;
         irq_helper[COM1_INT_NO].handler = serial_consume;
         irq_helper[COM1_INT_NO].arg = &serial_buffer;
         irq_helper[PF_INT_NO].handler = pg_fault_isr;

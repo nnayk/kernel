@@ -45,6 +45,13 @@ struct Process{
 
 typedef struct Process Process;
 
+typedef struct
+{
+        Process *head;
+        Process *tail;
+        int proc_count;
+}ProcQueue;
+
 typedef void (*kproc_t)(void*);
 void PROC_run(void);
 Process *PROC_create_kthread(kproc_t, void*);
@@ -55,4 +62,7 @@ void yield();
 void kexit();
 void yield_isr(int,int,void *);
 void kexit_isr(int,int,void *);
+int PROC_unblock_head(ProcQueue *); 
+int PROC_unblock_all(ProcQueue *);
+int PROC_block_on(ProcQueue *, int enable_ints); 
 #endif
