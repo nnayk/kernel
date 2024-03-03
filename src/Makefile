@@ -2,11 +2,11 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop29
-loop1 := /dev/loop30
+loop0 := /dev/loop31
+loop1 := /dev/loop32
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o kmalloc_tests.o page_frame_tests.o process.o scheduler.o mt_tests.o snakes.o
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o kmalloc_tests.o page_frame_tests.o process.o scheduler.o mt_tests.o snakes.o kbd_tests.o
 
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g -Wall -Werror -mno-red-zone

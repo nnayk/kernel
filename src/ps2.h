@@ -10,3 +10,4 @@ char ps2_poll_read();
 void ps2_poll_write(uint16_t,uint8_t);
 void ps2_enable_kbd_int();
 void kbd_isr(int,int,void *);
+unsigned char KBD_read(void);
