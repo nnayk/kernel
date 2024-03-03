@@ -20,7 +20,7 @@ extern Process main_proc;
 
 ProcQueue *sched_init_queue()
 {
-        ProcQueue *q = kmalloc(sizeof(ProcQueue *));
+        ProcQueue *q = kmalloc(sizeof(ProcQueue));
         q->head = NULL;
         q->tail = NULL;
         q->proc_count = 0;
@@ -56,7 +56,7 @@ int sched_remove(ProcQueue *q, Process *victim)
         Process *prev; /* saves Process that points to victim */
         if(!victim || !q->head) 
         {
-                printk("sched_remove: bad args\n");
+                printk("sched_remove: bad args: q = %p, victim = %p\n",q,victim);
                 bail();
         }
 
