@@ -106,6 +106,7 @@ void kexit_isr(int int_num, int err_code,void *arg)
 
 void PROC_wrapper(kproc_t func, void * arg)
 {
+    if(!are_interrupts_enabled()) sti(); // band-aid fix for testing blocking
     (func)(arg);
     kexit();
 }
@@ -125,11 +126,12 @@ int PROC_block_on(ProcQueue *q, int enable_ints)
 
 int PROC_unblock_head(ProcQueue *q)
 {
-    if(!q || !q->head) 
+    if(!q) 
     {
-            printk("PROC_unblock_head: bad arg\n");
+            printk("PROC_unblock_head: null arg\n");
             bail();
     }
+    if(!q->head) return SUCCESS;
     Process *head = q->head;
     sched_remove(q,q->head);
     sched_admit(ready_procs,head);
