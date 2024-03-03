@@ -134,6 +134,7 @@ void kbd_isr(int int_num,int err_code,void *buffer)
         // TODO: write the char to kbd buffer instead of this
         buff_write(&kbd_buffer,data);
         irq_end_of_interrupt(KBD_IRQ_NO);
+        PROC_unblock_head(kbd_blocked);
 }
 
 unsigned char KBD_read(void)
