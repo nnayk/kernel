@@ -132,9 +132,12 @@ void kbd_isr(int int_num,int err_code,void *buffer)
         printk("inside kbd_isr\n");
         unsigned char data = ps2_poll_read();
         // TODO: write the char to kbd buffer instead of this
-        buff_write(&kbd_buffer,data);
         irq_end_of_interrupt(KBD_IRQ_NO);
-        PROC_unblock_head(kbd_blocked);
+        if(data < RELEASE_KEY_START)
+        {
+            buff_write(&kbd_buffer,data);
+            PROC_unblock_head(kbd_blocked);
+        }
 }
 
 unsigned char KBD_read(void)
@@ -144,18 +147,17 @@ unsigned char KBD_read(void)
         while (buff_empty(&kbd_buffer)) 
         {
                 PROC_block_on(kbd_blocked, 1);
-                // read the key code from the buffer
-                // process the key code
-                // case 1: the key code corresponds to a single byte ascii char
-                data = buff_read(&kbd_buffer);
-                if(data < RELEASE_KEY_START)
-                {
-                    data = mapScanCodeToAscii(data);
-                    break;
-                }
-                // TODO case 2: the key code corresponds to a multi byte command. Currently I plan to check if the key code corresponds to end of command. If so, I'll walk through the entire buffer from consumer to producer to form the single char. Note that I'll probably need to use some buff_peek() call instead of buff_read() above to avoid moving the consumer. Alternaitvely I could just store a local var to keep track of initial consumer index.
                 cli();
         }
+        // read the key code from the buffer
+        // process the key code
+        // case 1: the key code corresponds to a single byte ascii char
+        data = buff_read(&kbd_buffer);
+        if(data < RELEASE_KEY_START)
+        {
+            data = mapScanCodeToAscii(data);
+        }
+        // TODO case 2: the key code corresponds to a multi byte command. Currently I plan to check if the key code corresponds to end of command. If so, I'll walk through the entire buffer from consumer to producer to form the single char. Note that I'll probably need to use some buff_peek() call instead of buff_read() above to avoid moving the consumer.
         sti();
         return data;
 }
