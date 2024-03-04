@@ -59,3 +59,13 @@ int buff_write(State *state, char toAdd)
 
     return SUCCESS;
 }
+
+void display_buff(State *state)
+{
+        for(int i=0;i<20;i++)
+        {
+            printk("%c",mapScanCodeToAscii(state->buff[i]));
+        }
+
+        printk("\n");
+}

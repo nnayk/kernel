@@ -9,7 +9,7 @@
 #include "stdint-gcc.h"
 # include "print.h"
 
-#define BUFF_SIZE 16
+#define BUFF_SIZE 256
 typedef struct{
         char buff[BUFF_SIZE];
         char *consumer, *producer;
@@ -22,4 +22,5 @@ int buff_full(State *);
 int buff_empty(State *);
 char buff_read(State *);
 int buff_write(State *,char);
+void display_buff(State *);
 #endif
