@@ -32,10 +32,10 @@ int paging_simple_test()
         {
                 pages[i] = MMU_alloc_page();
                 va_to_pa(pages[i],NULL,SET_PA);
+                printk("Alloc %d: page addr = %p, frame addr = %p\n",i+1,pages[i],va_to_pa(pages[i],NULL,GET_PA));
         }
         for(int i = 0;i<COUNT;i++)
         {
-                printk("Alloc %d: page addr = %p, frame addr = %p\n",i+1,pages[i],va_to_pa(pages[i],NULL,GET_PA));
             if(write_bitmap(bitmap,pages[i],PAGE_SIZE) < 0)
             {
                 printk("pf_stress_test: write_bitmap() error\n");
@@ -53,7 +53,13 @@ int paging_simple_test()
                     return -2;
             }
         }
-        printk("demand paging complete!\n");
+        for(int i=0;i<COUNT;i++) MMU_free_page(pages[i]);
+        for(int i = 0;i<COUNT;i++)
+        {
+                pages[i] = MMU_alloc_page();
+                va_to_pa(pages[i],NULL,SET_PA);
+                printk("Alloc %d: page addr = %p, frame addr = %p\n",i+1,pages[i],va_to_pa(pages[i],NULL,GET_PA));
+        }
         // validate the frames and free the pages
 
         

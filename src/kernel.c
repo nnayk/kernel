@@ -29,15 +29,7 @@ Process main_proc;
 
 void kmain()
 {
-        /*
-        void *va = (void *)(0x8000000000);
-        VA_t virt_addr = *((VA_t *)&va);
-        printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
-        va = (void *)(0x7FFFFFFFFFF);
-        virt_addr = *((VA_t *)&va);
-        printk("va=%p, p4 ind = %d\n",va,virt_addr.p4_index);
-        */
-        int loop = 0;
+        int loop = 1;
         while(!loop);
 
         main_proc.pid = 0;
@@ -59,24 +51,20 @@ void kmain()
                 printk("init_pool error");
                 return;
         }
-        //display_pools();
-        //kmalloc_tests();
         PROC_init();
-        //simple_test();
-        //numbers_test();
         sched_admit(ready_procs,&main_proc);
         PROC_run();
         //setup_snakes(1);
-        kbd_tests();
-        //display_threads(all_procs);
-        //display_threads(ready_procs);
-        //pf_simple_test();
-        //pf_nonseq_test();
-        //pf_stress_test();
-        //while(!loop);
-        //int *x=(void *)0x1000000000;
-        //*x=2;
-        //printk("x=%p\n",x);
+        //kbd_tests();
+#if 0   // tests
+        pf_simple_test();
+        pf_nonseq_test();
+        pf_stress_test();
+        kmalloc_tests(); // note: can't be run with pf tests above
+        simple_test();
+        numbers_test();
+#endif
+        paging_tests();
         while(1)
         {
             PROC_run();
