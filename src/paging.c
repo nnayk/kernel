@@ -32,7 +32,7 @@ extern region elf_region;
 
 void *alloc_pte(PTE_t *entry, int access)
 {
-    if(DBUG) printk("entry = %p\n",entry);
+    //if(DBUG) printk("entry = %p\n",entry);
     void *phys_addr;
     if(!entry)
     {
@@ -262,7 +262,7 @@ void *MMU_alloc_page()
     void *addr;
     if(kheap + PAGE_SIZE >= kstack)
     {
-            if(DBUG) printk("MMU_alloc_page: out of kernel memory\n");
+            printk("MMU_alloc_page: out of kernel memory\n");
             bail();
     }
     addr = kheap;
@@ -338,8 +338,8 @@ void MMU_free_pages(void *va_start, int count)
 {
     for(int i=0;i<count;i++)
     {
-            va_start += PAGE_SIZE;
             MMU_free_page(va_start);
+            va_start += PAGE_SIZE;
     }
 }
 
