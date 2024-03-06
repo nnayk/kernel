@@ -8,6 +8,7 @@
 #include "print.h"
 #include "process.h"
 #include "scheduler.h"
+#include "utility.h"
 
 static void indentnum(void *);
 
@@ -20,6 +21,7 @@ void numbers_test()
 {
   long i;
   int numThreads = 10;
+  //printk("number_test: are ints enabled? %d\n",are_interrupts_enabled());
 
   /* spawn a number of individual LWPs */
   for(i=1;i<=numThreads;i++) {
@@ -33,6 +35,7 @@ static void indentnum(void *num) {
    */
   long i;
   int howfar;
+  //printk("are ints enabled? %d\n",are_interrupts_enabled());
   howfar=(long)num;              /* interpret num as an integer */
   for(i=1;i<=howfar;i++){
     printk("%d\n",howfar);

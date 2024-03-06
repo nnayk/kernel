@@ -17,6 +17,7 @@ static void consume_byte(char);
 static int get_hw_buff_status();
 static int is_line_int();
 static uint8_t read_LSR();
+extern State serial_buffer;
 
 void serial_init()
 {
@@ -27,11 +28,11 @@ void serial_init()
    outb(PORT_COM1 + 3, 0x03);    // 8 bits, no parity, one stop bit
    outb(PORT_COM1 + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
    outb(PORT_COM1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
-   outb(PORT_COM1 + 4, 0x1E);    // Set in loopback mode, test the serial chip
+   //outb(PORT_COM1 + 4, 0x1E);    // Set in loopback mode, test the serial chip
    outb(PORT_COM1+1,0x02);       // enable TX interrupts only
    //int loop = 0;
    //while(!loop);
-   outb(PORT_COM1 + 4, 0x0F);
+   //outb(PORT_COM1 + 4, 0x0F);
    irq_clear_mask(COM1_IRQ_NO);
    //asm volatile("int $0x24");
 }
@@ -50,7 +51,7 @@ void serial_consume(int int_num,int error_code,void *arg)
         // empty buffer, turn off TX interrupts and set idle bit
         else if (buff_empty(state))  
         {
-                if(DBUG) VGA_display_str("EMPTY BUFFER!\n");
+                //if(DBUG) VGA_display_str("EMPTY BUFFER!\n");
                 irq_set_mask(COM1_IRQ_NO);
                 state->idle = 1;
         }else
@@ -58,7 +59,7 @@ void serial_consume(int int_num,int error_code,void *arg)
             if(DBUG) VGA_display_str("CALLING CONSUME FROM CONSUME!\n");
             // this is a wrapper around outb that writes to serial output
             consume_byte(buff_read(state)); 
-            state->idle = 0;
+            state->idle = 1;
         }
         irq_end_of_interrupt(COM1_IRQ_NO); 
         return; 
@@ -71,7 +72,7 @@ int serial_write(char toAdd, State *state)
             cli();
 
         // if hw buffer is empty, write the next byte immediately
-        if(state->idle && get_hw_buff_status())
+        if(get_hw_buff_status())
         {
                 if(DBUG) VGA_display_str("hw empty, writing!\n");
                 irq_clear_mask(COM1_IRQ_NO);
@@ -91,12 +92,22 @@ int serial_write(char toAdd, State *state)
             if(DBUG) VGA_display_str("writing to buffer\n");
             buff_write(state,toAdd);
         }
-        if(int_enabled) sti();
+        if(int_enabled) 
+        {
+            if(DBUG) VGA_display_str("enabling ints\n");
+            sti();
+        }
         return SUCCESS; 
 }
 
 static void consume_byte(char c)
 {
+    if(DBUG) 
+    {
+            VGA_display_str("consuming char:");
+            VGA_display_char(c);
+            VGA_display_char('\n');
+    }
     outb(PORT_COM1,c);
 }
 

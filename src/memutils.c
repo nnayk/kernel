@@ -49,7 +49,12 @@ void *memset(void *dst, int c, size_t n)
 }
 void *memcpy(void *dst, const void *src, size_t n)
 {
-        if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
+        if(n>LIMIT)
+        {
+                printk("ooga\n");
+                bail();
+                return (void *)ERR_INPUT_SIZE;
+        }
         for(int i=0;i<n;i++)
         {
                 if(!(dst+i) || !(src+i)) return (void *)ERR_NULL_PTR;
@@ -259,7 +264,7 @@ void *pf_alloc()
         // no free memory
         else
         {
-                if(DBUG) printk("Ran out of physical  memory\n");
+                printk("Ran out of physical  memory. num frames left = %d\n",num_frames_total);
                 bail();
         }
         num_frames_total--;

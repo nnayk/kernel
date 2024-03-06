@@ -14,6 +14,7 @@
 #include "memutils.h"
 #include "paging.h"
 #include "process.h"
+#include "vga.h"
 
 #define IDT_ENTRY_SIZE 16
 #define TRAP_GATE 0xF
@@ -63,7 +64,6 @@ void pic_remap(int offset1, int offset2)
 int irq_init()
 {
         if(DBUG) printk("INSIDE IRQ INIT!\n");
-        printk("page fault handler addr = %p\n",asm_wrappers[14]);
         idtr_t idtr;
         tss_desc_t tss_desc;
         size_t tss_size = sizeof(tss);
@@ -75,7 +75,10 @@ int irq_init()
         pic_remap(PIC_OFF_1,PIC_OFF_2);
         // setup the irq helper
         if(!(err=irq_helper_init()))
-                return err;
+        {
+            sti();    
+            return err;
+        }
         // init each idt entry
         for(int i=0;i<NUM_INTS;i++)
         {
@@ -100,7 +103,11 @@ int irq_init()
 
         if(DBUG) printk("size of idt: %ld,size of tss_desc: %ld,size of tss:%ld\n", idt_size,tss_desc_size,tss_size);
         // write to the idt memory location
-        if(!memcpy(idt,idt_arr,idt_size)) return ERR_MEMCPY; 
+        if(!memcpy(idt,idt_arr,idt_size)) 
+        {
+            printk("irq_init: memcpy error 1\n");
+            bail(); 
+        }
         
         idtr.limit = idt_size - 1;
         idtr.base_addr = idt;
@@ -127,7 +134,11 @@ int irq_init()
         tss_desc.base_mid_2 = (tss_addr >> 24) & 0xFF;
         tss_desc.base_high = (tss_addr >> 32) & 0xFFFFFFFF;
         tss_desc.reserved_2 = 0; 
-        if(!memcpy(gdt64+16,&tss_desc,16)) return ERR_MEMCPY; 
+        if(!memcpy(gdt64+16,&tss_desc,16)) 
+        {
+                printk("irq_init: memcpy err\n");
+                bail();
+        }
         idtr.limit = idt_size - 1;
         // tss setup
         tss.rsp0 = (uint64_t)&ists[IST_STACK_SIZE]; // TODO: update this value
@@ -252,16 +263,15 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_INTS)))
     {
-        printk("Error: Invalid interrupt number %d",int_num);
+        VGA_display_str("Error: Invalid interrupt number\n");
         hlt();
     }
     /* check that it's a handled interrupt */
     irq_helper_t entry = irq_helper[int_num];
     if(!entry.handler)
     {
-        printk("Error: Unhandled interrupt %d. Error code = %d\n",
-                        int_num,err_code);
-        hlt();
+        VGA_display_str("Error: Unhandled interrupt\n");
+        if(int_num != ATA1_INT_NO) hlt(); // ATA1 will be unhandled during init stage
     }
     /* call the ISR */
     else (*entry.handler)(int_num,err_code,entry.arg);

@@ -51,7 +51,11 @@ extern State serial_buffer;
 __attribute__ ((format (printf, 1, 2)))
 int printk(const char *fmt,...)
 {
-        if(!fmt) return ERR_NULL_PTR;
+        if(!fmt) 
+        {
+            printk("fmt = %s\n",fmt);
+            return ERR_NULL_PTR;
+        }
         va_list va;
         va_start(va, fmt);
         Args args;

@@ -13,6 +13,7 @@
 #include "scheduler.h"
 #include "mt_tests.h"
 #include "snakes.h"
+#include "blockdev.h"
 
 static int err;
 State serial_buffer;
@@ -29,9 +30,8 @@ Process main_proc;
 
 void kmain()
 {
-        int loop = 1;
+        int loop = 0;
         while(!loop);
-
         main_proc.pid = 0;
         
         ram[0].start = INVALID_START_ADDR;
@@ -54,6 +54,9 @@ void kmain()
         PROC_init();
         sched_admit(ready_procs,&main_proc);
         PROC_run();
+        //while(!loop);
+        setup_ata();
+        //kmalloc_tests();
         //setup_snakes(1);
         //kbd_tests();
 #if 0   // tests
@@ -63,8 +66,8 @@ void kmain()
         kmalloc_tests(); // note: can't be run with pf tests above
         simple_test();
         numbers_test();
-#endif
         paging_tests();
+#endif
         while(1)
         {
             PROC_run();

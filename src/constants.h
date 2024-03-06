@@ -28,6 +28,8 @@
 #define GPF_INT_NO 0x0D
 #define YIELD_INT_NO 0x48
 #define KEXIT_INT_NO 0x49
+#define ATA1_INT_NO 46 // for primary bus
+#define ATA2_INT_NO 47 // for secondary bus
 #define PIC_OFF_1 0x20
 #define PIC_OFF_2 0x28
 #define VA_IDENTITY_MAP_MAX (void *)0x8000000000 // max virtual address for identity map

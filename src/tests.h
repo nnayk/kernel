@@ -11,3 +11,4 @@ void pf_nonseq_test();
 int pf_stress_test();
 int kmalloc_tests();
 int kbd_tests();
+void paging_tests();
