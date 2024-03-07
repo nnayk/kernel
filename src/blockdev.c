@@ -119,7 +119,7 @@ static void ata_init(void *arg)
     ata_lst.size = 0;
     ata_lst.capacity = NUM_ATA_BUSES_PER_CTLR * NUM_CTLRS;
     // probe each bus on the first ATA controller and register ATA devs as appropriate
-    for(int i=0;i<NUM_ATA_BUSES_PER_CTLR*NUM_CTLRS-3;i++)
+    for(int i=0;i<NUM_ATA_BUSES_PER_CTLR*NUM_CTLRS;i++)
     {
         if((ata_dev = ATABD_probe(bus_io_bases[i],0))) 
         {
