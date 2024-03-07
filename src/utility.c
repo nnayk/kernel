@@ -52,7 +52,7 @@ uint8_t inb(uint16_t port)
         return ret;
 }
 
-uint8_t inw(uint16_t port)
+uint16_t inw(uint16_t port)
 {
         uint16_t ret;
         asm volatile ( "inw %1, %0"

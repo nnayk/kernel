@@ -9,7 +9,7 @@
 #define BLK_SIZE 512
 #define NUM_ATA_BUSES_PER_CTLR 2
 #define NUM_CTLRS 2
-#define DATA_BYTE_CT 256
+#define DATA_WD_CT 256
 
 #define ATA1B1_IO 0x1F0
 #define ATA1B2_IO 0x170
