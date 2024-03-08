@@ -19,7 +19,7 @@ static void read_block_32(void *arg)
     printk("entered read_block_32\n");
     ATABD *dev = ata_lst.devs[0];
     uint16_t *buffer = kmalloc(sizeof(uint16_t)*256);
-    ATABD_read_block((BD *)dev,16384,buffer);
+    ATABD_read_block((BD *)dev,0,buffer);
     for(int i=0;i<256;i++)
     {
         printk("word %d = %hx\n",i,buffer[i]);        
@@ -28,8 +28,7 @@ static void read_block_32(void *arg)
 
 static void simple_test()
 {
- Process *proc = PROC_create_kthread((kproc_t)read_block_32,0);
- sched_admit(ready_procs,proc);
+    PROC_create_kthread((kproc_t)read_block_32,0);
 }
 int ata_tests()
 {

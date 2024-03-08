@@ -93,7 +93,7 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     uint16_t data;
     for (int i = 0; i < DATA_WD_CT; i++) {
         data = inw(io_base+DATA);
-        printk("iteration %d: read %hx\n",i,data);
+        //printk("iteration %d: read %hx\n",i,data);
         buffer[i] = data;
     }
     // verify that LBA48 is supported
@@ -110,7 +110,6 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     if(DBUG) printk("%lu sectors total\n",blk_ct);
     dev = (ATABD *)kmalloc(sizeof(ATABD));
     ATABD_init(dev);
-    BD_init(&dev->parent);
     dev->parent.blk_ct = blk_ct;
     kfree(buffer);
     irq_helper[ATA1_INT_NO].handler = ATABD_read_isr;
@@ -154,8 +153,7 @@ void ATABD_register(ATABD *dev)
 
 void setup_ata()
 {
-    Process *proc = PROC_create_kthread((kproc_t)ata_init,NULL);
-    sched_admit(ready_procs,proc);
+    PROC_create_kthread((kproc_t)ata_init,NULL);
 }
 
 
@@ -172,7 +170,7 @@ ATABD *ATABD_init(ATABD *self)
 {
         BD_init(&self->parent);
         self->name = NULL;
-        self->parent.read_block = &ATABD_read_block;
+        self->parent.read_block = ATABD_read_block;
         return self;
 }
 
@@ -195,23 +193,30 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
                 PROC_block_on(ata_blocked,1);
         }
         sti();
+        poll_status();
         outb(0x1F6, 0x40);
+        poll_status();
     outb(0x1F2,0);
-    outb(0x1F3, (lba48 >> 24));
-    outb(0x1F4, (lba48 >> 32));
-    outb(0x1F5, (lba48 >> 40));
+        poll_status();
+    outb(0x1F3, (lba48 >> 24) & 0xFF);
+    outb(0x1F4, (lba48 >> 32) & 0xFF);
+    outb(0x1F5, (lba48 >> 40) & 0xFF);
+        poll_status();
     outb(0x1F2,1);
-    outb(0x1F3, lba48);
-    outb(0x1F4, (lba48 >> 8));
-    outb(0x1F5, (lba48 >> 16));
+    outb(0x1F3, lba48 & 0xFF);
+    outb(0x1F4, (lba48 >> 8) & 0xFF);
+    outb(0x1F5, (lba48 >> 16) & 0xFF);
     outb(0x1F7, 0x24);
+        printk("status = %hx\n",inb(0x1F7));
         // block until isr unblocks current thread
-        PROC_block_on(ata_blocked,1);
+        //PROC_block_on(ata_blocked,1);
+        poll_status();
+        printk("status = %hx\n",inb(0x1F7));
         cli(); // TODO: think I can delete this (and the subsequent sti)
         // now read the data
         for(int i=0;i<DATA_WD_CT;i++)
         {
-            ((uint64_t *)dst)[i] = inw(0x1F0);        
+            ((uint16_t *)dst)[i] = inw(0x1F0);        
         }
         // unblock the next thread
         PROC_unblock_head(ata_blocked);
@@ -230,3 +235,12 @@ void ATABD_read_isr(int int_num,int err,void *arg)
     PROC_unblock_head(ata_blocked);
 }
 
+void poll_status()
+{
+        uint8_t status = inb(0x1F7);
+        while(status & (1<<7)) 
+        {
+            printk("polling status\n");
+            status = inb(0x1F7);
+        }
+}

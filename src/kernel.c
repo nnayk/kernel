@@ -74,6 +74,7 @@ void kmain()
         {
             PROC_run();
             //if(ready_procs->proc_count == 1) display_threads(all_procs);
+            printk("%d, %hx\n",are_interrupts_enabled(),inb(0x1F7));
             hlt();
         }
 }

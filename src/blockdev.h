@@ -87,3 +87,5 @@ int ATABD_read_block(BD *, uint64_t, void *);
 void ATABD_read_isr(int,int,void *);
 void setup_ata();
 void ATABD_register(ATABD *);
+void poll_status();
+
