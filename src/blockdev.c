@@ -15,14 +15,16 @@
 #include "irq.h"
 #include "error.h"
 
-#define DBUG 1
+#define DBUG 0
 extern ProcQueue *ready_procs;
 extern ProcQueue *ata_blocked;
+extern Process *curr_proc;
 const uint16_t bus_io_bases[] = {ATA1B1_IO,ATA1B2_IO,ATA2B1_IO,ATA2B2_IO};
 const uint16_t bus_ctl_bases[] = {ATA1B1_CTL,ATA1B2_CTL,ATA2B1_CTL,ATA2B2_CTL};
 const uint8_t ata_int_nums[] = {ATA1_INT_NO,ATA1_INT_NO,ATA2_INT_NO,ATA2_INT_NO};
 const int data_buff_size = DATA_WD_CT * sizeof(uint16_t); // amount of data to read from ATA data port
 ATABD_dev_lst ata_lst;
+ATABD_req_lst read_reqs;
 extern irq_helper_t irq_helper[];
 
 static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
@@ -54,22 +56,22 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     /* differentiate ATA, ATAPI, SATA and SATAPI */
 	if (cl==0x14 && ch==0xEB) 
     {
-            printk("ATADEV_PATAPI\n");
+            if(DBUG) printk("ATADEV_PATAPI\n");
             //return ATADEV_PATAPI;
     }
 	if (cl==0x69 && ch==0x96) 
     {
-            printk("ATADEV_SATAPI\n");
+            if(DBUG) printk("ATADEV_SATAPI\n");
             //return ATADEV_SATAPI;
     }
 	if (cl==0 && ch == 0) 
     {
-            printk("ATADEV_PATA\n");
+            if(DBUG) printk("ATADEV_PATA\n");
             //return ATADEV_PATA;
     }
 	if (cl==0x3c && ch==0xc3) 
     {
-            printk("ATADEV_SATA\n");
+            if(DBUG) printk("ATADEV_SATA\n");
             //return ATADEV_SATA;
     }
 
@@ -80,10 +82,10 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     status = inb(io_base + STATUS);
     status = inb(io_base + STATUS);
     status = inb(io_base + STATUS);
-    if(DBUG && (status & STATUS_DRQ)) printk("data ready to read\n");
+    if(DBUG && (status & STATUS_DRQ)) if(DBUG) printk("data ready to read\n");
     
     if (status & STATUS_ERR) {
-        printk("ATABD_probe: ERR bit set! status = %hx\n",status);
+        if(DBUG) printk("ATABD_probe: ERR bit set! status = %hx\n",status);
         return NULL;
     }
 
@@ -93,13 +95,13 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     uint16_t data;
     for (int i = 0; i < DATA_WD_CT; i++) {
         data = inw(io_base+DATA);
-        //printk("iteration %d: read %hx\n",i,data);
+        //if(DBUG) printk("iteration %d: read %hx\n",i,data);
         buffer[i] = data;
     }
     // verify that LBA48 is supported
     if(!(buffer[83] & (1<<10)))
     {
-            printk("ATABD_probe: LBA48 not supported!\n");
+            if(DBUG) printk("ATABD_probe: LBA48 not supported!\n");
             //bail();
     }
     // read and store the number of sectors on the disk
@@ -107,7 +109,7 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     blk_ct |= (((uint64_t)buffer[101]) << 16);
     blk_ct |= (((uint64_t)buffer[102]) << 32);
     blk_ct |= (((uint64_t)buffer[103]) << 48);
-    if(DBUG) printk("%lu sectors total\n",blk_ct);
+    if(DBUG) if(DBUG) printk("%lu sectors total\n",blk_ct);
     dev = (ATABD *)kmalloc(sizeof(ATABD));
     ATABD_init(dev);
     dev->parent.blk_ct = blk_ct;
@@ -127,10 +129,10 @@ static void ata_init(void *arg)
     {
         if((ata_dev = ATABD_probe(bus_io_bases[i],0,ata_int_nums[i]))) 
         {
-                printk("ata_init: found dev on bus %d\n",i+1);
+                if(DBUG) printk("ata_init: found dev on bus %d\n",i+1);
                 ATABD_register(ata_dev);
         }
-        else printk("ata_init: didn't find a dev on bus %d\n",i+1);
+        else if(DBUG) printk("ata_init: didn't find a dev on bus %d\n",i+1);
     }
 }
 
@@ -138,13 +140,13 @@ void ATABD_register(ATABD *dev)
 {
         if(!dev)
         {
-                printk("ATABD_register: null arg!\n");
+                if(DBUG) printk("ATABD_register: null arg!\n");
                 bail();
         }
 
         if(ata_lst.size == ata_lst.capacity)
         {
-                printk("ATABD_register: reached list capacity of %d!\n",ata_lst.capacity);
+                if(DBUG) printk("ATABD_register: reached list capacity of %d!\n",ata_lst.capacity);
                 bail();
         }
 
@@ -177,63 +179,88 @@ ATABD *ATABD_init(ATABD *self)
 int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
 {
         cli();
+        if(DBUG) printk("ata read block dst %p\n",dst);
         // TODO: validate lba48
         /*
         if(!((0<=blk_num) && (blk_num < dev->blk_ct)))
         {
-            printk("ATABD_read: invalid block number %ld (max. blk_num = %ld)\n",blk_num,dev->blk_ct);
+            if(DBUG) printk("ATABD_read: invalid block number %ld (max. blk_num = %ld)\n",blk_num,dev->blk_ct);
             return -1;
         }
         */
-        
-        //block if another thread is already waiting
-        cli();
-        if(ata_blocked->head)
+        ATABD_req_t *new_req = kmalloc(sizeof(ATABD_req_t));
+        new_req->lba48 = lba48;
+        new_req->sec_ct = 1;
+        new_req->buffer = dst;
+        //issue a request if the request queue is empty
+        if(!read_reqs.head)
         {
-                PROC_block_on(ata_blocked,1);
+            read_reqs.head = new_req;
+            read_reqs.tail = new_req;
+            issue_read_req(new_req);
         }
-        //sti();
-        poll_status();
+        else
+        {
+            read_reqs.tail->next = new_req;
+            read_reqs.tail = new_req;
+        }
+        if(DBUG) printk("blocking on lba48=%ld\n",lba48);
+        // block until interrupt (either for current thread or for existing read request)
+        PROC_block_on(ata_blocked,1);
+        if(DBUG) printk("exiting READ_BLOCK for lba48 = %ld!\n",lba48);
+        kfree(new_req);
+        sti();
+        return SUCCESS; // change    
+}
+
+void issue_read_req(ATABD_req_t *req)
+{
+        uint64_t lba48 = req->lba48;
+        //poll_status();
         outb(0x1F6, 0x40);
-        poll_status();
+        //poll_status();
     outb(0x1F2,0);
-        poll_status();
+        //poll_status();
     outb(0x1F3, (lba48 >> 24) & 0xFF);
     outb(0x1F4, (lba48 >> 32) & 0xFF);
     outb(0x1F5, (lba48 >> 40) & 0xFF);
-        poll_status();
+        //poll_status();
     outb(0x1F2,1);
     outb(0x1F3, lba48 & 0xFF);
     outb(0x1F4, (lba48 >> 8) & 0xFF);
     outb(0x1F5, (lba48 >> 16) & 0xFF);
     outb(0x1F7, 0x24);
-        //printk("status = %hx\n",inb(0x1F7));
-        // block until isr unblocks current thread
-        PROC_block_on(ata_blocked,1);
-        //poll_status();
-        //printk("status = %hx\n",inb(0x1F7));
-        //cli(); // TODO: think I can delete this (and the subsequent sti)
-        // now read the data
-        for(int i=0;i<DATA_WD_CT;i++)
-        {
-            ((uint16_t *)dst)[i] = inw(0x1F0);        
-        }
-        // unblock the next thread
-        PROC_unblock_head(ata_blocked);
-        sti();
-        return SUCCESS; // change    
+    inb(0x1f7);
+    if(DBUG) printk("status after issue = %d\n",inb(0x1f7));
+    if(DBUG) printk("issued read req for lba48 = %ld\n",lba48);
 }
 
 void ATABD_read_isr(int int_num,int err,void *arg)
 {
-    if(!ata_blocked->head)
+    if(DBUG) printk("entered isr\n");
+    if(!ata_blocked->head || !read_reqs.head)
     {
-        printk("ATABD_read_isr: no processes waiting to read!\n");
+        if(DBUG) printk("ATABD_read_isr: no processes waiting to read!\n");
         irq_end_of_interrupt(14);
         return;
     }
+    // get and pop the first read request
+    ATABD_req_t *curr_req = read_reqs.head;
+    read_reqs.head = read_reqs.head->next;
+    if(!read_reqs.head) read_reqs.tail = read_reqs.head;
+    uint16_t *dst = curr_req->buffer; 
+    if(DBUG) printk("dst buffer = %p\n",dst);
+        for(int i=0;i<DATA_WD_CT;i++)
+        {
+            dst[i] = inw(0x1F0);        
+            if(i>=253) if(DBUG) printk("dst[%d] = %hx\n",i,dst[i]);
+        }
 
+    // unblock the first thread waiting for data
     PROC_unblock_head(ata_blocked);
+    // issue next read request if possible
+    if(read_reqs.head) issue_read_req(read_reqs.head);
+    if(DBUG) printk("exiting ATA isr\n");
     irq_end_of_interrupt(14);
 }
 
@@ -242,7 +269,7 @@ void poll_status()
         uint8_t status = inb(0x1F7);
         while(status & (1<<7)) 
         {
-            printk("polling status\n");
+            if(DBUG) printk("polling status\n");
             status = inb(0x1F7);
         }
 }

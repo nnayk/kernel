@@ -32,7 +32,7 @@ Process main_proc;
 void kmain()
 {
         int loop = 0;
-        while(!loop);
+        while(loop);
         main_proc.pid = 0;
         
         ram[0].start = INVALID_START_ADDR;

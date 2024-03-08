@@ -64,14 +64,14 @@ typedef struct
     int capacity;
     ATABD *devs[NUM_CTLRS * NUM_ATA_BUSES_PER_CTLR];
 }ATABD_dev_lst;
-#if 0
+#if 1
 struct ATABD_req_t
 {
     uint16_t sec_ct; // number of sectors to read
     uint64_t lba48;
     uint16_t *buffer;
     struct ATABD_req_t *next;
-}
+};
 
 typedef struct ATABD_req_t ATABD_req_t;
 
@@ -88,4 +88,5 @@ void ATABD_read_isr(int,int,void *);
 void setup_ata();
 void ATABD_register(ATABD *);
 void poll_status();
+void issue_read_req(ATABD_req_t *);
 

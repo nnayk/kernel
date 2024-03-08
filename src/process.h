@@ -38,7 +38,8 @@ struct Process{
   
   // proc metadata
   uint64_t pid;
-  void *stack_start; // not sure if this is needed
+  void *stack_start;
+  void *data; // generic optional pointer
   struct Process *allNext;
   struct Process *next; // either next proc in blocked queue or ready queue
 };
