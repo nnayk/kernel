@@ -40,7 +40,7 @@
 enum BDType { MASS_STORAGE, PARTITION };
 
 struct BD {
-   uint64_t sec_ct;
+   uint64_t blk_ct;
    int (*read_block)(struct BD *, uint64_t, void *);
    uint32_t blk_size;
    enum BDType type;
@@ -63,10 +63,27 @@ typedef struct
     int size;
     int capacity;
     ATABD *devs[NUM_CTLRS * NUM_ATA_BUSES_PER_CTLR];
-}ATABD_lst;
+}ATABD_dev_lst;
+#if 0
+struct ATABD_req_t
+{
+    uint16_t sec_ct; // number of sectors to read
+    uint64_t lba48;
+    uint16_t *buffer;
+    struct ATABD_req_t *next;
+}
 
+typedef struct ATABD_req_t ATABD_req_t;
+
+typedef struct
+{
+    ATABD_req_t *head;        
+    ATABD_req_t *tail;        
+}ATABD_req_lst;
+#endif
 BD *BD_init(BD *);
 ATABD *ATABD_init(ATABD *);
-int ATABD_read(BD *, uint64_t, void *);
+int ATABD_read_block(BD *, uint64_t, void *);
+void ATABD_read_isr(int,int,void *);
 void setup_ata();
 void ATABD_register(ATABD *);

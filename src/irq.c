@@ -271,7 +271,7 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     if(!entry.handler)
     {
         VGA_display_str("Error: Unhandled interrupt\n");
-        hlt(); // ATA1 will be unhandled during init stage
+        //hlt(); // ATA1 will be unhandled during init stage
     }
     /* call the ISR */
     else (*entry.handler)(int_num,err_code,entry.arg);

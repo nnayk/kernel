@@ -24,6 +24,7 @@ void *free_head;
 ProcQueue *all_procs;
 ProcQueue *ready_procs;
 ProcQueue *kbd_blocked;
+ProcQueue *ata_blocked;
 Process *curr_proc;
 Process *next_proc;
 Process main_proc;
@@ -31,7 +32,7 @@ Process main_proc;
 void kmain()
 {
         int loop = 0;
-        while(loop);
+        while(!loop);
         main_proc.pid = 0;
         
         ram[0].start = INVALID_START_ADDR;
@@ -68,6 +69,7 @@ void kmain()
         numbers_test();
         paging_tests();
 #endif
+        ata_tests();
         while(1)
         {
             PROC_run();

@@ -20,6 +20,7 @@
 extern ProcQueue *all_procs;
 extern ProcQueue *ready_procs;
 extern ProcQueue *kbd_blocked;
+extern ProcQueue *ata_blocked;
 extern Process *curr_proc;
 extern Process *next_proc;
 extern Process main_proc;
@@ -45,6 +46,7 @@ void PROC_init()
     all_procs = sched_init_queue();            
     ready_procs = sched_init_queue();
     kbd_blocked = sched_init_queue();
+    ata_blocked = sched_init_queue();
     curr_proc = NULL;
     next_proc = NULL;
 }

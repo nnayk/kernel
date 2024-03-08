@@ -13,27 +13,31 @@
 #include "memutils.h"
 #include "constants.h"
 #include "irq.h"
+#include "error.h"
 
 #define DBUG 1
 extern ProcQueue *ready_procs;
+extern ProcQueue *ata_blocked;
 const uint16_t bus_io_bases[] = {ATA1B1_IO,ATA1B2_IO,ATA2B1_IO,ATA2B2_IO};
 const uint16_t bus_ctl_bases[] = {ATA1B1_CTL,ATA1B2_CTL,ATA2B1_CTL,ATA2B2_CTL};
+const uint8_t ata_int_nums[] = {ATA1_INT_NO,ATA1_INT_NO,ATA2_INT_NO,ATA2_INT_NO};
 const int data_buff_size = DATA_WD_CT * sizeof(uint16_t); // amount of data to read from ATA data port
-ATABD_lst ata_lst;
+ATABD_dev_lst ata_lst;
+extern irq_helper_t irq_helper[];
 
-static ATABD *ATABD_probe(uint16_t io_base,int use_slave)
+static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
 {
     #define BSY_BIT (1<<7)
     #define STATUS_DRQ (1<<3)
     #define STATUS_ERR 1
-    irq_set_mask(14);
-    uint64_t sec_ct=0;
+    //irq_set_mask(14);
+    uint64_t blk_ct=0;
     uint8_t status=0;
     ATABD *dev=NULL;
     // specify master channel usage
     outb(io_base+DRIVE,0xA0);
     // set sector count to 0
-    outb(io_base+SEC_CT, 0);
+    outb(io_base+blk_ct, 0);
     // set LBA ports to 0
     outb(io_base+LBA_LOW, 0);
     outb(io_base+LBA_MID, 0);
@@ -80,7 +84,7 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave)
     
     if (status & STATUS_ERR) {
         printk("ATABD_probe: ERR bit set! status = %hx\n",status);
-        bail();
+        return NULL;
     }
 
 
@@ -99,29 +103,30 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave)
             //bail();
     }
     // read and store the number of sectors on the disk
-    sec_ct |= (((uint64_t)buffer[100]));
-    sec_ct |= (((uint64_t)buffer[101]) << 16);
-    sec_ct |= (((uint64_t)buffer[102]) << 32);
-    sec_ct |= (((uint64_t)buffer[103]) << 48);
-    if(DBUG) printk("%lu sectors total\n",sec_ct);
+    blk_ct |= (((uint64_t)buffer[100]));
+    blk_ct |= (((uint64_t)buffer[101]) << 16);
+    blk_ct |= (((uint64_t)buffer[102]) << 32);
+    blk_ct |= (((uint64_t)buffer[103]) << 48);
+    if(DBUG) printk("%lu sectors total\n",blk_ct);
     dev = (ATABD *)kmalloc(sizeof(ATABD));
     ATABD_init(dev);
     BD_init(&dev->parent);
-    dev->parent.sec_ct = sec_ct;
+    dev->parent.blk_ct = blk_ct;
     kfree(buffer);
-    irq_clear_mask(14);
+    irq_helper[ATA1_INT_NO].handler = ATABD_read_isr;
+    //irq_clear_mask(14);
     return dev;
 }
 
 static void ata_init(void *arg)
 {
-    ATABD *ata_dev = NULL;   
+    ATABD *ata_dev = NULL;
     ata_lst.size = 0;
     ata_lst.capacity = NUM_ATA_BUSES_PER_CTLR * NUM_CTLRS;
     // probe each bus on the first ATA controller and register ATA devs as appropriate
     for(int i=0;i<NUM_ATA_BUSES_PER_CTLR*NUM_CTLRS;i++)
     {
-        if((ata_dev = ATABD_probe(bus_io_bases[i],0))) 
+        if((ata_dev = ATABD_probe(bus_io_bases[i],0,ata_int_nums[i]))) 
         {
                 printk("ata_init: found dev on bus %d\n",i+1);
                 ATABD_register(ata_dev);
@@ -157,7 +162,7 @@ void setup_ata()
 BD *BD_init(BD *self)
 {
         self->blk_size = BLK_SIZE;
-        self->sec_ct = 0;
+        self->blk_ct = 0;
         self->read_block = NULL;
         self->next = NULL;
         return self;
@@ -167,11 +172,61 @@ ATABD *ATABD_init(ATABD *self)
 {
         BD_init(&self->parent);
         self->name = NULL;
-        self->parent.read_block = &ATABD_read;
+        self->parent.read_block = &ATABD_read_block;
         return self;
 }
 
-int ATABD_read(BD *dev, uint64_t blk_num, void *dst)
+int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
 {
-     return 1; // change    
+        cli();
+        // TODO: validate lba48
+        /*
+        if(!((0<=blk_num) && (blk_num < dev->blk_ct)))
+        {
+            printk("ATABD_read: invalid block number %ld (max. blk_num = %ld)\n",blk_num,dev->blk_ct);
+            return -1;
+        }
+        */
+        
+        //block if another thread is already waiting
+        cli();
+        if(ata_blocked->head)
+        {
+                PROC_block_on(ata_blocked,1);
+        }
+        sti();
+        outb(0x1F6, 0x40);
+    outb(0x1F2,0);
+    outb(0x1F3, (lba48 >> 24));
+    outb(0x1F4, (lba48 >> 32));
+    outb(0x1F5, (lba48 >> 40));
+    outb(0x1F2,1);
+    outb(0x1F3, lba48);
+    outb(0x1F4, (lba48 >> 8));
+    outb(0x1F5, (lba48 >> 16));
+    outb(0x1F7, 0x24);
+        // block until isr unblocks current thread
+        PROC_block_on(ata_blocked,1);
+        cli(); // TODO: think I can delete this (and the subsequent sti)
+        // now read the data
+        for(int i=0;i<DATA_WD_CT;i++)
+        {
+            ((uint64_t *)dst)[i] = inw(0x1F0);        
+        }
+        // unblock the next thread
+        PROC_unblock_head(ata_blocked);
+        sti();
+        return SUCCESS; // change    
 }
+
+void ATABD_read_isr(int int_num,int err,void *arg)
+{
+    if(!ata_blocked->head)
+    {
+        printk("ATABD_read_isr: no processes waiting to read!\n");
+        bail();
+    }
+
+    PROC_unblock_head(ata_blocked);
+}
+

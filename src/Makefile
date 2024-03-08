@@ -6,7 +6,7 @@ loop0 := /dev/loop37
 loop1 := /dev/loop38
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
-tests = kmalloc_tests.o page_frame_tests.o mt_tests.o kbd_tests.o paging_tests.o
+tests = kmalloc_tests.o page_frame_tests.o mt_tests.o kbd_tests.o paging_tests.o ata_tests.o
 objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o process.o scheduler.o snakes.o blockdev.o $(tests)
 
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
