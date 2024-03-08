@@ -231,6 +231,9 @@ void issue_read_req(ATABD_req_t *req)
     outb(0x1F5, (lba48 >> 16) & 0xFF);
     outb(0x1F7, 0x24);
     inb(0x1f7);
+    inb(0x1f7);
+    inb(0x1f7);
+    inb(0x1f7);
     if(DBUG) printk("status after issue = %d\n",inb(0x1f7));
     if(DBUG) printk("issued read req for lba48 = %ld\n",lba48);
 }
