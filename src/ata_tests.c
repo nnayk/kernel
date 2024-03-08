@@ -19,7 +19,7 @@ static void read_block_32(void *arg)
     printk("entered read_block_32\n");
     ATABD *dev = ata_lst.devs[0];
     uint16_t *buffer = kmalloc(sizeof(uint16_t)*256);
-    ATABD_read_block((BD *)dev,0,buffer);
+    ATABD_read_block((BD *)dev,32,buffer);
     for(int i=0;i<256;i++)
     {
         printk("word %d = %hx\n",i,buffer[i]);        
