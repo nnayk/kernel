@@ -192,7 +192,7 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
         {
                 PROC_block_on(ata_blocked,1);
         }
-        sti();
+        //sti();
         poll_status();
         outb(0x1F6, 0x40);
         poll_status();
@@ -207,12 +207,12 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
     outb(0x1F4, (lba48 >> 8) & 0xFF);
     outb(0x1F5, (lba48 >> 16) & 0xFF);
     outb(0x1F7, 0x24);
-        printk("status = %hx\n",inb(0x1F7));
+        //printk("status = %hx\n",inb(0x1F7));
         // block until isr unblocks current thread
-        //PROC_block_on(ata_blocked,1);
-        poll_status();
-        printk("status = %hx\n",inb(0x1F7));
-        cli(); // TODO: think I can delete this (and the subsequent sti)
+        PROC_block_on(ata_blocked,1);
+        //poll_status();
+        //printk("status = %hx\n",inb(0x1F7));
+        //cli(); // TODO: think I can delete this (and the subsequent sti)
         // now read the data
         for(int i=0;i<DATA_WD_CT;i++)
         {
@@ -229,10 +229,12 @@ void ATABD_read_isr(int int_num,int err,void *arg)
     if(!ata_blocked->head)
     {
         printk("ATABD_read_isr: no processes waiting to read!\n");
-        bail();
+        irq_end_of_interrupt(14);
+        return;
     }
 
     PROC_unblock_head(ata_blocked);
+    irq_end_of_interrupt(14);
 }
 
 void poll_status()
