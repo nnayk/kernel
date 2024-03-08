@@ -14,6 +14,7 @@
 #include "mt_tests.h"
 #include "snakes.h"
 #include "blockdev.h"
+#include "fat.h"
 
 static int err;
 State serial_buffer;
@@ -68,8 +69,10 @@ void kmain()
         simple_test();
         numbers_test();
         paging_tests();
-#endif
         ata_tests();
+#endif
+        //ata_tests();
+        PROC_create_kthread((kproc_t)parse_mbr,NULL);
         while(1)
         {
             PROC_run();

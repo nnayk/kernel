@@ -216,24 +216,21 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
 void issue_read_req(ATABD_req_t *req)
 {
         uint64_t lba48 = req->lba48;
-        //poll_status();
+        poll_status();
         outb(0x1F6, 0x40);
-        //poll_status();
+        poll_status();
     outb(0x1F2,0);
-        //poll_status();
+        poll_status();
     outb(0x1F3, (lba48 >> 24) & 0xFF);
     outb(0x1F4, (lba48 >> 32) & 0xFF);
     outb(0x1F5, (lba48 >> 40) & 0xFF);
-        //poll_status();
+        poll_status();
     outb(0x1F2,1);
     outb(0x1F3, lba48 & 0xFF);
     outb(0x1F4, (lba48 >> 8) & 0xFF);
     outb(0x1F5, (lba48 >> 16) & 0xFF);
     outb(0x1F7, 0x24);
-    inb(0x1f7);
-    inb(0x1f7);
-    inb(0x1f7);
-    inb(0x1f7);
+    poll_status();
     if(DBUG) printk("status after issue = %d\n",inb(0x1f7));
     if(DBUG) printk("issued read req for lba48 = %ld\n",lba48);
 }
@@ -269,10 +266,9 @@ void ATABD_read_isr(int int_num,int err,void *arg)
 
 void poll_status()
 {
-        uint8_t status = inb(0x1F7);
-        while(status & (1<<7)) 
+        for(int i=0;i<4;i++)
         {
             if(DBUG) printk("polling status\n");
-            status = inb(0x1F7);
+            inb(0x1F7);
         }
 }
