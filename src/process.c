@@ -137,6 +137,7 @@ int PROC_unblock_head(ProcQueue *q)
     Process *head = q->head;
     sched_remove(q,q->head);
     sched_admit(ready_procs,head);
+    reschedule();
     return SUCCESS;
 }
 int PROC_unblock_all(ProcQueue *q)
