@@ -59,8 +59,8 @@ void kmain()
         //while(!loop);
         setup_ata();
         //kmalloc_tests();
-        setup_snakes(1);
-        kbd_tests();
+        //setup_snakes(1);
+        //kbd_tests();
 #if 0   // tests
         pf_simple_test();
         pf_nonseq_test();
@@ -72,7 +72,7 @@ void kmain()
         ata_tests();
 #endif
         //ata_tests();
-        //PROC_create_kthread((kproc_t)fat_init,NULL);
+        PROC_create_kthread((kproc_t)fat_init,NULL);
         while(1)
         {
             PROC_run();

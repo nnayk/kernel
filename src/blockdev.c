@@ -216,11 +216,10 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
 void issue_read_req(ATABD_req_t *req)
 {
         uint64_t lba48 = req->lba48;
-        poll_status();
+        //poll_status();
         outb(0x1F6, 0x40);
         poll_status();
     outb(0x1F2,0);
-        poll_status();
     outb(0x1F3, (lba48 >> 24) & 0xFF);
     outb(0x1F4, (lba48 >> 32) & 0xFF);
     outb(0x1F5, (lba48 >> 40) & 0xFF);
@@ -229,6 +228,7 @@ void issue_read_req(ATABD_req_t *req)
     outb(0x1F3, lba48 & 0xFF);
     outb(0x1F4, (lba48 >> 8) & 0xFF);
     outb(0x1F5, (lba48 >> 16) & 0xFF);
+        poll_status();
     outb(0x1F7, 0x24);
     poll_status();
     if(DBUG) printk("status after issue = %d\n",inb(0x1f7));
@@ -237,6 +237,7 @@ void issue_read_req(ATABD_req_t *req)
 
 void ATABD_read_isr(int int_num,int err,void *arg)
 {
+    //inb(0x1F7);
     if(DBUG) printk("entered isr\n");
     if(!ata_blocked->head || !read_reqs.head)
     {
@@ -252,21 +253,25 @@ void ATABD_read_isr(int int_num,int err,void *arg)
     if(DBUG) printk("dst buffer = %p\n",dst);
         for(int i=0;i<DATA_WD_CT;i++)
         {
-            dst[i] = inw(0x1F0);        
+            dst[i] = inw(0x1F0); 
+            poll_status();
             if(i>=253) if(DBUG) printk("dst[%d] = %hx\n",i,dst[i]);
         }
 
     // unblock the first thread waiting for data
     PROC_unblock_head(ata_blocked);
     // issue next read request if possible
-    if(read_reqs.head) issue_read_req(read_reqs.head);
+    if(read_reqs.head) 
+    {
+            issue_read_req(read_reqs.head);
+    }
     if(DBUG) printk("exiting ATA isr\n");
     irq_end_of_interrupt(14);
 }
 
 void poll_status()
 {
-        for(int i=0;i<4;i++)
+        for(int i=0;i<5;i++)
         {
             if(DBUG) printk("polling status\n");
             inb(0x1F7);
