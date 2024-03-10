@@ -24,7 +24,7 @@ void fat_init()
     parse_mbr();
     SuperBk *super = fat_probe();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
-    readdir(super->fat_hdr->root_cluster_number);
+    readdir(super->fat_hdr->root_cluster_number,0);
 }
 void parse_mbr()
 {
@@ -137,7 +137,7 @@ void display_bpb(Fat_Bpb *bpb)
     printk("num sectors per fat = %d\n",bpb->num_sectors_per_fat);
 }
 
-void readdir(uint32_t cluster)
+void readdir(uint32_t cluster,int num_spaces)
 {
     if(!valid_cluster(cluster))
     {
@@ -176,6 +176,7 @@ void readdir(uint32_t cluster)
             }
             // skip, this entry has been deleted
             else if(dir_ent->name[0] == 0xE5) continue;
+            for(int i=0;i<num_spaces;i++) print_char(' ');
             // recursively read the dir
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
@@ -189,7 +190,7 @@ void readdir(uint32_t cluster)
                 e2 = dir_ent->name[0]=='.' && dir_ent->name[1]=='.' && dir_ent->name[2]==' ';
                 printk("e1=%d,e2=%d\n",e1,e2);
                 printk("next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
-                if(!e1 && !e2) readdir(dir_ent->cluster_hi | dir_ent->cluster_lo);
+                if(!e1 && !e2) readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
             }
             // else if it's a file, just print the name
             else

@@ -121,7 +121,7 @@ void display_partition_entry(Partition_Entry);
 SuperBk *fat_probe();
 void display_fat32(Fat_Hdr *);
 void display_bpb(Fat_Bpb *);
-void readdir(uint32_t);
+void readdir(uint32_t,int);
 //void get_cluster_chain(uint32_t);
 int  valid_cluster();
 uint32_t cluster_to_sector(uint32_t);
