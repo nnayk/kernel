@@ -32,3 +32,4 @@ void *get_cr2();
 void bail();
 int write_bitmap(uint8_t *,void *,uint16_t);
 int are_buffers_equal(const void *, const void *,int);
+int strcmp(const char *, const char *);

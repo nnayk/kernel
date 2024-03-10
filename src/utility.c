@@ -204,8 +204,17 @@ int are_buffers_equal(const void *ptr1, const void *ptr2,int size) {
     return SUCCESS; // Equal
 }
 
+int strcmp(const char *s1, const char *s2)
+{
+ while(*s1 && (*s1 == *s2))
+    {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
+}
+
 #if 0
-int strcmp(const char *s1, const char *s2);
 const char *strchr(const char *s, int c);
 char *strdup(const char *s);
 #endif

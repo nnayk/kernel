@@ -49,3 +49,5 @@
 
 #define REGION0_OFF 0
 #define REGION1_OFF 1
+
+#define BLK_SIZE 512
