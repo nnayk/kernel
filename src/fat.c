@@ -169,7 +169,11 @@ void readdir(uint32_t cluster)
             multiplier = 1;
             dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off); // TODO: check this ptr arithmetic since cbuffer is of type uint32_t *
             // reached end of dir entries
-            if(dir_ent->name[0] == 0) break;
+            if(dir_ent->name[0] == 0) 
+            {
+                if(DBUG) printk("reached end of entries\n");
+                break;
+            }
             // skip, this entry has been deleted
             else if(dir_ent->name[0] == 0xE5) continue;
             // recursively read the dir
