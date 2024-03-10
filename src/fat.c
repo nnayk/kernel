@@ -189,7 +189,7 @@ void readdir(uint32_t cluster)
                 e2 = dir_ent->name[0]=='.' && dir_ent->name[1]=='.' && dir_ent->name[2]==' ';
                 printk("e1=%d,e2=%d\n",e1,e2);
                 printk("next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
-                if(e1 || e2) readdir(dir_ent->cluster_hi | dir_ent->cluster_lo);
+                if(!e1 && !e2) readdir(dir_ent->cluster_hi | dir_ent->cluster_lo);
             }
             // else if it's a file, just print the name
             else
