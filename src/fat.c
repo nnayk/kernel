@@ -149,7 +149,10 @@ void readdir(uint32_t cluster,int num_spaces)
     ATABD *dev = ata_lst.devs[0];
     Fat_Dir_Ent *dir_ent;
     int e1,e2;
-    //Fat_LDir_Ent *ldir_ent;
+    Fat_LDir_Ent *ldir_ent;
+    uint16_t *name = kmalloc(260*sizeof(uint16_t)); // not sure if I can hardcode like this
+    int lfn = 0;
+    int offset = 0;
     //TODO: fix while loop condition
     while(cluster && cluster < 0x0FFFFFF8)
     {
@@ -162,11 +165,10 @@ void readdir(uint32_t cluster,int num_spaces)
         }
         // process the cluster and print its contents
         uint32_t dir_off = 0; // dir entry offset in current cluster
-        int multiplier = 1; // number of entries to skip over (in the case of long entries)
         // get the first dir entry
         while(1)
         {
-            multiplier = 1;
+            lfn = 0;
             dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off); // TODO: check this ptr arithmetic since cbuffer is of type uint32_t *
             // reached end of dir entries
             if(dir_ent->name[0] == 0) 
@@ -177,30 +179,66 @@ void readdir(uint32_t cluster,int num_spaces)
             // skip, this entry has been deleted
             else if(dir_ent->name[0] == 0xE5) continue;
             for(int i=0;i<num_spaces;i++) print_char(' ');
+            // lfn check
+            if(dir_ent->attr & FAT_ATTR_LFN) 
+            {
+                    lfn = 1;
+                    printk("LFN!\n");
+                    // read until classic entry reached
+                    while(1)
+                    {
+                        ldir_ent = (Fat_LDir_Ent *)(cbuffer+dir_off);
+                        // form the name and print it
+                        offset = ((ldir_ent->order & 0x3F) -1) * 13;
+                        memcpy(name+offset,ldir_ent->first,sizeof(uint16_t)*5);
+                        memcpy(name+offset+5,ldir_ent->middle,sizeof(uint16_t)*6);
+                        memcpy(name+offset+11,ldir_ent->last,sizeof(uint16_t)*2);
+                        dir_off += sizeof(Fat_Dir_Ent);
+                        // if reached last lfn entry, read the classic entry and break
+                        if((ldir_ent->order & 0x3f) ==1) // & 0x40) TODO: fix this condition
+                        {
+                            printk("lfn = ");
+                            for(int i=0;i<39;i++)
+                            {
+                                if(name[i] == 0) break;
+                                else print_char(name[i]);
+                            }
+                            print_char('\n');
+                            dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off);
+                            break;
+                        }
+                    }
+                    
+            }
             // recursively read the dir
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
-                printk("dir = %s\n",dir_ent->name);
+                if(!lfn) printk("dir = %s\n",dir_ent->name);
+                /*
                 for(int w=0;w<strlen(dir_ent->name);w++)
                 {
                     printk("index %d = %d\n",w,dir_ent->name[w]);
                 }
+                */
                                 
                 e1 = dir_ent->name[0]=='.' && dir_ent->name[1]==' ';
                 e2 = dir_ent->name[0]=='.' && dir_ent->name[1]=='.' && dir_ent->name[2]==' ';
                 printk("e1=%d,e2=%d\n",e1,e2);
-                printk("next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
-                if(!e1 && !e2) readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
+                if(!e1 && !e2) 
+                {
+                        printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
+                        readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
+                }
             }
             // else if it's a file, just print the name
             else
             {
                 // TODO: lfn check
-                printk("%s\n",dir_ent->name);
+                if(!lfn) printk("%s\n",dir_ent->name);
 
             }
 
-            dir_off += sizeof(Fat_Dir_Ent)*multiplier;
+            dir_off += sizeof(Fat_Dir_Ent);
         }
         cluster = super->fat_tbl[cluster];
         // get the next cluster
