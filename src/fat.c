@@ -153,6 +153,7 @@ void readdir(uint32_t cluster,int num_spaces)
     uint16_t *name = kmalloc(260*sizeof(uint16_t)); // not sure if I can hardcode like this
     int lfn = 0;
     int offset = 0;
+    uint32_t dir_off = 0; // dir entry offset in current cluster
     //TODO: fix while loop condition
     while(cluster && cluster < 0x0FFFFFF8)
     {
@@ -164,7 +165,7 @@ void readdir(uint32_t cluster,int num_spaces)
             ATABD_read_block((BD *)dev,sector,cbuffer+cbuff_off*BLK_SIZE);
         }
         // process the cluster and print its contents
-        uint32_t dir_off = 0; // dir entry offset in current cluster
+        dir_off = 0; 
         // get the first dir entry
         while(1)
         {
@@ -190,6 +191,7 @@ void readdir(uint32_t cluster,int num_spaces)
                         ldir_ent = (Fat_LDir_Ent *)(cbuffer+dir_off);
                         // form the name and print it
                         offset = ((ldir_ent->order & 0x3F) -1) * 13;
+                        memset(name,0,sizeof(uint16_t)*260);
                         memcpy(name+offset,ldir_ent->first,sizeof(uint16_t)*5);
                         memcpy(name+offset+5,ldir_ent->middle,sizeof(uint16_t)*6);
                         memcpy(name+offset+11,ldir_ent->last,sizeof(uint16_t)*2);
