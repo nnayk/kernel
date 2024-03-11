@@ -194,8 +194,9 @@ void readdir(uint32_t cluster,int num_spaces)
                         memcpy(name+offset+5,ldir_ent->middle,sizeof(uint16_t)*6);
                         memcpy(name+offset+11,ldir_ent->last,sizeof(uint16_t)*2);
                         dir_off += sizeof(Fat_Dir_Ent);
+                        if(dir_off == 512) break;
                         // if reached last lfn entry, read the classic entry and break
-                        if((ldir_ent->order & 0x3f) ==1) // & 0x40) TODO: fix this condition
+                        if((ldir_ent->order & 0x3f) == 1) // & 0x40) TODO: fix this condition
                         {
                             printk("lfn = ");
                             for(int i=0;i<39;i++)
@@ -237,8 +238,8 @@ void readdir(uint32_t cluster,int num_spaces)
                 if(!lfn) printk("%s\n",dir_ent->name);
 
             }
-
             dir_off += sizeof(Fat_Dir_Ent);
+            if(dir_off >= 512) break;
         }
         cluster = super->fat_tbl[cluster];
         // get the next cluster
