@@ -12,7 +12,7 @@
 #include "utility.h"
 #include "fat.h"
 
-#define DBUG 1
+#define DBUG 0
 
 Partition_Entry part_entries[4];
 extern ATABD_dev_lst ata_lst;
@@ -154,10 +154,11 @@ void readdir(uint32_t cluster,int num_spaces)
     int lfn = 0;
     int offset = 0;
     uint32_t dir_off = 0; // dir entry offset in current cluster
+    int prev_lfn=0;
     //TODO: fix while loop condition
     while(cluster && cluster < 0x0FFFFFF8)
     {
-        printk("cluster=%hx\n",cluster);
+        if(DBUG) printk("cluster=%hx\n",cluster);
         sector = cluster_to_sector(cluster);
         // read the cluster
         for(int cbuff_off=0;cbuff_off<super->num_secs_per_cluster;cbuff_off++)
@@ -166,6 +167,9 @@ void readdir(uint32_t cluster,int num_spaces)
         }
         // process the cluster and print its contents
         dir_off = 0; 
+        // get lfn status of last entry of previous cluster
+        //if(lfn) prev_lfn = 1;
+        //else prev_lfn = 0;
         // get the first dir entry
         while(1)
         {
@@ -179,35 +183,50 @@ void readdir(uint32_t cluster,int num_spaces)
             }
             // skip, this entry has been deleted
             else if(dir_ent->name[0] == 0xE5) continue;
-            for(int i=0;i<num_spaces;i++) print_char(' ');
+            if(!prev_lfn)
+            {
+                    if(DBUG) printk("num spaces = %d\n",num_spaces);    
+                    for(int i=0;i<num_spaces;i++) 
+                    {
+                        print_char(' ');
+                    }
+            }
+            else if(DBUG) printk("prev_lfn is true\n");
             // lfn check
             if(dir_ent->attr & FAT_ATTR_LFN) 
             {
                     lfn = 1;
-                    printk("LFN!\n");
+                    if(DBUG) printk("LFN!\n");
                     // read until classic entry reached
                     while(1)
                     {
                         ldir_ent = (Fat_LDir_Ent *)(cbuffer+dir_off);
                         // form the name and print it
                         offset = ((ldir_ent->order & 0x3F) -1) * 13;
-                        memset(name,0,sizeof(uint16_t)*260);
                         memcpy(name+offset,ldir_ent->first,sizeof(uint16_t)*5);
                         memcpy(name+offset+5,ldir_ent->middle,sizeof(uint16_t)*6);
                         memcpy(name+offset+11,ldir_ent->last,sizeof(uint16_t)*2);
                         dir_off += sizeof(Fat_Dir_Ent);
-                        if(dir_off == 512) break;
                         // if reached last lfn entry, read the classic entry and break
                         if((ldir_ent->order & 0x3f) == 1) // & 0x40) TODO: fix this condition
                         {
-                            printk("lfn = ");
+                            if(DBUG) printk("lfn = ");
                             for(int i=0;i<39;i++)
                             {
                                 if(name[i] == 0) break;
                                 else print_char(name[i]);
                             }
                             print_char('\n');
-                            dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off);
+                            memset(name,0,sizeof(uint16_t)*260);
+                            if(dir_off <= 480) 
+                            {
+                                 dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off);
+                                 break;
+                            }
+                        }
+                        if(dir_off == 512)
+                        {
+                            prev_lfn = 1;
                             break;
                         }
                     }
@@ -216,7 +235,7 @@ void readdir(uint32_t cluster,int num_spaces)
             // recursively read the dir
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
-                if(!lfn) printk("dir = %s\n",dir_ent->name);
+                if(!lfn && !prev_lfn) printk("dir = %s\n",dir_ent->name);
                 /*
                 for(int w=0;w<strlen(dir_ent->name);w++)
                 {
@@ -226,10 +245,10 @@ void readdir(uint32_t cluster,int num_spaces)
                                 
                 e1 = dir_ent->name[0]=='.' && dir_ent->name[1]==' ';
                 e2 = dir_ent->name[0]=='.' && dir_ent->name[1]=='.' && dir_ent->name[2]==' ';
-                printk("e1=%d,e2=%d\n",e1,e2);
+                if(DBUG) printk("e1=%d,e2=%d\n",e1,e2);
                 if(!e1 && !e2) 
                 {
-                        printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
+                        if(DBUG) printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
                         readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
                 }
             }
@@ -237,9 +256,11 @@ void readdir(uint32_t cluster,int num_spaces)
             else
             {
                 // TODO: lfn check
-                if(!lfn) printk("%s\n",dir_ent->name);
+                if(!lfn && !prev_lfn) printk("%s\n",dir_ent->name);
 
             }
+            if(dir_off >= 512) break;
+            prev_lfn = 0;
             dir_off += sizeof(Fat_Dir_Ent);
             if(dir_off >= 512) break;
         }
