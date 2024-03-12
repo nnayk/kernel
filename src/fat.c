@@ -25,6 +25,7 @@ void fat_init()
     parse_mbr();
     SuperBk *super = fat_probe();
     super->root_inode = init_inode(super->fat_hdr->root_cluster_number);
+    super->root_inode->filename  = char_arr_to_uint16_arr("root",5);
     super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
@@ -182,6 +183,8 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
         // process dir entries
         while(1)
         {
+            e1 = 0;
+            e2 = 0;
             lfn = 0;
             //curr_dir = NULL;
             dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off); // TODO: check this ptr arithmetic since cbuffer is of type uint32_t *
@@ -240,7 +243,6 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
                 if(!lfn && !prev_lfn) printk("dir = %s\n",dir_ent->name);
-                curr_dir = init_dir();
                 /*
                 for(int w=0;w<strlen(dir_ent->name);w++)
                 {
@@ -255,6 +257,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                 {
                         if(DBUG) printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
                         if(DBUG) printk("size = %d bytes\n",dir_ent->size);
+                        curr_dir = init_dir();
                         readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,curr_dir,num_spaces+4);
                         
                 }
@@ -276,7 +279,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             // at this point we have a classic entry for certain
             prev_lfn = 0;
             // create an inode if the file system hasn't been processed yet
-            if(!inodes_cached) 
+            if(!inodes_cached && (!e1 && !e2)) 
             {
                 curr_inode = init_inode(cluster);
                 curr_inode->name_len = get_inode_name_len(name);
@@ -316,9 +319,8 @@ uint32_t cluster_to_sector(uint32_t cluster)
 void add_inode(Dir *d,Inode *inode)
 {
     int capacity = d->capacity;
-    int count = d->count;
-    d->inodes[count++] = inode;
-    if(count == capacity)
+    d->inodes[d->count++] = inode;
+    if(d->count == capacity)
     {
         d->capacity *= 2;
         d->inodes = krealloc(d->inodes,capacity);
@@ -427,6 +429,9 @@ Inode *fetch_inode(Path *fpath)
             printk("fetch_inode: invalid file path.");
             bail();
         }
+
+        printk("curr inode = ");
+        display_file_name(curr_inode->filename);
         
         // search the child inodes 
         curr_dir = curr_inode->children;
@@ -434,7 +439,9 @@ Inode *fetch_inode(Path *fpath)
         {
             if(!are_buffers_equal(fpath->fnames[i],curr_dir->inodes[j]->filename,curr_dir->inodes[j]->name_len))
             {
-                return curr_dir->inodes[j];        
+                curr_inode = curr_dir->inodes[j];        
+                printk("found next inode ");
+                display_file_name(curr_inode->filename);
             }
         }
     }
