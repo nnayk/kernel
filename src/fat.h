@@ -80,7 +80,8 @@ typedef struct Dir Dir;
 struct Inode
 {
     uint32_t start_clust; 
-    char filename[260];
+    char *filename;
+    int name_len;
     uint64_t size; // in bytes
     uint32_t ctime;
     uint32_t atime;
@@ -146,4 +147,5 @@ Inode *init_inode(uint32_t);
 Dir *init_dir();
 void display_file_name(const uint16_t *);
 Inode *fetch_inode(Path *);
-File *open(char *);
+File *open(uint16_t *);
+int get_inode_name_len(const uint16_t *);

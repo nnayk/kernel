@@ -28,7 +28,10 @@ void fat_init()
     super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
-    open("/parent1/child1");
+    //uint16_t x[] = {97,98,99,0};
+    char *x = "/parent1/child1";
+    uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
+    open(y);
 }
 void parse_mbr()
 {
@@ -276,8 +279,9 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             if(!inodes_cached) 
             {
                 curr_inode = init_inode(cluster);
+                curr_inode->name_len = get_inode_name_len(name);
                 // update the inode entries
-                memcpy(curr_inode->filename,name,257);
+                memcpy(curr_inode->filename,name,curr_inode->name_len);
                 curr_inode->size = dir_ent->size;
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
@@ -354,11 +358,21 @@ void display_file_name(const uint16_t *name)
     print_char('\n');
 }
 
-File *open(char *fpath)
+int get_inode_name_len(const uint16_t *name)
 {
-        const char DELIM = '/'; /* path delimiter */
+    int count = 0;
+    for(int i=0;i<255;i++)
+    {
+        if(name[i] == 0) break;
+    }
+    return count;
+}
+
+File *open(uint16_t *fpath)
+{
+        const uint16_t DELIM = '/'; /* path delimiter */
         uint8_t INITIAL_SIZE = 10; /* initial size of fnames array */
-        char *temp = fpath;
+        uint16_t *temp = fpath;
         File *file = NULL;
 
     if(!fpath)
@@ -369,16 +383,23 @@ File *open(char *fpath)
 
         Path * path = (Path *)kmalloc(sizeof(Path));
         path->depth = 0;
-        path->fnames = (char **)kmalloc(sizeof(char *)*INITIAL_SIZE); // TODO: realloc the size when appropriate
+        path->fnames = (uint16_t **)kmalloc(sizeof(uint16_t *)*INITIAL_SIZE); // TODO: realloc the size when appropriate
+
+        // DELETE:
+        for(int i=0;i<260;i++)
+        {
+            if(fpath[i]==0) break;
+            print_char(fpath[i]);
+        }
 
         /* tokenize path string */
         while((temp = strsep(&fpath,&DELIM)))
         {
-                if(DBUG) printk("Found string %s of length %ld\n",temp,strlen(temp));
+                if(!DBUG) display_file_name(temp);
                 if(temp[0] == 0) continue;
-                path->fnames[path->depth] = (char *)kmalloc(sizeof(char)*(strlen(temp)+1));
-                memcpy(path->fnames[path->depth],temp,strlen(temp)+1);
-                if(DBUG) printk("Found string %s of length %ld\n",path->fnames[path->depth],strlen(path->fnames[path->depth]));
+                path->fnames[path->depth] = (uint16_t *)kmalloc(sizeof(uint16_t)*260);
+                memcpy(path->fnames[path->depth],temp,260);
+                if(!DBUG) display_file_name(path->fnames[path->depth]);
                 path->depth += 1;
         }
         
@@ -395,5 +416,29 @@ File *open(char *fpath)
 */
 Inode *fetch_inode(Path *fpath)
 {
+    Inode *curr_inode = super->root_inode; // start from root
+    Dir *curr_dir;
+    // traverse file system until desired file is reached
+    for(int i=0;i<fpath->depth-1;i++)
+    {
+        // make sure we're dealing with a directory
+        if(!curr_inode->children)
+        {
+            printk("fetch_inode: invalid file path.");
+            bail();
+        }
+        
+        // search the child inodes 
+        curr_dir = curr_inode->children;
+        for(int j=0;j<curr_dir->count;j++)
+        {
+            if(!are_buffers_equal(fpath->fnames[i],curr_dir->inodes[j]->filename,curr_dir->inodes[j]->name_len))
+            {
+                return curr_dir->inodes[j];        
+            }
+        }
+    }
+    
+    printk("invalid path\n");
     return NULL;
 }
