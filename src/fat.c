@@ -28,6 +28,7 @@ void fat_init()
     super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
+    open("/parent1/child1");
 }
 void parse_mbr()
 {
@@ -217,13 +218,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                         if((ldir_ent->order & 0x3f) == 1) // & 0x40) TODO: fix this condition
                         {
                             if(DBUG) printk("lfn = ");
-                            for(int i=0;i<255;i++)
-                            {
-                                if(name[i] == 0) break;
-                                else print_char(name[i]);
-                            }
-                            print_char('\n');
-                            memset(name,0,sizeof(uint16_t)*260);
+                            display_file_name(name);
                             if(dir_off <= 480) 
                             {
                                  dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off);
@@ -270,13 +265,24 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                 if(DBUG) printk("size = %d bytes\n",dir_ent->size);
 
             }
-            if(dir_off >= 512) break; // last entry in cluster is an lfn entry
+            if(dir_off >= 512) 
+            {
+                    memset(name,0,sizeof(uint16_t)*260);
+                    break; // last entry in cluster is an lfn entry
+            }
             // at this point we have a classic entry for certain
             prev_lfn = 0;
             // create an inode if the file system hasn't been processed yet
             if(!inodes_cached) 
             {
                 curr_inode = init_inode(cluster);
+                // update the inode entries
+                memcpy(curr_inode->filename,name,257);
+                curr_inode->size = dir_ent->size;
+                curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
+                curr_inode->atime = dir_ent->ad;
+                curr_inode->mtime = dir_ent->mt << 16 | dir_ent->md;
+                memset(name,0,sizeof(uint16_t)*260);
                 // if the entry is a directory then update its children reference
                 if(curr_dir) curr_inode->children = curr_dir;
                 parent_dir->add_inode(parent_dir,curr_inode);
@@ -335,4 +341,59 @@ Dir *init_dir()
         dir->inodes = kmalloc(sizeof(Inode *)*10);
         dir->add_inode = add_inode;
         return dir;
+}
+
+void display_file_name(const uint16_t *name)
+{
+    //printk("display_file_name: %p ",name);
+    for(int i=0;i<255;i++)
+    {
+        if(name[i] == 0) break;
+        else print_char(name[i]);
+    }
+    print_char('\n');
+}
+
+File *open(char *fpath)
+{
+        const char DELIM = '/'; /* path delimiter */
+        uint8_t INITIAL_SIZE = 10; /* initial size of fnames array */
+        char *temp = fpath;
+        File *file = NULL;
+
+    if(!fpath)
+    {
+        printk("open: null arg\n");
+        bail();
+    }
+
+        Path * path = (Path *)kmalloc(sizeof(Path));
+        path->depth = 0;
+        path->fnames = (char **)kmalloc(sizeof(char *)*INITIAL_SIZE); // TODO: realloc the size when appropriate
+
+        /* tokenize path string */
+        while((temp = strsep(&fpath,&DELIM)))
+        {
+                if(DBUG) printk("Found string %s of length %ld\n",temp,strlen(temp));
+                if(temp[0] == 0) continue;
+                path->fnames[path->depth] = (char *)kmalloc(sizeof(char)*(strlen(temp)+1));
+                memcpy(path->fnames[path->depth],temp,strlen(temp)+1);
+                if(DBUG) printk("Found string %s of length %ld\n",path->fnames[path->depth],strlen(path->fnames[path->depth]));
+                path->depth += 1;
+        }
+        
+        file = kmalloc(sizeof(File));
+        file->inode = fetch_inode(path);
+        file->offset = 0;
+        return file;
+}
+
+/*
+ * Description: Return the inode associated with a given file path
+ * Params:
+ * fpath -- file path
+*/
+Inode *fetch_inode(Path *fpath)
+{
+    return NULL;
 }

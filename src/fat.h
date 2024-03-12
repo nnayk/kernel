@@ -80,10 +80,13 @@ typedef struct Dir Dir;
 struct Inode
 {
     uint32_t start_clust; 
-    char filename[13];
+    char filename[260];
     uint64_t size; // in bytes
+    uint32_t ctime;
+    uint32_t atime;
+    uint32_t mtime;
     Dir *children;
-}e;
+};
 
 typedef struct
 {
@@ -95,6 +98,12 @@ typedef struct
     int num_clusters;
     int num_secs_per_cluster;
 }SuperBk;
+
+typedef struct
+{
+    Inode *inode;
+    uint64_t offset;
+}File;
 
 typedef struct{
 char name[11];
@@ -135,3 +144,6 @@ uint32_t cluster_to_sector(uint32_t);
 void add_inode(Dir *,Inode *);
 Inode *init_inode(uint32_t);
 Dir *init_dir();
+void display_file_name(const uint16_t *);
+Inode *fetch_inode(Path *);
+File *open(char *);
