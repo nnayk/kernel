@@ -73,6 +73,8 @@ $(image): partition kernel_package
 	sudo cp nakul.txt $(mnt_pt)
 	sudo cp -r parent1 $(mnt_pt)
 	sudo cp -r parent2 $(mnt_pt)
+	sudo touch abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.txt
+	sudo cp abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.txt $(mnt_pt)
 	sudo umount $(mnt_pt)
 	sudo losetup -d $(loop0)	
 	sudo losetup -d $(loop1)
