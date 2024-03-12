@@ -192,6 +192,7 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
         new_req->lba48 = lba48;
         new_req->sec_ct = 1;
         new_req->buffer = dst;
+        new_req->next = NULL;
         //issue a request if the request queue is empty
         if(!read_reqs.head)
         {
@@ -208,6 +209,11 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
         // block until interrupt (either for current thread or for existing read request)
         PROC_block_on(ata_blocked,1);
         if(DBUG) printk("exiting READ_BLOCK for lba48 = %ld!\n",lba48);
+    // issue next read request if possible
+    if(read_reqs.head) 
+    {
+            issue_read_req(read_reqs.head);
+    }
         kfree(new_req);
         sti();
         return SUCCESS; // change    
@@ -216,6 +222,7 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
 void issue_read_req(ATABD_req_t *req)
 {
         uint64_t lba48 = req->lba48;
+    if(DBUG) printk("issuing read req for lba48 = %ld\n",lba48);
         //poll_status();
         outb(0x1F6, 0x40);
         poll_status();
@@ -230,9 +237,8 @@ void issue_read_req(ATABD_req_t *req)
     outb(0x1F5, (lba48 >> 16) & 0xFF);
         poll_status();
     outb(0x1F7, 0x24);
-    poll_status();
+    //poll_status();
     if(DBUG) printk("status after issue = %d\n",inb(0x1f7));
-    if(DBUG) printk("issued read req for lba48 = %ld\n",lba48);
 }
 
 void ATABD_read_isr(int int_num,int err,void *arg)
@@ -258,22 +264,24 @@ void ATABD_read_isr(int int_num,int err,void *arg)
             if(i>=253) if(DBUG) printk("dst[%d] = %hx\n",i,dst[i]);
         }
 
+    irq_end_of_interrupt(14);
     // unblock the first thread waiting for data
     PROC_unblock_head(ata_blocked);
     // issue next read request if possible
+    /*
     if(read_reqs.head) 
     {
             issue_read_req(read_reqs.head);
     }
+    */
     if(DBUG) printk("exiting ATA isr\n");
-    irq_end_of_interrupt(14);
 }
 
 void poll_status()
 {
         for(int i=0;i<5;i++)
         {
-            if(DBUG) printk("polling status\n");
+            //if(DBUG) printk("polling status\n");
             inb(0x1F7);
         }
 }
