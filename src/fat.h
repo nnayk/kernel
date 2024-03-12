@@ -65,11 +65,20 @@ uint8_t boot_code[420];
 uint8_t boot_sig[2];
 } __attribute__((packed)) Fat_Hdr;
 
+struct Inode;
+
 typedef struct
 {
-    uint64_t start_clust; // TODO: maybe change data type
+    int capacity; // max number of children that can be stored
+    int count; //number of children
+    struct Inode **inodes; // list of child inodes
+}Dir;
+typedef struct
+{
+    uint32_t start_clust; 
     char filename[13];
     uint64_t size; // in bytes
+    Dir children;
 }Inode;
 
 typedef struct
@@ -82,12 +91,6 @@ typedef struct
     int num_clusters;
     int num_secs_per_cluster;
 }SuperBk;
-
-typedef struct
-{
-    uint32_t *arr; // start of chain
-    int count; // num clusters in chain
-}Cluster_Chain;
 
 typedef struct{
 char name[11];

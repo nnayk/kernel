@@ -211,7 +211,7 @@ void readdir(uint32_t cluster,int num_spaces)
                         if((ldir_ent->order & 0x3f) == 1) // & 0x40) TODO: fix this condition
                         {
                             if(DBUG) printk("lfn = ");
-                            for(int i=0;i<39;i++)
+                            for(int i=0;i<255;i++)
                             {
                                 if(name[i] == 0) break;
                                 else print_char(name[i]);
@@ -249,6 +249,7 @@ void readdir(uint32_t cluster,int num_spaces)
                 if(!e1 && !e2) 
                 {
                         if(DBUG) printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
+                        if(DBUG) printk("size = %d bytes\n",dir_ent->size);
                         readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
                 }
             }
@@ -257,6 +258,7 @@ void readdir(uint32_t cluster,int num_spaces)
             {
                 // TODO: lfn check
                 if(!lfn && !prev_lfn) printk("%s\n",dir_ent->name);
+                if(DBUG) printk("size = %d bytes\n",dir_ent->size);
 
             }
             if(dir_off >= 512) break;
