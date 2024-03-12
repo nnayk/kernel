@@ -17,14 +17,17 @@
 Partition_Entry part_entries[4];
 extern ATABD_dev_lst ata_lst;
 SuperBk *super;
+static int inodes_cached = 0;
 
 void fat_init()
 {
     if(DBUG) printk("inside fat init\n");
     parse_mbr();
     SuperBk *super = fat_probe();
+    super->root_inode = init_inode(super->fat_hdr->root_cluster_number);
+    super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
-    readdir(super->fat_hdr->root_cluster_number,0);
+    readdir(super->root_inode->start_clust,super->root_inode->children,0);
 }
 void parse_mbr()
 {
@@ -137,13 +140,13 @@ void display_bpb(Fat_Bpb *bpb)
     printk("num sectors per fat = %d\n",bpb->num_sectors_per_fat);
 }
 
-void readdir(uint32_t cluster,int num_spaces)
+void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
 {
     if(!valid_cluster(cluster))
     {
         printk("invalid cluster %d\n",cluster);
     }
-     
+    //Inode *curr_inode;
     uint8_t *cbuffer = kmalloc(BLK_SIZE*super->num_secs_per_cluster);
     uint32_t sector;
     ATABD *dev = ata_lst.devs[0];
@@ -155,6 +158,8 @@ void readdir(uint32_t cluster,int num_spaces)
     int offset = 0;
     uint32_t dir_off = 0; // dir entry offset in current cluster
     int prev_lfn=0;
+    Inode *curr_inode;
+    Dir *curr_dir=NULL; // only for use by directory entries of type dir
     //TODO: fix while loop condition
     while(cluster && cluster < 0x0FFFFFF8)
     {
@@ -170,10 +175,11 @@ void readdir(uint32_t cluster,int num_spaces)
         // get lfn status of last entry of previous cluster
         //if(lfn) prev_lfn = 1;
         //else prev_lfn = 0;
-        // get the first dir entry
+        // process dir entries
         while(1)
         {
             lfn = 0;
+            //curr_dir = NULL;
             dir_ent = (Fat_Dir_Ent *)(cbuffer+dir_off); // TODO: check this ptr arithmetic since cbuffer is of type uint32_t *
             // reached end of dir entries
             if(dir_ent->name[0] == 0) 
@@ -236,6 +242,7 @@ void readdir(uint32_t cluster,int num_spaces)
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
                 if(!lfn && !prev_lfn) printk("dir = %s\n",dir_ent->name);
+                curr_dir = init_dir();
                 /*
                 for(int w=0;w<strlen(dir_ent->name);w++)
                 {
@@ -250,21 +257,35 @@ void readdir(uint32_t cluster,int num_spaces)
                 {
                         if(DBUG) printk("recursing on next cluster = %hx\n",dir_ent->cluster_hi | dir_ent->cluster_lo);
                         if(DBUG) printk("size = %d bytes\n",dir_ent->size);
-                        readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,num_spaces+4);
+                        readdir(dir_ent->cluster_hi | dir_ent->cluster_lo,curr_dir,num_spaces+4);
+                        
                 }
             }
             // else if it's a file, just print the name
             else
             {
+                curr_dir = NULL;
                 // TODO: lfn check
                 if(!lfn && !prev_lfn) printk("%s\n",dir_ent->name);
                 if(DBUG) printk("size = %d bytes\n",dir_ent->size);
 
             }
-            if(dir_off >= 512) break;
+            if(dir_off >= 512) break; // last entry in cluster is an lfn entry
+            // at this point we have a classic entry for certain
             prev_lfn = 0;
+            // create an inode if the file system hasn't been processed yet
+            if(!inodes_cached) 
+            {
+                curr_inode = init_inode(cluster);
+                // if the entry is a directory then update its children reference
+                if(curr_dir) curr_inode->children = curr_dir;
+                parent_dir->add_inode(parent_dir,curr_inode);
+            }
             dir_off += sizeof(Fat_Dir_Ent);
-            if(dir_off >= 512) break;
+            if(dir_off >= 512) 
+            {
+                break; // reached last entry in cluster (which happens to be a classic entry)
+            }
         }
         cluster = super->fat_tbl[cluster];
         // get the next cluster
@@ -280,4 +301,38 @@ int valid_cluster(uint32_t cluster)
 uint32_t cluster_to_sector(uint32_t cluster)
 {
     return  super->partition_start + super->fat_hdr->bpb.reserved_sectors + super->fat_hdr->bpb.num_fats * super->fat_hdr->sectors_per_fat + cluster - 2;             
+}
+
+void add_inode(Dir *d,Inode *inode)
+{
+    int capacity = d->capacity;
+    int count = d->count;
+    d->inodes[count++] = inode;
+    if(count == capacity)
+    {
+        d->capacity *= 2;
+        d->inodes = krealloc(d->inodes,capacity);
+    }
+}
+
+Inode *init_inode(uint32_t cluster)
+{
+        Inode *inode;
+        inode = kmalloc(sizeof(Inode));
+        inode->size = -1;
+        inode->children = NULL;
+        inode->start_clust = cluster;
+        inode->children = NULL;
+        return inode;
+}
+
+Dir *init_dir()
+{
+        Dir *dir;
+        dir = kmalloc(sizeof(Dir));
+        dir->capacity = 10;
+        dir->count = 0;
+        dir->inodes = kmalloc(sizeof(Inode *)*10);
+        dir->add_inode = add_inode;
+        return dir;
 }

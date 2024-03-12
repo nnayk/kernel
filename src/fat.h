@@ -65,21 +65,25 @@ uint8_t boot_code[420];
 uint8_t boot_sig[2];
 } __attribute__((packed)) Fat_Hdr;
 
-struct Inode;
+typedef struct Inode Inode;
 
-typedef struct
+struct Dir
 {
     int capacity; // max number of children that can be stored
     int count; //number of children
-    struct Inode **inodes; // list of child inodes
-}Dir;
-typedef struct
+    Inode **inodes; // list of child inodes
+    void (*add_inode)(struct Dir *,Inode *);
+};
+
+typedef struct Dir Dir;
+
+struct Inode
 {
     uint32_t start_clust; 
     char filename[13];
     uint64_t size; // in bytes
-    Dir children;
-}Inode;
+    Dir *children;
+}e;
 
 typedef struct
 {
@@ -124,7 +128,10 @@ void display_partition_entry(Partition_Entry);
 SuperBk *fat_probe();
 void display_fat32(Fat_Hdr *);
 void display_bpb(Fat_Bpb *);
-void readdir(uint32_t,int);
+void readdir(uint32_t,Dir *,int);
 //void get_cluster_chain(uint32_t);
 int  valid_cluster();
 uint32_t cluster_to_sector(uint32_t);
+void add_inode(Dir *,Inode *);
+Inode *init_inode(uint32_t);
+Dir *init_dir();
