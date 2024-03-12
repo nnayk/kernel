@@ -273,7 +273,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             }
             if(dir_off >= 512) 
             {
-                    memset(name,0,sizeof(uint16_t)*260);
+                    if(ldir_ent->order == 1) memset(name,0,sizeof(uint16_t)*260);
                     break; // last entry in cluster is an lfn entry
             }
             // at this point we have a classic entry for certain
