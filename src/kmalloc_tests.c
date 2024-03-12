@@ -181,6 +181,10 @@ static void stress()
     while(num_frames_total>0)
     {
         if(num_frames_total < 1000) printk("stress: num_frames_total = %d\n",num_frames_total);    
+        if(num_frames_total==1)
+        {
+            printk("hello");
+        }
         free_addr = kmalloc(PAGE_SIZE-KMALLOC_EXTRA_SIZE);
     }
     kfree(free_addr);
@@ -195,11 +199,37 @@ static void stress()
             fill_count = PAGE_SIZE/POOL_SIZES[i];
             for(int j=0;j<fill_count;j++)
             {
+                printk("j=%d\n",j);
                 kmalloc(POOL_SIZES[i]-KMALLOC_EXTRA_SIZE);
             }
     }
     printk("Expect a failure now!\n");
     kmalloc(1);
+}
+
+static int simple_realloc()
+{
+    int *ptr = kmalloc(5*sizeof(int));
+    for(int i=0;i<5;i++)
+    {
+        ptr[i] = i;
+    }
+    ptr = krealloc(ptr,10*sizeof(int));
+    for(int i=5;i<10;i++)
+    {
+        ptr[i] = i;
+    }
+    // verify no changes to data
+    for(int i=0;i<10;i++)
+    {
+        if(ptr[i] != i)
+        {
+            printk("i = %d: ptr[%d] = %d\n",i,i,ptr[i]);
+            return -1;
+        }
+    }
+
+    return 1;
 }
 
 int kmalloc_tests()
@@ -225,6 +255,11 @@ int kmalloc_tests()
     if((status = raw_paging()) < 0) 
     {
             printk("failed raw_paging\n");
+            return status;
+    }
+    if((status = simple_realloc()) < 0) 
+    {
+            printk("failed simple realloc\n");
             return status;
     }
     printk("kmalloc_tests: SUCCEESS\n");

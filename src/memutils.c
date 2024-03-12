@@ -541,6 +541,21 @@ void kfree(void *addr)
         // reset header to indicate chunk is free
 }
 
+void *krealloc(void *ptr,size_t size)
+{
+    if(!ptr)
+    {
+        printk("krealloc: null arg\n");
+        return NULL;
+    }
+
+    KmallocExtra *hdr = (void *)((uint64_t)ptr-KMALLOC_EXTRA_SIZE);
+    void *new_ptr = kmalloc(size);
+    memcpy(new_ptr,ptr,hdr->usable_size);
+    kfree(ptr);
+    return new_ptr;
+}
+
 /*
  * Allocates a kernel stack
  * Params:

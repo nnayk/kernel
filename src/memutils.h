@@ -88,6 +88,7 @@ void *pf_alloc();
 int pf_free(void *);
 void *page_align_up(void *);
 void *kmalloc(size_t);
+void *krealloc(void *,size_t);
 void kfree(void *);
 int init_pools();
 Block *alloc_pool_blocks(int);
