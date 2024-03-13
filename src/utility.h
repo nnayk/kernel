@@ -6,10 +6,10 @@
  * manipulation functions from standard C library
 */
 
-#include <stddef.h>
-#include <stdint-gcc.h>
 #ifndef _utility_h
 #define _utility_h
+#include <stddef.h>
+#include <stdint-gcc.h>
 /* Represents a path to a file */
 typedef struct
 {

@@ -3,7 +3,8 @@
  * Kernel Project
  * Description:
 */
-
+#ifndef _blockdev_h
+#define _blockdev_h
 #include <stdint-gcc.h>
 
 #define BLK_SIZE 512
@@ -90,4 +91,4 @@ void ATABD_register(ATABD *);
 void poll_status();
 void issue_read_req(ATABD_req_t *);
 void ATABD_remove_read_req(ATABD_req_t *);
-
+#endif
