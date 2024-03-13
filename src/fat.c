@@ -296,7 +296,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                 memcpy(curr_inode->filename,name,(curr_inode->name_len+1)*sizeof(uint16_t));
                 curr_inode->size = dir_ent->size;
                 curr_inode->start_clust = (dir_ent->cluster_hi << 16) | dir_ent->cluster_lo;
-                printk("size = %ld\n",curr_inode->size);
+                if(DBUG) printk("size = %ld\n",curr_inode->size);
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
                 curr_inode->mtime = dir_ent->mt << 16 | dir_ent->md;
@@ -399,11 +399,12 @@ File *open(uint16_t *fpath)
         path->fnames = (uint16_t **)kmalloc(sizeof(uint16_t *)*INITIAL_SIZE); // TODO: realloc the size when appropriate
 
         // DELETE:
+        /*
         for(int i=0;i<260;i++)
         {
             if(fpath[i]==0) break;
             print_char(fpath[i]);
-        }
+        }*/
 
         /* tokenize path string */
         while((temp = strsep(&fpath,&DELIM)))
@@ -517,19 +518,19 @@ Inode *fetch_inode(Path *fpath)
         }
 
         if(DBUG) printk("curr inode = ");
-        display_file_name(curr_inode->filename);
+        if(DBUG) display_file_name(curr_inode->filename);
         
         // search the child inodes 
         curr_dir = curr_inode->children;
         found = 0;
         for(int j=0;j<curr_dir->count;j++)
         {
-            display_file_name(curr_inode->filename);
+            if(DBUG) display_file_name(curr_inode->filename);
             if(are_buffers_equal(fpath->fnames[i],curr_dir->inodes[j]->filename,curr_dir->inodes[j]->name_len*sizeof(uint16_t)))
             {
                 curr_inode = curr_dir->inodes[j];        
                 if(DBUG) printk("found next inode ");
-                display_file_name(curr_inode->filename);
+                if(DBUG) display_file_name(curr_inode->filename);
                 found = 1;
                 break;
             }
@@ -542,6 +543,6 @@ Inode *fetch_inode(Path *fpath)
         }
     }
     if(DBUG) printk("valid path. inode filename = ");
-    display_file_name(curr_inode->filename);
+    if(DBUG) display_file_name(curr_inode->filename);
     return curr_inode;
 }

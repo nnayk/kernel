@@ -211,7 +211,7 @@ void print_long_hex(unsigned long l)
         unsigned char digits[ARR_SIZE]; 
         int index = 0;
         unsigned char temp;
-        print_str(HEX_PREFIX);
+        //print_str(HEX_PREFIX);
         if(l == 0)
         {
                 print_digits(digits,0,l);

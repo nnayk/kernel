@@ -59,6 +59,7 @@ static void test_read_entire_file(char *name)
     {
         printk("%hx",hash[i]);
     }
+    printk("\n\n\n");
 }
 
 void util_vfs_hash_file(char *name)
@@ -68,19 +69,21 @@ void util_vfs_hash_file(char *name)
     char *dst = kmalloc(f->inode->size);
     read(f,dst,f->inode->size);
     uint8_t hash[16];
-    printk("hashing %ld byte string\n",f->inode->size);
+    //printk("hashing %ld byte string\n",f->inode->size);
+    printk("md5 hash for %s\n",name);
     md5String(dst,f->inode->size,hash);
     for(int i=0;i<16;i++)
     {
         printk("%hx",hash[i]);
     }
+    printk("\n");
 }
 
 void test_hash_several_files()
 {
-    char *filenames[4] = {"/boot/kernel.bin","/boot/grub/fonts/unicode.pf2",
+    char *filenames[3] = {"/boot/grub/fonts/unicode.pf2",
                           "/boot/grub/i386-pc/adler32.mod","/boot/grub/i386-pc/gcry_blowfish.mod"};
-    for(int i=0;i<1;i++)
+    for(int i=0;i<3;i++)
     {
         util_vfs_hash_file(filenames[i]);    
     }

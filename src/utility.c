@@ -13,7 +13,7 @@
 #include "constants.h"
 #include "print.h"
 
-#define DBUG 1
+#define DBUG 0
 
 size_t strlen(const char *s)
 {
