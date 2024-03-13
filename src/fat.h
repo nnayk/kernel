@@ -148,4 +148,6 @@ Dir *init_dir();
 void display_file_name(const uint16_t *);
 Inode *fetch_inode(Path *);
 File *open(uint16_t *);
+int lseek(File *,uint64_t);
+int read(File *,char *,uint64_t);
 int get_inode_name_len(const uint16_t *);

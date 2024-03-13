@@ -11,6 +11,7 @@
 #include "process.h"
 #include "utility.h"
 #include "fat.h"
+#include "error.h"
 
 #define DBUG 0
 
@@ -421,6 +422,72 @@ File *open(uint16_t *fpath)
         file->inode = fetch_inode(path);
         file->offset = 0;
         return file;
+}
+
+int read(File *f,char *dst,uint64_t len)
+{
+    if(!f || !dst)
+    {
+        printk("read: null arg\n");
+        bail();
+        return ERR_BAD_INPUT;
+    }
+    Inode *inode = f->inode;
+    uint32_t curr_cluster = inode->start_clust; // current file data cluster to read
+    uint64_t curr_off = 0; // offset in dst
+    uint16_t temp_buff[256]; // used to store ATA cluster reads
+    BD *dev = (BD *)ata_lst.devs[0];
+    if((inode->size < len) || (f->offset+len>=inode->size))
+    {
+        printk("read: len = %ld, offset = %ld, file size = %ld\n",len,f->offset,inode->size);
+        bail();
+        return ERR_BAD_INPUT;
+    }
+
+    // get to the right cluster based on file offset
+    int num_clusts_skip = f->offset/BLK_SIZE;
+    while(num_clusts_skip)
+    {
+        curr_cluster = super->fat_tbl[curr_cluster];
+        num_clusts_skip--;    
+    }
+
+    while(len)
+    {
+        ATABD_read_block(dev,curr_cluster,temp_buff);
+        if(len>=BLK_SIZE)
+        {
+            memcpy(dst+curr_off,temp_buff,BLK_SIZE);
+            len -= BLK_SIZE;
+            curr_cluster = super->fat_tbl[curr_cluster];
+        }
+        else
+        {
+            memcpy(dst+curr_off,temp_buff,len);
+            len = 0;
+        }
+    }
+    f->offset += len;
+    return SUCCESS;
+}
+
+int lseek(File *f,uint64_t offset)
+{
+   if(!f)
+   {
+        printk("lseek: null arg\n");
+        bail();
+        return ERR_BAD_INPUT;
+   }
+   if((offset < 0) || (offset >= f->inode->size))
+   {
+        printk("lseek: invalid offset %ld for file w/size = %ld\n",offset,f->offset);
+        bail();
+        return ERR_BAD_INPUT;
+   }
+
+   f->offset = offset;
+   return SUCCESS;
 }
 
 /*
