@@ -120,11 +120,11 @@ static int alloc_each_pool()
 static int ugly_sizes()
 {
         int status = SUCCESS;
-        void *addrs[12];
+        void *addrs[18];
         printk("inside ugly_sizes\n");
         uint8_t *bitmap = kmalloc(3200000);
-        int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000};//1391919,492323,123123,2024,5436,3123098};
-        int num_sizes = 12;
+        int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000,1391919,492323,123123,2024,5436,3123098};
+        int num_sizes = 18;
         int temp=0;
         for(int i=0;i<num_sizes;i++)
         {
