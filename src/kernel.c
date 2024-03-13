@@ -32,6 +32,7 @@ Process main_proc;
 
 void kmain()
 {
+        //hlt();
         int loop = 0;
         while(loop);
         main_proc.pid = 0;
@@ -53,20 +54,18 @@ void kmain()
                 printk("init_pool error");
                 return;
         }
-        /* 
         PROC_init();
         sched_admit(ready_procs,&main_proc);
         PROC_run();
-        numbers_test();
-        */
-        
-        //PROC_create_kthread((kproc_t)fat_init,NULL);
+        //numbers_test();
+        setup_ata();
+        PROC_create_kthread((kproc_t)fat_init,NULL);
         //while(!loop);
-        //setup_ata();
-        kmalloc_tests();
+        //kmalloc_tests();
         //paging_tests();
         //setup_snakes(1);
         //kbd_tests();
+        //printk("waiting for kbd input...\n");
 #if 0   // tests
         pf_simple_test();
         pf_nonseq_test();
@@ -80,7 +79,7 @@ void kmain()
         {
             PROC_run();
             //if(ready_procs->proc_count == 1) display_threads(all_procs);
-            //printk("%d, %hx\n",are_interrupts_enabled(),inb(0x1F7));
             hlt();
+            //printk("status = %d\n",inb(0x1f7));
         }
 }

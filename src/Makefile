@@ -2,8 +2,8 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop63
-loop1 := /dev/loop64
+loop0 := /dev/loop65
+loop1 := /dev/loop66
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 tests = kmalloc_tests.o page_frame_tests.o mt_tests.o kbd_tests.o paging_tests.o ata_tests.o
@@ -15,7 +15,7 @@ my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 .PHONY: empty clean lo_status
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -no-reboot -no-shutdown -serial stdio #1>qemu-data-dump -d int #2>qemu-int-dump
+	qemu-system-x86_64 -s -drive format=raw,file=fat.img -no-reboot -no-shutdown -serial stdio 1>qemu-data-dump -d int #2>qemu-int-dump
 clean:
 	rm *.o
 	rm kernel.bin
@@ -69,7 +69,7 @@ $(image): partition kernel_package
 	sudo touch nakul.txt
 	sudo mkdir -p parent1/child1
 	sudo mkdir -p parent2/child1/child2
-	sudo touch parent2/child1/child2/foo.txt
+	#sudo touch parent2/child1/child2/foo.txt
 	sudo cp nakul.txt $(mnt_pt)
 	sudo cp -r parent1 $(mnt_pt)
 	sudo cp -r parent2 $(mnt_pt)

@@ -15,7 +15,7 @@
 #include "irq.h"
 #include "error.h"
 
-#define DBUG 1
+#define DBUG 0
 extern ProcQueue *ready_procs;
 extern ProcQueue *ata_blocked;
 extern Process *curr_proc;
@@ -95,14 +95,14 @@ static ATABD *ATABD_probe(uint16_t io_base,int use_slave,int int_num)
     uint16_t data;
     for (int i = 0; i < DATA_WD_CT; i++) {
         data = inw(io_base+DATA);
-        //if(DBUG) printk("iteration %d: read %hx\n",i,data);
+        if(DBUG) printk("iteration %d: read %hx\n",i,data);
         buffer[i] = data;
     }
     // verify that LBA48 is supported
     if(!(buffer[83] & (1<<10)))
     {
             if(DBUG) printk("ATABD_probe: LBA48 not supported!\n");
-            //bail();
+            bail();
     }
     // read and store the number of sectors on the disk
     blk_ct |= (((uint64_t)buffer[100]));
@@ -227,8 +227,11 @@ void issue_read_req(ATABD_req_t *req)
     outb(0x1F5, (lba48 >> 40) & 0xFF);
         poll_status();
     outb(0x1F2,1);
+        poll_status();
     outb(0x1F3, lba48 & 0xFF);
+        poll_status();
     outb(0x1F4, (lba48 >> 8) & 0xFF);
+        poll_status();
     outb(0x1F5, (lba48 >> 16) & 0xFF);
         poll_status();
     outb(0x1F7, 0x24);
@@ -273,7 +276,7 @@ void ATABD_read_isr(int int_num,int err,void *arg)
 
 void poll_status()
 {
-        for(int i=0;i<5;i++)
+        for(int i=0;i<4;i++)
         {
             inb(0x1F7);
         }

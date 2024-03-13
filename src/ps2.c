@@ -129,6 +129,7 @@ void kbd_init()
 
 void kbd_isr(int int_num,int err_code,void *buffer)
 {
+        //printk("inside kbd isr\n");
         unsigned char data = ps2_poll_read();
         // TODO: write the char to kbd buffer instead of this
         irq_end_of_interrupt(KBD_IRQ_NO);

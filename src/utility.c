@@ -75,6 +75,7 @@ void sti() {
 }
 
 void hlt() {
+        //printk("ints %d\n",are_interrupts_enabled());
         asm volatile ("hlt");
 }
 
@@ -143,8 +144,8 @@ void dbug_hlt(int dbug_flag)
 void bail()
 {
     printk("BAILING!\n");
-    //if(are_interrupts_enabled())
-      //  cli();
+    if(are_interrupts_enabled())
+        cli();
     hlt();
 }
 

@@ -121,7 +121,7 @@ int PROC_block_on(ProcQueue *q, int enable_ints)
         }
         sched_remove(ready_procs,curr_proc);
         sched_admit(q,curr_proc);
-        if (enable_ints) sti();
+        if(enable_ints) sti();
         yield();
         return SUCCESS;
 }

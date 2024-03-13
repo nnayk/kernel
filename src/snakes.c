@@ -211,7 +211,7 @@ void run_hungry_snake(void *arg){
       free_snake(*s);
       kexit();
     }
-   // yield();                /* yield to the next snake */
+   yield();                /* yield to the next snake */
   }
 }
 
@@ -231,7 +231,7 @@ void run_snake(void *arg){
       free_snake(*s);
       kexit();
     }
-    //yield();                /* yield to the next snake */
+    yield();                /* yield to the next snake */
   }
 }
 

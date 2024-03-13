@@ -268,22 +268,26 @@ void *pf_alloc()
                 bail();
         }
         num_frames_total--;
+        /*
         if((uint64_t)pg_start % PAGE_SIZE)
         {
-            printk("pf_free: bad frame %p\n",pg_start);
+            printk("pf_alloc: bad frame %p\n",pg_start);
             bail();
         }
+        */
         return pg_start;
 }
 
 // frees an entire physical frame
 int pf_free(void *frame_start)
 {
+        /*
         if((uint64_t)frame_start % PAGE_SIZE)
         {
             printk("pf_free: bad frame %p\n",frame_start);
             bail();
         }
+        */
         // enqueue the new frame to the free list
         if(free_head == INVALID_START_ADDR)
         {

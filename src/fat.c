@@ -12,7 +12,7 @@
 #include "utility.h"
 #include "fat.h"
 
-#define DBUG 1
+#define DBUG 0
 
 Partition_Entry part_entries[4];
 extern ATABD_dev_lst ata_lst;
@@ -238,7 +238,6 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                             break;
                         }
                     }
-                    
             }
             // recursively read the dir
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)

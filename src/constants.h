@@ -42,7 +42,7 @@
 #define KHEAP_LIMIT 0x78000000000 // top/end of heap (exclusive)
 #define KSTACK_START 0x7FFFFFFFFFF // bottom/start of stack (inclusive)
 #define KSTACK_LIMIT 0xFFFFFFFFFF // top/end of stack (exclusive)
-#define STACK_SIZE 2000000
+#define STACK_SIZE 2097152
 #define STACK_PAGES STACK_SIZE/PAGE_SIZE
 #define MAX_FRAME_ADDR (void *)0xC0000000 // first 3 GB
 #define INITIAL_BLOCKS_PER_POOL 1
