@@ -15,7 +15,7 @@
 #include "irq.h"
 #include "error.h"
 
-#define DBUG 1
+#define DBUG 0
 extern ProcQueue *ready_procs;
 extern ProcQueue *ata_blocked;
 extern Process *curr_proc;

@@ -115,7 +115,7 @@ SuperBk *fat_probe()
         printk("invalid fat32 signature: %hx\n",super->fat_hdr->signature);
         bail();
     }
-    display_fat32(super->fat_hdr);
+    if(DBUG) display_fat32(super->fat_hdr);
     kfree(buffer);
     return super;   
 }
@@ -124,13 +124,16 @@ void display_fat32(Fat_Hdr *hdr)
 {
     printk("Fat header attributes:\n");
     display_bpb(&hdr->bpb);
-    if(hdr->bpb.num_sectors_per_fat == 0)
+    if(DBUG)
     {
-        printk("real num sectors per fat = %d\n",hdr->sectors_per_fat);
-    }
+            if(hdr->bpb.num_sectors_per_fat == 0)
+            {
+                printk("real num sectors per fat = %d\n",hdr->sectors_per_fat);
+            }
 
-    printk("root dir cluster no. = %d\n",hdr->root_cluster_number);
-    printk("name = %s\n",hdr->label);
+            printk("root dir cluster no. = %d\n",hdr->root_cluster_number);
+            printk("name = %s\n",hdr->label);
+    }
 }
 
 void display_bpb(Fat_Bpb *bpb)
@@ -170,7 +173,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
     {
         if(DBUG) printk("cluster=%hx\n",cluster);
         sector = cluster_to_sector(cluster);
-        printk("sector = %d\n",sector);
+        if(DBUG) printk("sector = %d\n",sector);
         // read the cluster
         for(int cbuff_off=0;cbuff_off<super->num_secs_per_cluster;cbuff_off++)
         {
@@ -197,6 +200,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             }
             // skip, this entry has been deleted
             else if(dir_ent->name[0] == 0xE5) continue;
+#if 0
             if(!prev_lfn)
             {
                     if(DBUG) printk("num spaces = %d\n",num_spaces);    
@@ -205,6 +209,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                         print_char(' ');
                     }
             }
+#endif
             else if(DBUG) printk("prev_lfn is true\n");
             // lfn check
             if(dir_ent->attr & FAT_ATTR_LFN) 
@@ -225,6 +230,10 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                         if((ldir_ent->order & 0x3f) == 1) // & 0x40) TODO: fix this condition
                         {
                             if(DBUG) printk("lfn = ");
+                    for(int i=0;i<num_spaces;i++) 
+                    {
+                        print_char(' ');
+                    }
                             display_file_name(name);
                             if(dir_off <= 480) 
                             {
@@ -242,7 +251,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             // recursively read the dir
             if(dir_ent->attr & FAT_ATTR_DIRECTORY)
             {
-                if(!lfn && !prev_lfn) printk("dir = %s\n",dir_ent->name);
+                //if(!lfn && !prev_lfn) printk("dir = %s\n",dir_ent->name);
                 /*
                 for(int w=0;w<strlen(dir_ent->name);w++)
                 {
@@ -273,7 +282,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             }
             if(dir_off >= 512) 
             {
-                    if(ldir_ent->order == 1) memset(name,0,sizeof(uint16_t)*260);
+                    //if(ldir_ent->order == 1) memset(name,0,sizeof(uint16_t)*260);
                     break; // last entry in cluster is an lfn entry
             }
             // at this point we have a classic entry for certain

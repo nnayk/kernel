@@ -15,7 +15,7 @@ my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
 .PHONY: empty clean lo_status
 
 run: $(image)
-	qemu-system-x86_64 -s -drive format=raw,file=fat.img -no-reboot -no-shutdown -serial stdio 1>qemu-data-dump -d int #2>qemu-int-dump
+	qemu-system-x86_64 -s -drive format=raw,file=fat.img -no-reboot -no-shutdown -serial stdio #1>qemu-data-dump -d int #2>qemu-int-dump
 clean:
 	rm *.o
 	rm kernel.bin
@@ -69,7 +69,7 @@ $(image): partition kernel_package
 	sudo touch nakul.txt
 	sudo mkdir -p parent1/child1
 	sudo mkdir -p parent2/child1/child2
-	#sudo touch parent2/child1/child2/foo.txt
+	sudo touch parent2/child1/child2/foo.txt
 	sudo cp nakul.txt $(mnt_pt)
 	sudo cp -r parent1 $(mnt_pt)
 	sudo cp -r parent2 $(mnt_pt)
