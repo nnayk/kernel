@@ -122,7 +122,7 @@ static int ugly_sizes()
         int status = SUCCESS;
         void *addrs[12];
         printk("inside ugly_sizes\n");
-        //uint8_t bitmap[3200000];
+        uint8_t *bitmap = kmalloc(3200000);
         int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000};//,1391919,492323,123123,2024,5436,3123098};
         int num_sizes = 12;
         for(int i=0;i<num_sizes;i++)
@@ -146,6 +146,7 @@ static int ugly_sizes()
                     return status;
                 kfree(addrs[i]);
         }
+        kfree(bitmap);
         return SUCCESS;
 }
 
@@ -163,14 +164,20 @@ static int raw_paging()
         void *second_frame;
         int size = POOL_SIZES[NUM_POOLS-1]; 
         if((status = validate_header(first_addr,size)) < 0)
+        {
+            printk("raw paging failed first test\n");
             return status;
+        }
         first_frame = va_to_pa(first_addr,NULL,GET_PA);
         kfree(first_addr);
         second_addr = kmalloc(size); 
         second_frame = va_to_pa(second_addr,NULL,GET_PA);
-        kfree(second_addr);
         if((status = validate_header(second_addr,size)) < 0)
+        {
+            printk("raw paging failed second test\n");
             return status;
+        }
+        kfree(second_addr);
         if((status = assert(first_addr - second_addr == PAGE_SIZE)) < -1)
         {
                 printk("raw_paging: VAs are equal!\n");
