@@ -403,15 +403,18 @@ void display_pools()
     KmallocPool pool;
     Block *block = NULL;
     int count;
-    for(int i=0;i<NUM_POOLS;i++)
+    printk("display_pools:\n");
+    //TODO: change this back to original, rn just want to see pool 1 only
+    for(int i=0;i<2;i++)
     {
+        if(i==0) continue;
         count = 0;
         pool = ram_pools[i];
-        if(DBUG) printk("Pool %d: size = %d, avail = %d\n",i+1,pool.max_size,pool.avail);
+        if(!DBUG) printk("Pool %d: size = %d, avail = %d\n",i+1,pool.max_size,pool.avail);
         block = pool.head;
         while(block)
         {
-                if(DBUG) printk("Block %d addr = %p\n",++count,block);
+                if(!DBUG) printk("Block %d addr = %p\n",++count,block);
                 block = block->next;
         }
     }
@@ -491,6 +494,10 @@ void *kmalloc(size_t usable_size)
                 if(!(start_addr = (void *)alloc_block(hdr.pool_index)))
                 {
                     start_addr = alloc_pool_blocks(pool_size);
+                }
+                if(pool_size == 64)
+                {
+                    if(DBUG) display_pools();
                 }
                 done = 1;
             }

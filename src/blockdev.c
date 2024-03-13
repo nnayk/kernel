@@ -15,7 +15,7 @@
 #include "irq.h"
 #include "error.h"
 
-#define DBUG 0
+#define DBUG 1
 extern ProcQueue *ready_procs;
 extern ProcQueue *ata_blocked;
 extern Process *curr_proc;
@@ -155,6 +155,8 @@ void ATABD_register(ATABD *dev)
 
 void setup_ata()
 {
+    read_reqs.head=NULL;
+    read_reqs.tail=NULL;
     PROC_create_kthread((kproc_t)ata_init,NULL);
 }
 
@@ -167,7 +169,30 @@ BD *BD_init(BD *self)
         self->next = NULL;
         return self;
 }
+/*
+ * Removes the given request from the ata read request queue
+ */
+void ATABD_remove_read_req(ATABD_req_t *req)
+{
+    if(req==read_reqs.head)
+    {
+        read_reqs.head = req->next;
+        if(req==read_reqs.tail)
+        {
+            read_reqs.tail = read_reqs.head;
+        }
+        return;
+    }
 
+    ATABD_req_t *prev = read_reqs.head;
+    while(prev && prev->next != req)
+    {
+        prev = prev->next;
+    }
+
+    prev->next = req->next;
+    req->next = NULL;
+}
 ATABD *ATABD_init(ATABD *self)
 {
         BD_init(&self->parent);
@@ -189,6 +214,7 @@ int ATABD_read_block(BD *dev, uint64_t lba48, void *dst)
         }
         */
         ATABD_req_t *new_req = kmalloc(sizeof(ATABD_req_t));
+        new_req->next = NULL;
         new_req->lba48 = lba48;
         new_req->sec_ct = 1;
         new_req->buffer = dst;
@@ -252,7 +278,10 @@ void ATABD_read_isr(int int_num,int err,void *arg)
     // get and pop the first read request
     ATABD_req_t *curr_req = read_reqs.head;
     read_reqs.head = read_reqs.head->next;
-    if(!read_reqs.head) read_reqs.tail = read_reqs.head;
+    if(!read_reqs.head) 
+    {
+        read_reqs.tail = read_reqs.head;
+    }
     uint16_t *dst = curr_req->buffer; 
     if(DBUG) printk("dst buffer = %p\n",dst);
         for(int i=0;i<DATA_WD_CT;i++)
@@ -266,9 +295,18 @@ void ATABD_read_isr(int int_num,int err,void *arg)
     // unblock the first thread waiting for data
     PROC_unblock_head(ata_blocked);
     // issue next read request if possible
-    if(read_reqs.head && read_reqs.head->lba48 != 0) 
+    if(read_reqs.head) 
     {
-            printk("isr issuing read req\n");
+            if(read_reqs.head->lba48==0)
+            {
+                read_reqs.head = read_reqs.head->next;
+                if(!read_reqs.head) 
+                {
+                        read_reqs.tail = read_reqs.head;
+                        return;
+                }
+            }
+            printk("isr issuing read req for lba48 %ld from isr\n",read_reqs.head->lba48);
             issue_read_req(read_reqs.head);
     }
     if(DBUG) printk("exiting ATA isr\n");

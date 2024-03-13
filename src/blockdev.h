@@ -89,4 +89,5 @@ void setup_ata();
 void ATABD_register(ATABD *);
 void poll_status();
 void issue_read_req(ATABD_req_t *);
+void ATABD_remove_read_req(ATABD_req_t *);
 

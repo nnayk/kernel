@@ -30,9 +30,9 @@ void fat_init()
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
     //uint16_t x[] = {97,98,99,0};
-    char *x = "/parent1/child1";
-    uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
-    open(y);
+    //char *x = "/parent1/child1";
+    //uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
+    //open(y);
 }
 void parse_mbr()
 {
@@ -283,8 +283,9 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             {
                 curr_inode = init_inode(cluster);
                 curr_inode->name_len = get_inode_name_len(name);
+                curr_inode->filename = kmalloc(sizeof(uint16_t)*curr_inode->name_len);
                 // update the inode entries
-                memcpy(curr_inode->filename,name,curr_inode->name_len);
+                memcpy(&curr_inode->filename,name,curr_inode->name_len);
                 curr_inode->size = dir_ent->size;
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
@@ -323,7 +324,7 @@ void add_inode(Dir *d,Inode *inode)
     if(d->count == capacity)
     {
         d->capacity *= 2;
-        d->inodes = krealloc(d->inodes,capacity);
+        d->inodes = krealloc(d->inodes,d->capacity*sizeof(Inode *));
     }
 }
 
@@ -366,6 +367,7 @@ int get_inode_name_len(const uint16_t *name)
     for(int i=0;i<255;i++)
     {
         if(name[i] == 0) break;
+        count++;
     }
     return count;
 }
