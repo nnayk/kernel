@@ -40,13 +40,13 @@ static void read_block_0(void *arg)
     }
 }
 
-static void simple_test()
+static void ata_test()
 {
     PROC_create_kthread((kproc_t)read_block_32,0);
     PROC_create_kthread((kproc_t)read_block_0,0);
 }
 int ata_tests()
 {
-        simple_test();
+        ata_test();
         return 1;
 }

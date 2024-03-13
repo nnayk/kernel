@@ -268,12 +268,22 @@ void *pf_alloc()
                 bail();
         }
         num_frames_total--;
+        if((uint64_t)pg_start % PAGE_SIZE)
+        {
+            printk("pf_free: bad frame %p\n",pg_start);
+            bail();
+        }
         return pg_start;
 }
 
 // frees an entire physical frame
 int pf_free(void *frame_start)
 {
+        if((uint64_t)frame_start % PAGE_SIZE)
+        {
+            printk("pf_free: bad frame %p\n",frame_start);
+            bail();
+        }
         // enqueue the new frame to the free list
         if(free_head == INVALID_START_ADDR)
         {
@@ -366,7 +376,7 @@ Block *alloc_pool_blocks(int size)
         Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
         uint64_t *temp = NULL;
         int num_blocks = PAGE_SIZE/size;
-        if(!(va_to_pa((void *)block_start,NULL,SET_PA)))
+        if(!(va_to_pa((void *)block_start,NULL,SET_P1)))
         {
                 printk("alloc_pool: va_to_pa() failed for size = %d\n",size);
                 bail();
@@ -487,11 +497,13 @@ void *kmalloc(size_t usable_size)
     {
         num_pages = (true_size + PAGE_SIZE - 1) / PAGE_SIZE;
         start_addr = MMU_alloc_pages(num_pages);
+        /*
         // map the new pages
         for(int i=0;i<num_pages;i++)
         {
             va_to_pa((void *)((uint64_t)start_addr+PAGE_SIZE*i),NULL,SET_PA);
         }
+        */
         hdr.pool_index = -1;
         hdr.usable_size = usable_size;
     }
@@ -522,7 +534,7 @@ void kfree(void *addr)
         if(pool_index == -1)
         {
             count = (hdr->usable_size + KMALLOC_EXTRA_SIZE + PAGE_SIZE - 1)/PAGE_SIZE;
-            MMU_free_pages(addr,count);
+            MMU_free_pages((void *)hdr,count);
         }
         // return the blocks to the corresponding pool
         else if((pool_index >=0) && (pool_index <= 5))

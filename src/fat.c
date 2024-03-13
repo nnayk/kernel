@@ -12,7 +12,7 @@
 #include "utility.h"
 #include "fat.h"
 
-#define DBUG 0
+#define DBUG 1
 
 Partition_Entry part_entries[4];
 extern ATABD_dev_lst ata_lst;
@@ -170,6 +170,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
     {
         if(DBUG) printk("cluster=%hx\n",cluster);
         sector = cluster_to_sector(cluster);
+        printk("sector = %d\n",sector);
         // read the cluster
         for(int cbuff_off=0;cbuff_off<super->num_secs_per_cluster;cbuff_off++)
         {

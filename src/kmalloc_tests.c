@@ -120,12 +120,27 @@ static int alloc_each_pool()
 static int ugly_sizes()
 {
         int status = SUCCESS;
-        void *addrs[5];
-        int sizes[] = {5,35,89,987,5003};
-        int num_sizes = sizeof(sizes)/sizeof(int);
+        void *addrs[12];
+        printk("inside ugly_sizes\n");
+        //uint8_t bitmap[3200000];
+        int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000};//,1391919,492323,123123,2024,5436,3123098};
+        int num_sizes = 12;
         for(int i=0;i<num_sizes;i++)
         {
+                printk("kmallocing %d bytes\n",sizes[i]);
                 addrs[i] = kmalloc(sizes[i]);
+#if 0
+            if(write_bitmap(bitmap,addrs[i],sizes[i]) < 0)
+            {
+                printk("alloc_each_pool: write_bitmap() failed\n");
+                bail();
+            }
+                if(!are_buffers_equal(addrs[i],bitmap,sizes[i]))
+                {
+                    printk("alloc_each_pool: validation error for pool %d: %p\n",i,addrs[i]);
+                    return -1;
+                }
+#endif
                 // validate the headers
                 if((status = validate_header(addrs[i],sizes[i])) < 0)
                     return status;
@@ -180,10 +195,10 @@ static void stress()
     int fill_count = 0; // number of kmalloc() calls to take up a page for each pool size
     while(num_frames_total>0)
     {
-        if(num_frames_total < 1000) printk("stress: num_frames_total = %d\n",num_frames_total);    
+        if((num_frames_total % 1000)==0) printk("stress: num_frames_total = %d\n",num_frames_total);    
         if(num_frames_total==1)
         {
-            printk("hello");
+            printk("last free frame");
         }
         free_addr = kmalloc(PAGE_SIZE-KMALLOC_EXTRA_SIZE);
     }
@@ -199,7 +214,6 @@ static void stress()
             fill_count = PAGE_SIZE/POOL_SIZES[i];
             for(int j=0;j<fill_count;j++)
             {
-                printk("j=%d\n",j);
                 kmalloc(POOL_SIZES[i]-KMALLOC_EXTRA_SIZE);
             }
     }
@@ -234,9 +248,10 @@ static int simple_realloc()
 
 int kmalloc_tests()
 {
+    printk("launching kmalloc tests...\n");
     int status = SUCCESS;
-    //int loop=0;
-    //while(!loop);
+    int loop=0;
+    while(!loop);
     if((status = simple()) < 0) 
     {
             printk("failed simple_test\n");

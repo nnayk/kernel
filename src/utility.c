@@ -214,6 +214,40 @@ int strcmp(const char *s1, const char *s2)
     return *(const unsigned char*)s1 - *(const unsigned char*)s2;
 }
 
+uint16_t *strsep(uint16_t **stringp, const uint16_t *delim)
+{
+    uint16_t *s;
+    const uint16_t *spanp;
+    int c, sc;
+    uint16_t *tok;
+
+    if ((s = *stringp) == NULL)
+        return NULL;
+
+    for (tok = s;;) {
+        c = *s++;
+        spanp = delim;
+        do {
+            sc = *spanp++;
+            if (sc == c) {
+                if (c == 0)
+                    s = NULL;
+                else
+                    s[-1] = '\0';
+                *stringp = s;
+                return tok;
+            }
+        } while (sc != '\0');
+    }
+}
+uint16_t *char_arr_to_uint16_arr(char *chars,size_t length) {
+    uint16_t *digits = kmalloc(sizeof(uint16_t)*length);
+    for (size_t i = 0; i < length; i++) {
+        digits[i] = (uint16_t)chars[i];
+    }
+    return digits;
+}
+
 #if 0
 const char *strchr(const char *s, int c);
 char *strdup(const char *s);

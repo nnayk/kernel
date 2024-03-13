@@ -8,7 +8,15 @@
 
 #include <stddef.h>
 #include <stdint-gcc.h>
-
+#ifndef _utility_h
+#define _utility_h
+/* Represents a path to a file */
+typedef struct
+{
+        uint32_t depth; /* represents the number of levels away from root
+                           the file is. Formulaically: depth = number of slashes + 1 */
+        uint16_t **fnames; /* names of the files in the path */
+}Path;
 
 size_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);
@@ -33,3 +41,6 @@ void bail();
 int write_bitmap(uint8_t *,void *,uint16_t);
 int are_buffers_equal(const void *, const void *,int);
 int strcmp(const char *, const char *);
+uint16_t *strsep(uint16_t **, const uint16_t *);
+uint16_t *char_arr_to_uint16_arr(char *,size_t);
+#endif

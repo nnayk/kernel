@@ -136,7 +136,6 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                     }
                     return NULL; 
                 }
-                // don't actually allocate the frame yet, just mark the virtual page as allocated
                 else if(op == SET_P1 || op == SET_PA) 
                 {
                         frame_start = alloc_pte(entry,0);                
@@ -170,6 +169,15 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                 else if(op == SET_P1)
                 {
                     entry->alloced = ALLOCED;
+                    entry->present = NEXT_PTE_ABSENT;
+                    entry->writable = PTE_WRITABLE;
+                    entry->user_access = 0;
+                    // disable TLB caching for now
+                    entry->write_through = 0;
+                    entry->cache_disabled = 0;
+                    entry->ignore = 0;
+                    entry->nx = 0;
+                    entry->avl2=0;
                     return entry;
                 }
         }
@@ -268,6 +276,7 @@ void *MMU_alloc_page()
     addr = kheap;
     // allocate p1 entry for the page
     va_to_pa(kheap,NULL,SET_P1);
+    if(DBUG) printk("alloced %p\n",kheap);
     // point kheap to the start of next page
     kheap += PAGE_SIZE;
     return addr;
@@ -338,6 +347,7 @@ void MMU_free_pages(void *va_start, int count)
 {
     for(int i=0;i<count;i++)
     {
+            if(DBUG) printk("i = %d: va_start = %p\n",i,va_start);
             MMU_free_page(va_start);
             va_start += PAGE_SIZE;
     }
@@ -371,15 +381,21 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     {
             printk("Attempting to access invalid virtual address (%p)!\n",va);
             bail();
-            return;
     }
     if(DBUG) printk("page fault va: %p\n",va);
-    //TODO: add chec that va > kheap and < kstack and valid_va check
+    //TODO: add check that va > kheap and < kstack and valid_va check
     PTE_t *p1_entry = (PTE_t *)va_to_pa(va,NULL,GET_P1);
     if(!p1_entry || p1_entry->alloced == NOT_ALLOCED)
     {
             printk("pg_fault_isr: Frame not allocated for P1 entry\n");
             bail();
+    }
+    va_to_pa(va,NULL,SET_PA);
+    set_cr3((uint64_t)get_p4_addr());
+    /*
+    if(((void *)KHEAP_START <= va) && (va < (void *)KHEAP_LIMIT))
+    {
+        printk("heap pg fault handler\n");
     }
     // check that the VA is within the current VA space
     //identity map check
@@ -399,6 +415,7 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     {
             va_to_pa(va,NULL,SET_PA);
     }
+    */
     // TODO: user space check
 // allocate block(s) from the pool for
    p1_entry->alloced = ALLOCED_RESET;

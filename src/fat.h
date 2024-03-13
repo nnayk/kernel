@@ -80,7 +80,7 @@ typedef struct Dir Dir;
 struct Inode
 {
     uint32_t start_clust; 
-    char *filename;
+    uint16_t *filename;
     int name_len;
     uint64_t size; // in bytes
     uint32_t ctime;

@@ -54,17 +54,6 @@ int paging_simple_test()
             }
         }
         for(int i=0;i<COUNT;i++) MMU_free_page(pages[i]);
-        for(int i = 0;i<COUNT;i++)
-        {
-                pages[i] = MMU_alloc_page();
-                va_to_pa(pages[i],NULL,SET_PA);
-                printk("Alloc %d: page addr = %p, frame addr = %p\n",i+1,pages[i],va_to_pa(pages[i],NULL,GET_PA));
-        }
-        // validate the frames and free the pages
-
-        
-        // confirm that the pages map to null again
-
         return SUCCESS;
 }
 
@@ -79,7 +68,7 @@ int paging_stress_test()
                 page_start = MMU_alloc_page();
                 va_to_pa(page_start,NULL,SET_PA);
                 //printk("page addr %d = %p, frame addr = %p\n",i+1,page_start,va_to_pa(page_start,NULL,GET_PA));
-                if(i>30000) 
+                if(i%1000==0) 
                     printk("i=%d,num frames left = %d,page addr %d = %p, frame addr = %p,\n",i,num_frames_total,i+1,page_start,va_to_pa(page_start,NULL,GET_PA));
                 if(write_bitmap(bitmap,page_start,PAGE_SIZE) < 0)
                 {
