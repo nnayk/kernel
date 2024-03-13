@@ -30,9 +30,9 @@ void fat_init()
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
     //uint16_t x[] = {97,98,99,0};
-    //char *x = "/parent1/child1";
-    //uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
-    //open(y);
+    char *x = "/parent1/child1";
+    uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
+    open(y);
 }
 void parse_mbr()
 {
@@ -292,9 +292,9 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
             {
                 curr_inode = init_inode(cluster);
                 curr_inode->name_len = get_inode_name_len(name);
-                curr_inode->filename = kmalloc(sizeof(uint16_t)*curr_inode->name_len);
+                curr_inode->filename = kmalloc(sizeof(uint16_t)*(curr_inode->name_len+1));
                 // update the inode entries
-                memcpy(&curr_inode->filename,name,curr_inode->name_len);
+                memcpy(curr_inode->filename,name,(curr_inode->name_len+1)*sizeof(uint16_t));
                 curr_inode->size = dir_ent->size;
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
@@ -314,6 +314,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
         // get the next cluster
     }
     kfree(cbuffer);
+    kfree(name);
 }
 
 int valid_cluster(uint32_t cluster)
@@ -431,8 +432,9 @@ Inode *fetch_inode(Path *fpath)
 {
     Inode *curr_inode = super->root_inode; // start from root
     Dir *curr_dir;
+    int found = 0; //tracks if we found the file at each layer of the path
     // traverse file system until desired file is reached
-    for(int i=0;i<fpath->depth-1;i++)
+    for(int i=0;i<fpath->depth;i++)
     {
         // make sure we're dealing with a directory
         if(!curr_inode->children)
@@ -446,17 +448,27 @@ Inode *fetch_inode(Path *fpath)
         
         // search the child inodes 
         curr_dir = curr_inode->children;
+        found = 0;
         for(int j=0;j<curr_dir->count;j++)
         {
-            if(!are_buffers_equal(fpath->fnames[i],curr_dir->inodes[j]->filename,curr_dir->inodes[j]->name_len))
+            display_file_name(curr_inode->filename);
+            if(are_buffers_equal(fpath->fnames[i],curr_dir->inodes[j]->filename,curr_dir->inodes[j]->name_len*sizeof(uint16_t)))
             {
                 curr_inode = curr_dir->inodes[j];        
                 printk("found next inode ");
                 display_file_name(curr_inode->filename);
+                found = 1;
+                break;
             }
         }
+
+        if(!found)
+        {
+            printk("invalid path\n");
+            return NULL;
+        }
     }
-    
-    printk("invalid path\n");
-    return NULL;
+    if(!DBUG) printk("valid path. inode filename = ");
+    display_file_name(curr_inode->filename);
+    return curr_inode;
 }
