@@ -5,13 +5,12 @@
 */
 
 #include <stdint-gcc.h>
-#include "blockdev.h"
 #include "print.h"
 #include "memutils.h"
 #include "process.h"
-#include "utility.h"
 #include "fat.h"
 #include "error.h"
+#include "tests.h" 
 
 #define DBUG 0
 
@@ -30,10 +29,8 @@ void fat_init()
     super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
     readdir(super->root_inode->start_clust,super->root_inode->children,0);
+    vfs_tests();
     //uint16_t x[] = {97,98,99,0};
-    char *x = "/parent1/child1";
-    uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
-    open(y);
 }
 void parse_mbr()
 {
@@ -297,6 +294,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                 // update the inode entries
                 memcpy(curr_inode->filename,name,(curr_inode->name_len+1)*sizeof(uint16_t));
                 curr_inode->size = dir_ent->size;
+                printk("size = %ld\n",curr_inode->size);
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
                 curr_inode->mtime = dir_ent->mt << 16 | dir_ent->md;
@@ -420,6 +418,7 @@ File *open(uint16_t *fpath)
         
         file = kmalloc(sizeof(File));
         file->inode = fetch_inode(path);
+        if(!file->inode) bail();
         file->offset = 0;
         return file;
 }
@@ -476,13 +475,13 @@ int lseek(File *f,uint64_t offset)
    if(!f)
    {
         printk("lseek: null arg\n");
-        bail();
+        //bail();
         return ERR_BAD_INPUT;
    }
    if((offset < 0) || (offset >= f->inode->size))
    {
-        printk("lseek: invalid offset %ld for file w/size = %ld\n",offset,f->offset);
-        bail();
+        printk("lseek: invalid offset %ld for file w/size = %ld and current seek ptr = %ld\n",offset,f->inode->size,f->offset);
+        //bail();
         return ERR_BAD_INPUT;
    }
 

@@ -13,3 +13,4 @@ int kmalloc_tests();
 int kbd_tests();
 void paging_tests();
 int ata_tests();
+void vfs_tests();

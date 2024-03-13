@@ -4,6 +4,8 @@
  * Description:
 */
 
+#include "blockdev.h"
+#include "utility.h"
 #define FAT32_TYPE 0xC
 
 #define FAT_ATTR_READ_ONLY 0x01
