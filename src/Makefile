@@ -7,7 +7,7 @@ loop1 := /dev/loop71
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 tests = kmalloc_tests.o page_frame_tests.o mt_tests.o kbd_tests.o paging_tests.o ata_tests.o vfs_tests.o
-objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o process.o scheduler.o snakes.o blockdev.o fat.o $(tests)
+objs := multiboot_header.o boot.o long_mode_init.o kernel.o vga.o utility.o print.o ps2.o idt_init.o irq.o isr.o shared_buff.o serial.o memutils.o paging.o process.o scheduler.o snakes.o blockdev.o fat.o md5.o $(tests)
 
 my-gcc := $(HOME)/opt/cross/bin/$(TARGET)-gcc
 my-gcc_flags := -c -g -Wall -Werror -mno-red-zone
