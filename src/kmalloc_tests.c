@@ -123,27 +123,44 @@ static int ugly_sizes()
         void *addrs[12];
         printk("inside ugly_sizes\n");
         uint8_t *bitmap = kmalloc(3200000);
-        int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000};//,1391919,492323,123123,2024,5436,3123098};
+        int sizes[] = {5,35,89,987,5003,65013,4,3,997,32861,520348,2000000};//1391919,492323,123123,2024,5436,3123098};
         int num_sizes = 12;
+        int temp=0;
         for(int i=0;i<num_sizes;i++)
         {
                 printk("kmallocing %d bytes\n",sizes[i]);
                 addrs[i] = kmalloc(sizes[i]);
-#if 0
-            if(write_bitmap(bitmap,addrs[i],sizes[i]) < 0)
-            {
-                printk("alloc_each_pool: write_bitmap() failed\n");
-                bail();
-            }
+                temp = sizes[i];
+                for(int j=0;j<sizes[i];j+=sizeof(void *))
+                {
+                    if(temp>=sizeof(void *)) 
+                    {
+                            memcpy(addrs[i]+j,addrs+i,sizeof(void *));
+                            temp -= sizeof(void *);
+                    }
+                    else memcpy(addrs[i]+j,addrs+i,temp);
+                }
+                // validate the headers
+                if((status = validate_header(addrs[i],sizes[i])) < 0)
+                    return status;
+        }
+        for(int i=0;i<num_sizes;i++)
+        {
+                temp = sizes[i];
+                for(int j=0;j<sizes[i];j+=sizeof(void *))
+                {
+                    if(temp>=sizeof(void *)) 
+                    {
+                            memcpy(bitmap+j,addrs+i,sizeof(void *));
+                            temp -= sizeof(void *);
+                    }
+                    else memcpy(bitmap+j,addrs+i,temp);
+                }
                 if(!are_buffers_equal(addrs[i],bitmap,sizes[i]))
                 {
                     printk("alloc_each_pool: validation error for pool %d: %p\n",i,addrs[i]);
                     return -1;
                 }
-#endif
-                // validate the headers
-                if((status = validate_header(addrs[i],sizes[i])) < 0)
-                    return status;
                 kfree(addrs[i]);
         }
         kfree(bitmap);
@@ -258,7 +275,7 @@ int kmalloc_tests()
     printk("launching kmalloc tests...\n");
     int status = SUCCESS;
     int loop=0;
-    while(!loop);
+    while(loop);
     if((status = simple()) < 0) 
     {
             printk("failed simple_test\n");
