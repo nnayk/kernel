@@ -38,7 +38,18 @@ static void test_read_entire_file(char *name)
     read(f,dst,f->inode->size);
     for(int i=0;i<f->inode->size;i++)
     {
-        printk("%d\n",dst[i]);
+        printk("%c",dst[i]);
+    }
+    lseek(f,0);
+    for(int i=0;i<f->inode->size;i++)
+    {
+        printk("%c",dst[i]);
+    }
+    lseek(f,2);
+    read(f,dst,f->inode->size-2);
+    for(int i=0;i<f->inode->size-2;i++)
+    {
+        printk("%c",dst[i]);
     }
 }
 

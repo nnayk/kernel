@@ -434,7 +434,7 @@ int read(File *f,char *dst,uint64_t len)
     Inode *inode = f->inode;
     uint32_t curr_cluster = inode->start_clust; // current file data cluster to read
     uint64_t curr_off = 0; // offset in dst
-    uint16_t temp_buff[256]; // used to store ATA cluster reads
+    char temp_buff[BLK_SIZE]; // used to store ATA cluster reads
     BD *dev = (BD *)ata_lst.devs[0];
     uint32_t sector=-1;
     if((inode->size < len) || (f->offset+len>inode->size))
@@ -452,21 +452,25 @@ int read(File *f,char *dst,uint64_t len)
         num_clusts_skip--;    
     }
 
+    int one_time_skip = f->offset % BLK_SIZE;
+    printk("one time skip = %d\n",one_time_skip);
+
     while(len)
     {
         sector = cluster_to_sector(curr_cluster);
-        ATABD_read_block(dev,sector,temp_buff);
+        ATABD_read_block(dev,sector,(uint16_t *)temp_buff);
         if(len>=BLK_SIZE)
         {
-            memcpy(dst+curr_off,temp_buff,BLK_SIZE);
+            memcpy(dst+curr_off,temp_buff+one_time_skip,BLK_SIZE);
             len -= BLK_SIZE;
             curr_cluster = super->fat_tbl[curr_cluster];
         }
         else
         {
-            memcpy(dst+curr_off,temp_buff,len);
+            memcpy(dst+curr_off,temp_buff+one_time_skip,len);
             len = 0;
         }
+        one_time_skip=0;
     }
     f->offset += len;
     return SUCCESS;
