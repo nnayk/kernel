@@ -2,8 +2,8 @@ image := fat.img
 sec_start := 2048s
 sec_len := 30720s 
 byte_offset := 1048576
-loop0 := /dev/loop65
-loop1 := /dev/loop66
+loop0 := /dev/loop70
+loop1 := /dev/loop71
 mnt_pt := /mnt/fatgrub
 execs := boot multiboot_header
 tests = kmalloc_tests.o page_frame_tests.o mt_tests.o kbd_tests.o paging_tests.o ata_tests.o vfs_tests.o
@@ -66,7 +66,6 @@ $(image): partition kernel_package
 	sudo mount $(loop1) $(mnt_pt)
 	sudo grub-install --root-directory=$(mnt_pt) --no-floppy --modules="normal part_msdos ext2 multiboot" $(loop0)
 	sudo cp -r .img/* $(mnt_pt)
-	sudo touch nakul.txt
 	sudo mkdir -p parent1/child1
 	sudo mkdir -p parent2/child1/child2
 	sudo touch parent2/child1/child2/foo.txt

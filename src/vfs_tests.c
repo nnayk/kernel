@@ -7,8 +7,9 @@
 #include "print.h"
 #include "fat.h"
 #include "utility.h"
+#include "memutils.h"
 
-static void test_illegal_seek(void *arg)
+static void test_illegal_seek()
 {
     char *x = "/parent1/child1";
     uint16_t *y = char_arr_to_uint16_arr(x,strlen(x));
@@ -29,7 +30,20 @@ static void test_illegal_seek(void *arg)
     printk("passed test_illegal_seek\n");
 }
 
+static void test_read_entire_file(char *name)
+{
+    uint16_t *real_name = char_arr_to_uint16_arr(name,strlen(name));
+    File *f = open(real_name);
+    char *dst = kmalloc(f->inode->size);
+    read(f,dst,f->inode->size);
+    for(int i=0;i<f->inode->size;i++)
+    {
+        printk("%d\n",dst[i]);
+    }
+}
+
 void vfs_tests()
 {
-    test_illegal_seek(0);
+    test_illegal_seek();
+    test_read_entire_file("nakul.txt");
 }

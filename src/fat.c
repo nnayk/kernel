@@ -25,6 +25,7 @@ void fat_init()
     parse_mbr();
     SuperBk *super = fat_probe();
     super->root_inode = init_inode(super->fat_hdr->root_cluster_number);
+    super->root_inode->start_clust = super->fat_hdr->root_cluster_number;
     super->root_inode->filename  = char_arr_to_uint16_arr("root",5);
     super->root_inode->children = init_dir();
     if(DBUG) printk("just so I don't get a warning/error: %p\n",super);
@@ -294,6 +295,7 @@ void readdir(uint32_t cluster,Dir *parent_dir,int num_spaces)
                 // update the inode entries
                 memcpy(curr_inode->filename,name,(curr_inode->name_len+1)*sizeof(uint16_t));
                 curr_inode->size = dir_ent->size;
+                curr_inode->start_clust = (dir_ent->cluster_hi << 16) | dir_ent->cluster_lo;
                 printk("size = %ld\n",curr_inode->size);
                 curr_inode->ctime = dir_ent->ct << 16 | dir_ent->cd;
                 curr_inode->atime = dir_ent->ad;
@@ -342,8 +344,6 @@ Inode *init_inode(uint32_t cluster)
         Inode *inode;
         inode = kmalloc(sizeof(Inode));
         inode->size = -1;
-        inode->children = NULL;
-        inode->start_clust = cluster;
         inode->children = NULL;
         return inode;
 }
@@ -436,7 +436,8 @@ int read(File *f,char *dst,uint64_t len)
     uint64_t curr_off = 0; // offset in dst
     uint16_t temp_buff[256]; // used to store ATA cluster reads
     BD *dev = (BD *)ata_lst.devs[0];
-    if((inode->size < len) || (f->offset+len>=inode->size))
+    uint32_t sector=-1;
+    if((inode->size < len) || (f->offset+len>inode->size))
     {
         printk("read: len = %ld, offset = %ld, file size = %ld\n",len,f->offset,inode->size);
         bail();
@@ -453,7 +454,8 @@ int read(File *f,char *dst,uint64_t len)
 
     while(len)
     {
-        ATABD_read_block(dev,curr_cluster,temp_buff);
+        sector = cluster_to_sector(curr_cluster);
+        ATABD_read_block(dev,sector,temp_buff);
         if(len>=BLK_SIZE)
         {
             memcpy(dst+curr_off,temp_buff,BLK_SIZE);
