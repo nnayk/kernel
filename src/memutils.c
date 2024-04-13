@@ -22,8 +22,6 @@
 
 uint64_t kheap = KHEAP_START; //points to top of kernel heap
 uint64_t kstack = KSTACK_START; //points to topmost of kernel stack (equivalent to rsp for the most recently allocated kernel stack)
-//extern region unused_head;
-//extern region free_head;
 extern region elf_region;
 extern region ram[];
 extern void *free_head;
@@ -41,7 +39,6 @@ void *memset(void *dst, int c, size_t n)
         if(n>LIMIT) return (void *)ERR_INPUT_SIZE;
         for(int i=0;i<n;i++)
         {
-                //if(!(dst+i)) return (void *)ERR_NULL_PTR;
                 ((char *)dst)[i] = c;
         }
 
@@ -257,7 +254,6 @@ void *pf_alloc()
         }
         else if((ram[REGION1_OFF].curr < ram[REGION1_OFF].end))
         {
-            //printk("page_start=%p\n",pg_start);
             pg_start = ram[REGION1_OFF].curr;
             ram[REGION1_OFF].curr += PAGE_SIZE;
         }
@@ -268,26 +264,12 @@ void *pf_alloc()
                 bail();
         }
         num_frames_total--;
-        /*
-        if((uint64_t)pg_start % PAGE_SIZE)
-        {
-            printk("pf_alloc: bad frame %p\n",pg_start);
-            bail();
-        }
-        */
         return pg_start;
 }
 
 // frees an entire physical frame
 int pf_free(void *frame_start)
 {
-        /*
-        if((uint64_t)frame_start % PAGE_SIZE)
-        {
-            printk("pf_free: bad frame %p\n",frame_start);
-            bail();
-        }
-        */
         // enqueue the new frame to the free list
         if(free_head == INVALID_START_ADDR)
         {
@@ -338,43 +320,6 @@ int init_pools()
     return SUCCESS;
 }
 
-#if 0
-/*
- * Dynamically allocates a pool of the requested size 
- * Params:
- * size -- pool size
- * Returns:
- * VA corresponding to start of the block
- */
-Block *alloc_pool_blocks(int size)
-{
-        Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
-        Block *temp = NULL;
-        int num_blocks = PAGE_SIZE/size;
-        if(!(va_to_pa((void *)block_start,NULL,SET_PA)))
-        {
-                printk("alloc_pool: va_to_pa() failed for size = %d\n",size);
-                bail();
-        }
-        // partition the frame into multiple blocks
-        for(int i=0;i<num_blocks;i++)
-        {
-            temp = (Block *)((uint64_t)block_start + (size * i));
-            temp->next=(Block *)0xABCD;
-            printk("%p\n",(Block *)((uint64_t)temp+size));
-            if(i != num_blocks-1)
-            {
-                    temp->next = (Block *)((uint64_t)temp+size);
-            }
-                    
-            else
-                    temp->next = 0; // zero out next pointer for last block
-        }
-
-        return block_start;
-}
-#endif
-
 Block *alloc_pool_blocks(int size)
 {
         Block *block_start = (Block *)MMU_alloc_page(); // VA  of first block in pool
@@ -405,7 +350,7 @@ void display_pools()
     int count;
     printk("display_pools:\n");
     //TODO: change this back to original, rn just want to see pool 1 only
-    for(int i=0;i<2;i++)
+    for(int i=0;i<NUM_POOLS;i++)
     {
         if(i==0) continue;
         count = 0;
@@ -508,13 +453,6 @@ void *kmalloc(size_t usable_size)
     {
         num_pages = (true_size + PAGE_SIZE - 1) / PAGE_SIZE;
         start_addr = MMU_alloc_pages(num_pages);
-        /*
-        // map the new pages
-        for(int i=0;i<num_pages;i++)
-        {
-            va_to_pa((void *)((uint64_t)start_addr+PAGE_SIZE*i),NULL,SET_PA);
-        }
-        */
         hdr.pool_index = -1;
         hdr.usable_size = usable_size;
     }
@@ -559,8 +497,6 @@ void kfree(void *addr)
             bail();
         }
         // TODO: coalesce with next chunk if possible
-        //if(addr + 
-        
         // reset header to indicate chunk is free
 }
 

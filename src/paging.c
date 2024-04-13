@@ -32,7 +32,6 @@ extern region elf_region;
 
 void *alloc_pte(PTE_t *entry, int access)
 {
-    //if(DBUG) printk("entry = %p\n",entry);
     void *phys_addr;
     if(!entry)
     {
@@ -43,7 +42,6 @@ void *alloc_pte(PTE_t *entry, int access)
     entry->present = NEXT_PTE_PRESENT;
     entry->writable = PTE_WRITABLE;
     entry->user_access = access;
-    // disable TLB caching for now
     entry->write_through = 0;
     entry->cache_disabled = 0;
     entry->ignore = 0;
@@ -53,8 +51,6 @@ void *alloc_pte(PTE_t *entry, int access)
     phys_addr = pf_alloc();
 
     entry->addr = RSHIFT_ADDR(phys_addr);
-    //if(DBUG) printk("phys_addr = %p,entry->addr = %lx\n",
-                 //   phys_addr,(long)entry->addr);
 
     return phys_addr;
 }
@@ -62,7 +58,6 @@ void *alloc_pte(PTE_t *entry, int access)
 // translates a virtual address to physical address
 void *va_to_pa(void *va,void *p4_addr,PT_op op)
 {
-        //void *p4_addr; // address of page table level 4 for current thread
         VA_t virt_addr = *((VA_t *)&va);
         PTE_t *entry;
         void *frame_start = NULL; // frame given to a page table 
@@ -157,7 +152,6 @@ void *va_to_pa(void *va,void *p4_addr,PT_op op)
                    {
                            entry->present = NEXT_PTE_PRESENT;
                            entry->addr = RSHIFT_ADDR(va);
-                           //if(entry == (void *)0x4100) printk("Adjusting p1 entry 256: va = %p, page_start = %lx\n",va,(long)entry->addr);
                    }
                    // otherwise assign to an arbitrary free frame
                    else 
@@ -251,7 +245,6 @@ int valid_pa(void *addr)
 {
     if (((ram[REGION0_OFF].start <= addr) && (addr < ram[REGION0_OFF].end)) || ((ram[REGION1_OFF].start <= addr) && (addr < ram[REGION1_OFF].end)))
     {
-            //if(DBUG) printk("%p is a valid phys addr\n",(void *)addr);
             return 1;
     }
 
@@ -355,13 +348,9 @@ void MMU_free_pages(void *va_start, int count)
 
 void kstack_free_pages(void *va_start, int count)
 {
-    //VA_t virt_addr;
     if(DBUG) printk("freeing %d pages\n",count);
     for(int i=0;i<count-1;i++)
     {
-            //printk("va_start=%p,i=%d\n",va_start,i);
-            //virt_addr = *((VA_t *)&va_start);
-            //printk("va_start = %p,virt_addr p4 = %d, p1 = %d\n",va_start,virt_addr.p4_index,virt_addr.p1_index);
             MMU_free_page(va_start);
             va_start -= PAGE_SIZE;
     }
@@ -392,30 +381,6 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
     }
     va_to_pa(va,NULL,SET_PA);
     set_cr3((uint64_t)get_p4_addr());
-    /*
-    if(((void *)KHEAP_START <= va) && (va < (void *)KHEAP_LIMIT))
-    {
-        printk("heap pg fault handler\n");
-    }
-    // check that the VA is within the current VA space
-    //identity map check
-    if(va < (void *)VA_IDENTITY_MAP_MAX)
-    {
-            if(DBUG) printk("pg_fault_isr: resolved %p w/identity map\n",va);
-            va_to_pa(va,NULL,SET_PA);
-    }
-    //kernel heap region check
-    else if(((void *)KHEAP_START <= va) && (va < (void *)KHEAP_LIMIT))
-    {
-            printk("unreachable code error: kheap does not use demand paging!\n");
-            bail();
-    }
-    // kernel stack region check
-    else if((va <= (void *)KSTACK_START) && (va > (void *)KSTACK_LIMIT))
-    {
-            va_to_pa(va,NULL,SET_PA);
-    }
-    */
     // TODO: user space check
 // allocate block(s) from the pool for
    p1_entry->alloced = ALLOCED_RESET;
@@ -423,21 +388,11 @@ void pg_fault_isr(int int_num,int err_code,void *arg)
 
 void identity_map(void *p4_addr)
 {
-    //uint64_t curr_va = (uint64_t)elf_region.start;
     uint64_t curr_va = 0x1000;
-    //int temp = 0;
     while((void *)curr_va < MAX_FRAME_ADDR)
     {
             va_to_pa((void *)curr_va,p4_addr,SET_PA);
-            /*
-            if(DBUG || temp % 10000 == 0) 
-            {
-                    printk("temp = %d: successfully mapped %lx\n",temp,curr_va);
-            }
-            */
             curr_va += PAGE_SIZE;
-            //temp++;
-            //if(curr_va > 0x101e24) break;
     }
 
     if(DBUG) printk("done mapping!\n");

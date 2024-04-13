@@ -41,12 +41,14 @@ static void test_read_entire_file(char *name)
     {
         printk("%c",dst[i]);
     }
+    printk("seeking to byte offset 2\n");
     lseek(f,2);
     read(f,dst,f->inode->size-2);
     for(int i=0;i<f->inode->size-2;i++)
     {
         printk("%c",dst[i]);
     }
+    printk("seeking back to start of file\n");
     lseek(f,0);
     read(f,dst,f->inode->size);
     for(int i=0;i<f->inode->size;i++)
@@ -81,6 +83,7 @@ void util_vfs_hash_file(char *name)
 
 void test_hash_several_files()
 {
+    printk("generating md5 hashes...\n");
     char *filenames[3] = {"/boot/grub/fonts/unicode.pf2",
                           "/boot/grub/i386-pc/adler32.mod","/boot/grub/i386-pc/gcry_blowfish.mod"};
     for(int i=0;i<3;i++)

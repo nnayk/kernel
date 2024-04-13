@@ -121,12 +121,6 @@ int sched_remove(ProcQueue *q, Process *victim)
         return SUCCESS;
 }
 
-#if 0
-int PROC_unblock_head(ProcQueue *); 
-int PROC_unblock_all(ProcQueue *);
-int PROC_block_on(ProcQueue *, int enable_ints); 
-#endif
-
 Process *reschedule()
 {
         // if only main thread is on the queue then return

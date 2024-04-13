@@ -115,8 +115,6 @@ int irq_init()
         irq_set_mask(COM1_IRQ_NO);
         irq_set_mask(PIT_IRQ_NO);
         irq_clear_mask(KBD_IRQ_NO);
-        //int loop = 0;
-        //while(!loop);
         ps2_enable_kbd_int();
 
         // tss descriptor setup
@@ -167,9 +165,6 @@ int irq_init()
                 display_idt_entry(idt_arr[14]);
                 display_idt_entry(idt_arr[21]);
         }
-        /*asm volatile (
-        "int $0x21"  // Use interrupt number 1 (IRQ 1 for keyboard)
-    );*/
         return 1;
 }
 
@@ -254,12 +249,6 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     {
             printk("wrapper: int num. = %d, error = %d\n",int_num,err_code);
     }
-    /*
-    else
-    {
-            printk("in wrapper for int num = %d\n",int_num);
-    }
-    */
     /* validate int. num */
     if(!((0<=int_num) && (int_num < NUM_INTS)))
     {
@@ -271,8 +260,7 @@ void c_wrapper(int int_num,int err_code,void *buffer)
     if(!entry.handler)
     {
         VGA_display_str("Error: Unhandled interrupt\n");
-        if(int_num==46) irq_end_of_interrupt(14);
-        //hlt(); // ATA1 will be unhandled during init stage
+        if(int_num==ATA1_INT_NO) irq_end_of_interrupt(14);
     }
     /* call the ISR */
     else (*entry.handler)(int_num,err_code,entry.arg);
