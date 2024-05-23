@@ -3,7 +3,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="artifacts/logo.png" alt="Logo" width="150" height="150">
+    <img src="logo.png" alt="Logo" width="150" height="150">
     <h1>Minimal Kernel</h1>
   </a>
 </div>
