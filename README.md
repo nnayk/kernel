@@ -18,11 +18,6 @@ and various device drivers (keyboard I/O, serial I/O, FAT32 disk.
 
 * ![C-URL]
 
-## Installation and Usage
-* Compilation/Execution Instructions
-	* cd into `src` directory
-	* `make run` to run some kernel tests (non-interactive)
-
 <!-- MARKDOWN LINKS & IMAGES -->
 [C-URL]: https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white
 
